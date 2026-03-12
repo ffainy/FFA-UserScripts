@@ -60,6 +60,7 @@
         cardVisual:          { en: 'Visual Settings',                zh: '视觉设置'             },
         cardInteraction:     { en: 'Behaviour',                      zh: '行为设置'             },
         cardEngines:         { en: 'Search Engines',                 zh: '搜索引擎'             },
+        cardSearch:          { en: 'Search Behavior',                 zh: '搜索行为'             },
         cardLanguage:        { en: 'Language',                       zh: '语言'                },
         cardData:            { en: 'Data',                           zh: '数据'                },
         labelOffset:         { en: 'Bottom Offset',                  zh: '底部间距'             },
@@ -71,6 +72,8 @@
         labelBgColor:        { en: 'Background Color',               zh: '背景颜色'             },
         labelAccentColor:    { en: 'Accent Color',                   zh: '强调颜色'             },
         labelAutoFade:       { en: 'Auto Fade',                      zh: '自动渐隐'             },
+        labelNewTab:         { en: 'Open in New Tab',                 zh: '新标签页打开'         },
+        hintNewTab:          { en: 'Search results will open in a new tab', zh: '搜索结果将在新标签页打开' },
         labelFont:           { en: 'Font Family',                    zh: '字体'                },
         labelFontHint:       { en: 'e.g. "Microsoft Yahei"',         zh: '例如 "Microsoft Yahei"' },
         btnAddEngine:        { en: 'Add New Engine',                 zh: '添加新引擎'            },
@@ -119,6 +122,9 @@
         ah: true,         // 自动渐隐
         lang: 'en',       // 语言
         font: '',         // 自定义字体
+        searchBehavior: {
+            openInNewTab: true,  // 搜索时是否在新标签页打开
+        },
         en: DEFAULT_ENGINES,
         ...THEMES.minimal,
     };
@@ -1178,6 +1184,15 @@
                     </div>
 
                     <div class="neo-card">
+                        <span class="neo-card-title">${t('cardSearch')}</span>
+                        <div class="neo-label">
+                            <span>${t('labelNewTab')}</span>
+                            <div class="neo-switch ${s.searchBehavior.openInNewTab?'on':''}" data-action="toggle-newtab"></div>
+                        </div>
+                        <div class="neo-field-hint">${t('hintNewTab')}</div>
+                    </div>
+
+                    <div class="neo-card">
                         <span class="neo-card-title">${t('cardEngines')}</span>
                         <div class="n-list">${engineRows}</div>
                         <button data-action="add-engine" class="neo-btn-main"
@@ -1287,6 +1302,13 @@
                     s.ah = !s.ah;
                     SettingsManager.save();
                     applyStyles();
+                    renderPanel();
+                    break;
+                }
+
+                case 'toggle-newtab': {
+                    s.searchBehavior.openInNewTab = !s.searchBehavior.openInNewTab;
+                    SettingsManager.save();
                     renderPanel();
                     break;
                 }
