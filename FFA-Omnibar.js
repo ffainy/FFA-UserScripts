@@ -3,16 +3,9 @@
 // @namespace    http://tampermonkey.net/
 // @description  A floating search toolbar that unifies Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more — switch engines instantly, get real-time suggestions, and customize every detail with themes, fonts, and layout settings.
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiMxQTFBMkUiLz4KICA8Y2lyY2xlIGN4PSIyNyIgY3k9IjI2IiByPSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBENEZGIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjM0IiB5MT0iMzMiIHgyPSI0MiIgeTI9IjQxIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8bGluZSB4MT0iMjAiIHkxPSI0NyIgeDI9IjQ0IiB5Mj0iNDciIHN0cm9rZT0iIzAwRDRGRiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC45Ii8+CiAgPGxpbmUgeDE9IjIwIiB5MT0iNTMiIHgyPSIzOCIgeTI9IjUzIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNiIvPgo8L3N2Zz4=
-// @version      2.0.0
+// @version      2.1.0
 // @author       Farfaraway
-// @match        *://www.google.com/search*
-// @match        *://www.baidu.com/s*
-// @match        *://www.bing.com/search*
-// @match        *://cn.bing.com/search*
-// @match        *://duckduckgo.com/*
-// @match        *://search.bilibili.com/*
-// @match        *://*.wikipedia.org/*
-// @match        *://store.steampowered.com/*
+// @match        *://*/*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
@@ -284,18 +277,7 @@
         return p.get('q') || p.get('wd') || p.get('keyword') || p.get('search') || '';
     }
 
-    /**
-     * 判断当前页面 hostname 是否与引擎 host 匹配。
-     * 支持子域名：引擎 host 为根域（如 "bing.com"）时，
-     * "www.bing.com" 和 "cn.bing.com" 均可命中。
-     * @param {string} hostname  - location.hostname
-     * @param {string} engineHost
-     * @returns {boolean}
-     */
-    function hostMatches(hostname, engineHost) {
-        return hostname === engineHost || hostname.endsWith('.' + engineHost);
-    }
-
+    
     /** 内置引擎的 host 集合，编辑时图标输入框不回填内置图标 */
     const BUILTIN_HOSTS = new Set(DEFAULT_ENGINES.map(e => e.host));
 
@@ -987,15 +969,10 @@
 
             const currentQuery = extractPageQuery();
             const enabled = s.en.filter(e => e.enabled);
-            const sorted  = [
-                ...enabled.filter(e =>  hostMatches(location.hostname, e.host)),
-                ...enabled.filter(e => !hostMatches(location.hostname, e.host)),
-            ];
 
-            sorted.forEach(eng => {
+            enabled.forEach(eng => {
                 const btn = document.createElement('div');
                 btn.className = 'engine-btn';
-                if (hostMatches(location.hostname, eng.host)) btn.classList.add('active');
 
                 // 图标：安全插入（sanitize SVG / img for base64）
                 const iconSpan = document.createElement('span');
@@ -1017,53 +994,44 @@
 
                 btn.append(iconSpan, labelSpan);
 
-                if (hostMatches(location.hostname, eng.host)) {
-                    // 当前引擎：高亮 + 搜索框
-                    const inputContainer = document.createElement('div');
-                    inputContainer.className = 'input-container';
-                    const input = document.createElement('input');
-                    input.className = 'search-input';
-                    input.value = currentQuery;
-                    input.setAttribute('aria-label', 'Search');
+                // 所有启用的引擎都显示搜索框
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'input-container';
+                const input = document.createElement('input');
+                input.className = 'search-input';
+                input.value = currentQuery;
+                input.setAttribute('aria-label', 'Search');
 
-                    input.onfocus = () => {
-                        wrapper.classList.add('active', 'pinned');
-                        toolbar.classList.add('focused', 'pinned');
-                        mask.classList.add('show');
-                        suggestBox.classList.add('show');
-                        fetchSuggestions(input.value, suggestBox, mask, eng.url);
-                    };
-                    input.onblur = () => {
-                        toolbar.classList.remove('focused');
-                        if (!suggestBox.classList.contains('show') && !panel.classList.contains('show')) {
-                            wrapper.classList.remove('pinned');
-                            toolbar.classList.remove('pinned');
-                        }
-                    };
-                    input.oninput = () => {
-                        mask.classList.add('show');
-                        suggestBox.classList.add('show');
-                        fetchSuggestions(input.value, suggestBox, mask, eng.url);
-                    };
-                    input.onkeydown = (e) => {
-                        // 先走键盘导航，消费后不执行搜索跳转
-                        if (SuggestModule.handleKeyNav(e, suggestBox, mask, eng.url)) return;
-                        if (e.key === 'Enter' && input.value.trim()) {
-                            HistoryModule.push(input.value.trim());
-                            location.href = eng.url.replace('%s', encodeURIComponent(input.value));
-                        }
-                    };
+                input.onfocus = () => {
+                    wrapper.classList.add('active', 'pinned');
+                    toolbar.classList.add('focused', 'pinned');
+                    mask.classList.add('show');
+                    suggestBox.classList.add('show');
+                    fetchSuggestions(input.value, suggestBox, mask, eng.url);
+                };
+                input.onblur = () => {
+                    toolbar.classList.remove('focused');
+                    if (!suggestBox.classList.contains('show') && !panel.classList.contains('show')) {
+                        wrapper.classList.remove('pinned');
+                        toolbar.classList.remove('pinned');
+                    }
+                };
+                input.oninput = () => {
+                    mask.classList.add('show');
+                    suggestBox.classList.add('show');
+                    fetchSuggestions(input.value, suggestBox, mask, eng.url);
+                };
+                input.onkeydown = (e) => {
+                    // 先走键盘导航，消费后不执行搜索跳转
+                    if (SuggestModule.handleKeyNav(e, suggestBox, mask, eng.url)) return;
+                    if (e.key === 'Enter' && input.value.trim()) {
+                        HistoryModule.push(input.value.trim());
+                        location.href = eng.url.replace('%s', encodeURIComponent(input.value));
+                    }
+                };
 
-                    inputContainer.append(input);
-                    toolbar.append(btn, inputContainer);
-                } else {
-                    // 其他引擎：点击携带当前词跳转
-                    btn.onclick = () => {
-                        const q = shadowRoot.querySelector('.search-input')?.value || currentQuery;
-                        location.href = eng.url.replace('%s', encodeURIComponent(q));
-                    };
-                    toolbar.append(btn);
-                }
+                inputContainer.append(input);
+                toolbar.append(btn, inputContainer);
             });
         }
 
