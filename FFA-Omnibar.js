@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @description  A floating search toolbar that unifies Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more — switch engines instantly, get real-time suggestions, and customize every detail with themes, fonts, and layout settings.
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiMxQTFBMkUiLz4KICA8Y2lyY2xlIGN4PSIyNyIgY3k9IjI2IiByPSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBENEZGIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjM0IiB5MT0iMzMiIHgyPSI0MiIgeTI9IjQxIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8bGluZSB4MT0iMjAiIHkxPSI0NyIgeDI9IjQ0IiB5Mj0iNDciIHN0cm9rZT0iIzAwRDRGRiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC45Ii8+CiAgPGxpbmUgeDE9IjIwIiB5MT0iNTMiIHgyPSIzOCIgeTI9IjUzIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNiIvPgo8L3N2Zz4=
-// @version      2.1.1
+// @version      2.1.2
 // @author       Farfaraway
 // @match        *://*/*
 // @grant        GM_getValue
@@ -275,6 +275,23 @@
     function extractPageQuery() {
         const p = new URLSearchParams(location.search);
         return p.get('q') || p.get('wd') || p.get('keyword') || p.get('search') || '';
+    }
+
+    /**
+     * 执行搜索跳转，根据设置决定是否在新标签页打开
+     * @param {string} engineUrl - 搜索引擎 URL 模板（含 %s 占位符）
+     * @param {string} query - 搜索词
+     */
+    function performSearch(engineUrl, query) {
+        if (!engineUrl || !query?.trim()) return;
+        const term = query.trim();
+        const url = engineUrl.replace('%s', encodeURIComponent(term));
+        HistoryModule.push(term);
+        if (SettingsManager.current?.searchBehavior?.openInNewTab) {
+            window.open(url, '_blank');
+        } else {
+            location.href = url;
+        }
     }
 
     
@@ -802,7 +819,7 @@
                     const text = document.createElement('span'); text.className = 'history-text'; text.textContent = term;
                     const del  = document.createElement('span'); del.className  = 'history-del';  del.textContent = '✕'; del.title = t('btnRemoveHistory');
 
-                    text.onclick = e => { e.stopPropagation(); HistoryModule.push(term); location.href = engineUrl.replace('%s', encodeURIComponent(term)); };
+                    text.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
                     del.onclick  = e => {
                         e.stopPropagation();
                         HistoryModule.remove(term);
@@ -826,7 +843,7 @@
                     item.className = 'suggest-item';
                     item.style.animationDelay = delay + 'ms';
                     item.textContent = term; // safe
-                    item.onclick = e => { e.stopPropagation(); HistoryModule.push(term); location.href = engineUrl.replace('%s', encodeURIComponent(term)); };
+                    item.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
                     box.appendChild(item);
                     this._navItems.push({ el: item, term });
                     delay += STEP;
@@ -864,8 +881,7 @@
             if (e.key === 'Enter' && this._focusedIndex >= 0) {
                 e.preventDefault();
                 const { term } = items[this._focusedIndex];
-                HistoryModule.push(term);
-                location.href = engineUrl.replace('%s', encodeURIComponent(term));
+                performSearch(engineUrl, term);
                 return true;
             }
             if (e.key === 'Escape') {
@@ -1071,13 +1087,9 @@
                 if (engineUrl && SuggestModule.handleKeyNav(e, suggestBox, mask, engineUrl)) return;
 
                 if (e.key === 'Enter' && input.value.trim()) {
-                    HistoryModule.push(input.value.trim());
-
                     // 使用当前选中的引擎，如果没有选中则使用第一个启用的引擎
                     const finalEngineUrl = selectedBtn ? selectedBtn.dataset.engineUrl : enabled[0]?.url;
-                    if (finalEngineUrl) {
-                        location.href = finalEngineUrl.replace('%s', encodeURIComponent(input.value));
-                    }
+                    performSearch(finalEngineUrl, input.value);
                 }
             };
 
