@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @description  A floating search toolbar that unifies Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more — switch engines instantly, get real-time suggestions, and customize every detail with themes, fonts, and layout settings.
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiMxQTFBMkUiLz4KICA8Y2lyY2xlIGN4PSIyNyIgY3k9IjI2IiByPSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBENEZGIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjM0IiB5MT0iMzMiIHgyPSI0MiIgeTI9IjQxIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8bGluZSB4MT0iMjAiIHkxPSI0NyIgeDI9IjQ0IiB5Mj0iNDciIHN0cm9rZT0iIzAwRDRGRiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC45Ii8+CiAgPGxpbmUgeDE9IjIwIiB5MT0iNTMiIHgyPSIzOCIgeTI9IjUzIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNiIvPgo8L3N2Zz4=
-// @version      2.1.6
+// @version      2.1.7
 // @author       Farfaraway
 // @match        *://*/*
 // @grant        GM_getValue
@@ -280,6 +280,34 @@
     function extractPageQuery() {
         const p = new URLSearchParams(location.search);
         return p.get('q') || p.get('wd') || p.get('keyword') || p.get('search') || '';
+    }
+
+    /**
+     * 根据当前页面host匹配对应的搜索引擎
+     * @returns {object|null} 匹配的引擎对象，未匹配返回null
+     */
+    function matchCurrentPageToEngine() {
+        const currentHost = window.location.host;
+        const settings = SettingsManager.current;
+
+        // 安全检查
+        if (!settings || !settings.en) {
+            return null;
+        }
+
+        const enabledEngines = settings.en.filter(e => e.enabled);
+
+        // 精确匹配
+        const exactMatch = enabledEngines.find(engine => engine.host === currentHost);
+        if (exactMatch) return exactMatch;
+
+        // 子域名匹配（如www.google.com匹配google.com）
+        const domainMatch = enabledEngines.find(engine =>
+            currentHost.endsWith('.' + engine.host) ||
+            currentHost === engine.host
+        );
+
+        return domainMatch || null;
     }
 
     /**
@@ -1049,11 +1077,24 @@
             const currentQuery = extractPageQuery();
             const enabled = s.en.filter(e => e.enabled);
 
+            // 根据当前页面匹配引擎
+            const matchedEngine = matchCurrentPageToEngine();
+            let activeEngineUrl = null;
+
+            if (matchedEngine) {
+                activeEngineUrl = matchedEngine.url;
+            }
+
             // 渲染引擎按钮
             enabled.forEach(eng => {
                 const btn = document.createElement('div');
                 btn.className = 'engine-btn';
                 btn.dataset.engineUrl = eng.url;
+
+                // 如果当前页面匹配此引擎，设置为active
+                if (activeEngineUrl === eng.url) {
+                    btn.classList.add('active');
+                }
 
                 // 图标：安全插入（sanitize SVG / img for base64）
                 const iconSpan = document.createElement('span');
@@ -1075,18 +1116,29 @@
 
                 btn.append(iconSpan, labelSpan);
 
-                // 点击引擎按钮切换选中状态
+                // 点击引擎按钮：有搜索内容时执行搜索，无内容时切换引擎
                 btn.onclick = (e) => {
                     e.stopPropagation();
 
+                    // 获取搜索框内容和引擎URL
+                    const query = input.value.trim();
+                    const engineUrl = btn.dataset.engineUrl;
+
+                    // 如果搜索框有内容且引擎URL有效，执行搜索
+                    if (query && engineUrl) {
+                        performSearch(engineUrl, query);
+                        return; // 搜索后直接返回，不执行切换逻辑
+                    }
+
+                    // 如果搜索框没有内容，执行引擎切换逻辑
                     // 移除其他按钮的 active 类
                     toolbar.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
 
                     // 添加当前按钮的 active 类
                     btn.classList.add('active');
 
-                    // 清空搜索框并隐藏建议框
-                    input.value = '';
+                    // 不清空搜索框，方便用户切换引擎后直接搜索
+                    // 隐藏建议框
                     suggestBox.classList.remove('show');
                     suggestBox.innerHTML = '';
                     SuggestModule.clearNav();
@@ -1095,7 +1147,6 @@
                     input.focus();
 
                     // 更新建议框的URL为当前选中的引擎
-                    const engineUrl = btn.dataset.engineUrl;
                     if (engineUrl) {
                         fetchSuggestions('', suggestBox, mask, engineUrl);
                     }
@@ -1159,8 +1210,8 @@
             inputContainer.append(input);
             toolbar.append(inputContainer);
 
-            // 设置默认选中的引擎
-            if (enabled.length > 0) {
+            // 如果没有匹配的引擎，设置第一个启用的引擎为active
+            if (!activeEngineUrl && enabled.length > 0) {
                 const firstBtn = toolbar.querySelector('.engine-btn');
                 if (firstBtn) {
                     firstBtn.classList.add('active');
