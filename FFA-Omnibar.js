@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @description  A floating search toolbar that unifies Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more — switch engines instantly, get real-time suggestions, and customize every detail with themes, fonts, and layout settings.
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiMxQTFBMkUiLz4KICA8Y2lyY2xlIGN4PSIyNyIgY3k9IjI2IiByPSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBENEZGIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGxpbmUgeDE9IjM0IiB5MT0iMzMiIHgyPSI0MiIgeTI9IjQxIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8bGluZSB4MT0iMjAiIHkxPSI0NyIgeDI9IjQ0IiB5Mj0iNDciIHN0cm9rZT0iIzAwRDRGRiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC45Ii8+CiAgPGxpbmUgeDE9IjIwIiB5MT0iNTMiIHgyPSIzOCIgeTI9IjUzIiBzdHJva2U9IiMwMEQ0RkYiIHN0cm9rZS13aWR0aD0iMi41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNiIvPgo8L3N2Zz4=
-// @version      2.1.2
+// @version      2.1.4
 // @author       Farfaraway
 // @match        *://*/*
 // @grant        GM_getValue
@@ -62,6 +62,8 @@
         labelWidgetRadius:   { en: 'Widget Radius',                  zh: '控件圆角'             },
         labelToolbarAlpha:   { en: 'Toolbar Background',             zh: '搜索条背景'            },
         labelPanelAlpha:     { en: 'Panel Background',               zh: '面板背景'             },
+        labelToolbarBlur:    { en: 'Toolbar Blur',                   zh: '搜索条模糊'            },
+        labelPanelBlur:      { en: 'Panel Blur',                     zh: '面板模糊'              },
         labelBgColor:        { en: 'Background Color',               zh: '背景颜色'             },
         labelAccentColor:    { en: 'Accent Color',                   zh: '强调颜色'             },
         labelAutoFade:       { en: 'Auto Fade',                      zh: '自动渐隐'             },
@@ -112,6 +114,8 @@
         fs: 14,           // 字体大小 (px)
         ta: 50,           // 工具栏背景透明度 (%)
         pa: 60,           // 面板背景透明度 (%)
+        tb: 40,           // 工具栏模糊系数 (px)
+        pb: 45,           // 面板模糊系数 (px)
         ah: true,         // 自动渐隐
         lang: 'en',       // 语言
         font: '',         // 自定义字体
@@ -334,7 +338,6 @@
         const isDark     = textColor === '#fff';
         const shadowColor = hexToRgba(s.a, isDark ? 0.4 : 0.25);
         const shadowSpec  = `0 ${isDark ? 20 : 15}px ${isDark ? 80 : 45}px ${shadowColor}`;
-        const blurLevel   = isDark ? '45px' : '40px';
         const saturation  = isDark ? '210%' : '180%';
         const dimText     = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.78)';
         const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
@@ -363,7 +366,8 @@
             `--nf:${fontStack}system-ui,sans-serif;` +
             `--sp:cubic-bezier(0.23,1,0.32,1);` +
             `--sd:${shadowSpec};` +
-            `--ng:blur(${blurLevel}) saturate(${saturation});` +
+            `--ng:blur(${s.tb}px) saturate(${saturation});` +
+            `--ngp:blur(${s.pb}px) saturate(${saturation});` +
             `--ncb:var(--nbp)` +
             `}` +
             `:host *{font-family:${fontStack}system-ui,sans-serif !important}`;
@@ -513,7 +517,7 @@
         `.neo-mask{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;transition:0.5s}`,
         `.neo-mask.show{visibility:visible;opacity:1}`,
         /* 面板主体 */
-        `.neo-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);width:520px;min-height:40vh;max-height:70vh;border-radius:var(--nr);padding:30px 0;z-index:2147483645;visibility:hidden;opacity:0;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:0.5s var(--sp);background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ng);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
+        `.neo-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);width:520px;min-height:40vh;max-height:70vh;border-radius:var(--nr);padding:30px 0;z-index:2147483645;visibility:hidden;opacity:0;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:0.5s var(--sp);background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ngp);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
         `.neo-panel.show{visibility:visible;opacity:1;transform:translate(-50%,-50%) scale(1)}`,
         `.neo-panel *{font-family:var(--nf) !important;color:inherit;box-sizing:border-box}`,
         `.neo-panel a,.neo-panel a:visited,.neo-panel a:hover{color:inherit;text-decoration:none}`,
@@ -546,7 +550,7 @@
         `.neo-btn-main{padding:14px;background:var(--na);color:var(--noa);border:none;border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;box-shadow:0 4px 15px var(--nag);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
         `.neo-btn-main:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);text-shadow:0 0 10px var(--noa),0 0 25px var(--noa)}`,
         /* 编辑引擎子面板 */
-        `.neo-sub-panel{position:absolute;inset:0;background:var(--nbs);backdrop-filter:var(--ng);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--sp);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--nbd)}`,
+        `.neo-sub-panel{position:absolute;inset:0;background:var(--nbs);backdrop-filter:var(--ngp);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--sp);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--nbd)}`,
         `.neo-sub-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:30px;box-sizing:border-box}`,
         `.neo-sub-panel.show{transform:translateY(0)}`,
         `.neo-edit-input{width:100%;padding:14px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--nf)}`,
@@ -585,14 +589,14 @@
         `.wrapper:hover,.wrapper.active,.wrapper.pinned{opacity:1;transform:translateY(0)}`,
         `.toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--nbt);backdrop-filter:var(--ng);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:0.4s var(--sp)}`,
         `.toolbar.focused{border-color:var(--na);background:var(--nbp);box-shadow:var(--sd),0 0 25px var(--nag),0 0 50px var(--nag)}`,
-        `.engine-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.4s var(--sp),box-shadow 0.25s var(--sp),border-color 0.25s var(--sp),background 0.25s var(--sp),transform 0.25s var(--sp);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5}`,
+        `.engine-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.4s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp),background 0.3s var(--sp),transform 0.3s var(--sp),max-width 0.35s var(--sp),padding 0.3s var(--sp);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:36px;overflow:hidden}`,
         `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;width:16px;height:16px}`,
-        `.engine-btn .btn-label{display:none;opacity:0;transition:opacity 0.3s var(--sp)}`,
-        `.toolbar:hover .engine-btn:not(.active),.toolbar.pinned .engine-btn:not(.active){opacity:1}`,
-        `.toolbar:hover .engine-btn:not(.active) .btn-label,.toolbar.pinned .engine-btn:not(.active) .btn-label{display:inline;opacity:1}`,
+        `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;transition:opacity 0.25s var(--sp)}`,
+        `.toolbar:hover .engine-btn:not(.active),.toolbar.pinned .engine-btn:not(.active){opacity:1;max-width:120px}`,
+        `.toolbar:hover .engine-btn:not(.active) .btn-label,.toolbar.pinned .engine-btn:not(.active) .btn-label{opacity:1;transition-delay:0.1s}`,
         `.engine-btn:hover{border-color:var(--na);background:var(--nag);transform:translateY(-3px);box-shadow:0 8px 20px var(--nag),0 0 12px var(--nag);text-shadow:0 0 12px var(--na),0 0 25px var(--na)}`,
-        `.engine-btn.active{background:var(--na);color:var(--noa);padding:8px 14px;box-shadow:0 8px 25px var(--nag);border-color:var(--na);text-shadow:0 0 8px var(--noa),0 0 20px var(--noa);opacity:1 !important}`,
-        `.engine-btn.active .btn-label{display:inline;opacity:1}`,
+        `.engine-btn.active{background:var(--na);color:var(--noa);padding:8px 14px;box-shadow:0 8px 25px var(--nag);border-color:var(--na);text-shadow:0 0 8px var(--noa),0 0 20px var(--noa);opacity:1 !important;max-width:120px}`,
+        `.engine-btn.active .btn-label{opacity:1}`,
         `.engine-btn.active:hover{transform:translateY(-3px)}`,
         `.input-container{position:relative;display:flex;align-items:center;margin-left:16px}`,
         `.search-input{-webkit-appearance:none;appearance:none;border:1px solid var(--nbd);background:var(--nib);padding:10px 20px;outline:none;width:150px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);border-radius:var(--ni);transition:all 0.5s var(--sp);box-sizing:border-box;font-family:var(--nf)}`,
@@ -1193,6 +1197,16 @@
                                 <input type="range" id="s-pa" min="5" max="100" value="${s.pa}">
                             </div>
                         </div>
+                        <div style="display:flex;gap:20px;margin-top:20px">
+                            <div style="flex:1">
+                                <div class="neo-label">${t('labelToolbarBlur')} <b>${s.tb}px</b></div>
+                                <input type="range" id="s-tb" min="0" max="80" value="${s.tb}">
+                            </div>
+                            <div style="flex:1">
+                                <div class="neo-label">${t('labelPanelBlur')} <b>${s.pb}px</b></div>
+                                <input type="range" id="s-pb" min="0" max="80" value="${s.pb}">
+                            </div>
+                        </div>
                         <div style="margin-top:20px">
                             <div class="neo-label">${t('labelBgColor')}</div>
                             <div class="neo-swatch-row">
@@ -1498,6 +1512,8 @@
             bindRange('s-fs', 'fs');
             bindRange('s-ta', 'ta', '%');
             bindRange('s-pa', 'pa', '%');
+            bindRange('s-tb', 'tb', 'px');
+            bindRange('s-pb', 'pb', 'px');
             bindRange('s-r',  'r');
             bindRange('s-ir', 'ir');
 
