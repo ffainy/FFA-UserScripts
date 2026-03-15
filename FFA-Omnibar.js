@@ -510,8 +510,8 @@
         `.wrapper.mini-mode .toolbar{opacity:0;transform:translateY(50px) scale(0.92);pointer-events:none;transition:opacity 0.5s var(--sp),transform 0.6s var(--sp)}`,
         `.wrapper.mini-mode.toolbar-visible .toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;transition-delay:0.1s}`,
         `.wrapper.mini-mode .toolbar{will-change:opacity,transform}`,
-        `.toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--nbt);backdrop-filter:var(--ng);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:0.4s var(--sp)}`,
-        `.toolbar.focused{background:var(--nbp);box-shadow:var(--sd)}`,
+        `.toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--nbt);backdrop-filter:var(--ng);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:border-color 0.3s var(--sp),box-shadow 0.3s var(--sp),background 0.4s var(--sp)}`,
+        `.toolbar.focused{background:var(--nbp);border-color:var(--na);box-shadow:var(--sd),0 0 0 1px var(--na),0 0 18px var(--nag)}`,
         `.engine-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.4s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp),background 0.3s var(--sp),transform 0.3s var(--sp),max-width 0.35s var(--sp),padding 0.3s var(--sp);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:36px;overflow:hidden}`,
         `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;width:16px;height:16px}`,
         `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;transition:opacity 0.25s var(--sp)}`,
@@ -521,10 +521,15 @@
         `.engine-btn.active{border-color:var(--na);box-shadow:0 0 8px var(--nag),0 0 16px var(--nag);opacity:1 !important;max-width:160px;padding-right:8px}`,
         `.engine-btn.active .btn-label{opacity:1}`,
         `.engine-btn.active:hover{background:var(--nag);transform:translateY(-3px)}`,
-        `.input-container{position:relative;display:flex;align-items:center;margin-left:16px}`,
-        `.search-input{-webkit-appearance:none;appearance:none;border:none;border-bottom:1.5px solid var(--nbd);background:transparent;padding:7px 16px;outline:none;width:150px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);border-radius:0;transition:width 0.5s var(--sp),border-color 0.3s,background 0.3s;box-sizing:border-box;font-family:var(--nf)}`,
-        `.search-input:focus{width:300px;border-bottom-color:var(--na);background:var(--nib);animation:focus-line 0.4s var(--sp)}`,
-        `@keyframes focus-line{from{border-bottom-width:0;opacity:0.5}to{border-bottom-width:1.5px;opacity:1}}`,
+        `.input-container{position:relative;display:flex;align-items:center;transition:width 0.45s var(--sp),background 0.3s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp);width:34px;border-radius:var(--ni);border:1px solid transparent;box-sizing:border-box}`,
+        `.input-container.expanded{width:236px;background:var(--nib);border-color:transparent;box-shadow:none;border-radius:var(--ni)}`,
+        `.input-container.expanded .search-btn{background:var(--nbd);border-color:transparent;box-shadow:none;color:var(--na);opacity:1}`,
+        `.input-container.expanded .search-btn:hover{background:var(--nag);border-color:transparent;border-right-color:var(--nbd)}`,
+        `.search-btn{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;cursor:pointer;color:var(--ntm);background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);transition:0.3s var(--sp);opacity:0.5;box-sizing:border-box}`,
+        `.search-btn:hover{opacity:1;border-color:var(--na);background:var(--nag);color:var(--na);box-shadow:0 0 8px var(--nag)}`,
+        `.search-input{-webkit-appearance:none;appearance:none;border:none;background:transparent;padding:0;outline:none;width:0;min-width:0;font-size:var(--nfs);line-height:1.2;color:var(--ntm);border-radius:0;transition:width 0.45s var(--sp),padding 0.45s var(--sp),opacity 0.3s var(--sp);box-sizing:border-box;font-family:var(--nf);opacity:0}`,
+        `.input-container.expanded .search-input{width:200px;padding:6px 10px 6px 6px;opacity:1}`,
+        `.search-input::placeholder{color:var(--ntd);opacity:0.55}`,
         `.suggest-box{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);width:95vw;max-width:720px;display:none;flex-wrap:wrap;gap:12px;justify-content:center;padding-bottom:35px}`,
         `.suggest-box.show{display:flex;animation:su 0.5s var(--sp)}`,
         `@keyframes su{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
@@ -1002,6 +1007,12 @@
 
             const inputContainer = document.createElement('div');
             inputContainer.className = 'input-container';
+
+            // 搜索图标按钮（currentColor 跟随主题强调色）
+            const searchBtn = document.createElement('div');
+            searchBtn.className = 'search-btn';
+            searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"/></svg>`;
+
             const input = document.createElement('input');
             input.className = 'search-input';
             input.value = currentQuery;
@@ -1011,21 +1022,51 @@
                 const btn = toolbar.querySelector('.engine-btn.active');
                 return btn ? btn.dataset.engineUrl : enabled[0]?.url;
             };
-            input.onfocus = () => {
-                if (input.value) input.select();
+
+            // 统一的收起函数，供所有关闭路径调用
+            const collapseInput = () => {
+                if (input.value.trim()) return;
+                inputContainer.classList.remove('expanded');
+                toolbar.classList.remove('focused');
+                wrapper.classList.remove('pinned');
+                toolbar.classList.remove('pinned');
+            };
+
+            const expand = () => {
+                inputContainer.classList.add('expanded');
                 wrapper.classList.add('active', 'pinned');
                 toolbar.classList.add('focused', 'pinned');
                 mask.classList.add('show');
                 suggestBox.classList.add('show');
+            };
+
+            // 页面有预填内容则默认展开
+            if (currentQuery) inputContainer.classList.add('expanded');
+
+            searchBtn.onclick = () => {
+                if (!inputContainer.classList.contains('expanded')) {
+                    expand();
+                    setTimeout(() => input.focus(), 50);
+                } else if (input.value.trim()) {
+                    performSearch(getEngineUrl(), input.value);
+                } else {
+                    input.focus();
+                }
+            };
+
+            input.onfocus = () => {
+                if (input.value) input.select();
+                expand();
                 const url = getEngineUrl();
                 if (url) fetchSuggestions(input.value, suggestBox, mask, url);
             };
+            // onblur 用 setTimeout 让 mask.onclick 先执行完再判断状态
             input.onblur = () => {
-                if (!suggestBox.classList.contains('show') && !panel.classList.contains('show')) {
-                    toolbar.classList.remove('focused');
-                    wrapper.classList.remove('pinned');
-                    toolbar.classList.remove('pinned');
-                }
+                setTimeout(() => {
+                    if (!suggestBox.classList.contains('show') && !panel.classList.contains('show')) {
+                        collapseInput();
+                    }
+                }, 150);
             };
             input.oninput = () => {
                 mask.classList.add('show');
@@ -1037,9 +1078,10 @@
                 const url = getEngineUrl();
                 if (url && SuggestModule.handleKeyNav(e, suggestBox, mask, url)) return;
                 if (e.key === 'Enter' && input.value.trim()) performSearch(url, input.value);
+                if (e.key === 'Escape') { input.blur(); }
             };
 
-            inputContainer.append(input);
+            inputContainer.append(searchBtn, input);
             toolbar.append(inputContainer);
 
             if (!activeEngineUrl)
@@ -1622,6 +1664,10 @@
                 panel.querySelector('#n-sub')?.classList.remove('show');
                 wrapper.classList.remove('active', 'pinned');
                 toolbar.classList.remove('focused', 'pinned');
+                // 收起输入框（无内容时）
+                const ic = toolbar.querySelector('.input-container');
+                const inp = toolbar.querySelector('.search-input');
+                if (ic && !inp?.value?.trim()) ic.classList.remove('expanded');
                 updateMiniMode();
             };
         }
