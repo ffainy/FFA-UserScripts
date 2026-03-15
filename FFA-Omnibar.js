@@ -1,11 +1,15 @@
 // ==UserScript==
 // @name         FFA Omnibar
-// @namespace    http://tampermonkey.net/
-// @description    A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
+// @namespace    https://github.com/ffainy/FFA-UserScripts
+// @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
-// @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
+// @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
 // @version      3.0.1
 // @author       Farfaraway
+// @homepage     https://github.com/ffainy/FFA-UserScripts
+// @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
+// @updateURL    https://raw.githubusercontent.com/ffainy/FFA-UserScripts/refs/heads/master/FFA-Omnibar.js
+// @tag          productivity
 // @match        *://*/*
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -284,7 +288,8 @@
         const saturation  = isDark ? `${Math.round(180 + 30 * glow)}%` : `${Math.round(160 + 20 * glow)}%`;
         const dimText     = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.78)';
         const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
-        const innerBg     = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        const innerBg     = isDark ? hexToRgba(s.a, 0.08) : hexToRgba(s.a, 0.06);
+        const innerBg2    = isDark ? hexToRgba(s.a, 0.1) : hexToRgba(s.a, 0.06);
         const nagAlpha    = isDark ? 0.35 * glow : 0.18 * glow;
         const fontStack   = s.font?.trim()
             ? s.font.split(',').map(f => `"${f.trim().replace(/^["']+|["']+$/g, '')}"`).filter(f => f !== '""').join(',') + ','
@@ -304,7 +309,7 @@
             `--noa:${contrastColor(s.a)};` +
             `--nbd:${borderColor};` +
             `--nag:${hexToRgba(s.a, nagAlpha)};` +
-            `--nib:${innerBg};` +
+            `--nib:${innerBg};--nib2:${innerBg2};` +
             `--nf:${fontStack}system-ui,sans-serif;` +
             `--sp:cubic-bezier(0.23,1,0.32,1);` +
             `--sd:${shadowSpec};` +
@@ -410,7 +415,7 @@
 
     const PANEL_CSS = [
         /* 遮罩 */
-        `.neo-mask{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;transition:0.5s}`,
+        `.neo-mask{position:fixed;inset:0;background:var(--nib2);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;transition:0.5s}`,
         `.neo-mask.show{visibility:visible;opacity:1}`,
         /* 面板主体 */
         `.neo-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);width:520px;min-height:40vh;max-height:70vh;border-radius:var(--nr);padding:30px 0;z-index:2147483645;visibility:hidden;opacity:0;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:0.5s var(--sp);background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ngp);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
@@ -523,7 +528,7 @@
         `.engine-btn.active:hover{background:var(--nag);transform:translateY(-3px)}`,
         `.input-container{position:relative;display:flex;align-items:center;transition:width 0.45s var(--sp),background 0.3s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp);width:34px;border-radius:var(--ni);border:1px solid transparent;box-sizing:border-box}`,
         `.input-container.expanded{width:236px;background:var(--nib);border-color:transparent;box-shadow:none;border-radius:var(--ni)}`,
-        `.input-container.expanded .search-btn{background:var(--nbd);border-color:transparent;box-shadow:none;color:var(--na);opacity:1}`,
+        `.input-container.expanded .search-btn{background:var(--nib2);border-color:transparent;box-shadow:none;color:var(--na);opacity:1}`,
         `.input-container.expanded .search-btn:hover{background:var(--nag);border-color:transparent;border-right-color:var(--nbd)}`,
         `.search-btn{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;cursor:pointer;color:var(--ntm);background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);transition:0.3s var(--sp);opacity:0.5;box-sizing:border-box}`,
         `.search-btn:hover{opacity:1;border-color:var(--na);background:var(--nag);color:var(--na);box-shadow:0 0 8px var(--nag)}`,
