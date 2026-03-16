@@ -5,19 +5,22 @@ on:
     branches:
       - master
     paths:
-      - '**.js'   # 只有 .js 文件变动才触发
+      # 在这里维护需要追踪版本的脚本列表
+      - 'FFA-Omnibar.js'
+      # - 'FFA-NewScript.js'
 
 jobs:
   update-changelog:
     runs-on: ubuntu-latest
-    # 防止 changelog commit 本身再次触发 workflow
+    # 防止 changelog 自动提交再次触发本 workflow
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2   # 需要拿到上一个 commit 来做版本对比
+          # 需要拉取前一个 commit 用于版本对比
+          fetch-depth: 2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,48 +33,38 @@ jobs:
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- '*.js')
           echo "Changed JS files: $CHANGED_FILES"
 
-          VERSION_BUMPED=""
-          BUMPED_FILE=""
-          NEW_VERSION=""
-          OLD_VERSION=""
+          # 收集所有发生版本变动的文件，格式：file:newVer:oldVer，多个用逗号拼接
+          BUMPED_FILES=""
 
           for FILE in $CHANGED_FILES; do
             if [ ! -f "$FILE" ]; then continue; fi
 
-            # 用 sed 替代 grep -P lookbehind
             CUR=$(sed -n 's|.*// @version[[:space:]]\+\([^[:space:]]\+\).*|\1|p' "$FILE" | head -1)
             PREV=$(git show HEAD~1:"$FILE" 2>/dev/null | sed -n 's|.*// @version[[:space:]]\+\([^[:space:]]\+\).*|\1|p' | head -1)
 
             echo "File: $FILE | prev: $PREV | current: $CUR"
 
             if [ -n "$CUR" ] && [ "$CUR" != "$PREV" ]; then
-              VERSION_BUMPED="true"
-              BUMPED_FILE="$FILE"
-              NEW_VERSION="$CUR"
-              OLD_VERSION="$PREV"
-              break
+              BUMPED_FILES="$BUMPED_FILES,$FILE:$CUR:$PREV"
             fi
           done
 
-          echo "version_bumped=$VERSION_BUMPED" >> $GITHUB_OUTPUT
-          echo "bumped_file=$BUMPED_FILE"       >> $GITHUB_OUTPUT
-          echo "new_version=$NEW_VERSION"       >> $GITHUB_OUTPUT
-          echo "old_version=$OLD_VERSION"       >> $GITHUB_OUTPUT
+          # 去掉开头多余的逗号
+          BUMPED_FILES="${BUMPED_FILES#,}"
+          echo "bumped_files=$BUMPED_FILES" >> $GITHUB_OUTPUT
 
       - name: Update CHANGELOG.md
-        if: steps.detect.outputs.version_bumped == 'true'
+        if: steps.detect.outputs.bumped_files != ''
         env:
-          NEW_VERSION: ${{ steps.detect.outputs.new_version }}
-          OLD_VERSION: ${{ steps.detect.outputs.old_version }}
-          BUMPED_FILE: ${{ steps.detect.outputs.bumped_file }}
+          BUMPED_FILES: ${{ steps.detect.outputs.bumped_files }}
         run: node .github/scripts/update-changelog.js
 
       - name: Commit and push CHANGELOG
-        if: steps.detect.outputs.version_bumped == 'true'
+        if: steps.detect.outputs.bumped_files != ''
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
           git diff --staged --quiet || \
-            git commit -m "docs: update CHANGELOG for v${{ steps.detect.outputs.new_version }} [skip ci]"
+            git commit -m "docs: update CHANGELOG for ${{ steps.detect.outputs.bumped_files }} [skip ci]"
           git push

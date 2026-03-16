@@ -1,105 +1,131 @@
 #!/usr/bin/env node
 /**
  * update-changelog.js
- * 读取最近的 commit messages，按 Keep a Changelog 规范
- * 将新版本段落插入 CHANGELOG.md 的顶部（## [Unreleased] 之后）
+ *
+ * 由 changelog.yml 调用，读取环境变量 BUMPED_FILES，
+ * 为每个版本变动的脚本生成 Keep a Changelog 规范的段落，
+ * 插入到 CHANGELOG.md 顶部。
+ *
+ * 新增脚本时只需在 changelog.yml 的 paths 里添加文件名，
+ * 本脚本无需改动。
  */
 
 const { execSync } = require('child_process');
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
 
 const CHANGELOG_PATH = path.resolve('CHANGELOG.md');
-const NEW_VERSION  = process.env.NEW_VERSION;
-const OLD_VERSION  = process.env.OLD_VERSION;
-const BUMPED_FILE  = process.env.BUMPED_FILE;
 
-if (!NEW_VERSION) {
-  console.error('NEW_VERSION env var is required');
+// BUMPED_FILES 格式：file:newVer:oldVer，多个用逗号分隔
+// 示例："FFA-Omnibar.js:1.3.0:1.2.0,FFA-NewScript.js:1.0.0:"
+const BUMPED_FILES = process.env.BUMPED_FILES;
+
+if (!BUMPED_FILES) {
+  console.error('BUMPED_FILES env var is required');
   process.exit(1);
 }
 
-// ── 1. 拉取自上个版本以来的 commit messages ──────────────────────────────
-let commitLog = '';
-try {
-  // 如果有旧版本 tag，从 tag 开始；否则取最近 20 条
-  const tagExists = execSync(`git tag -l "v${OLD_VERSION}"`).toString().trim();
-  const range = tagExists ? `v${OLD_VERSION}..HEAD` : '-20';
-  commitLog = execSync(
-    `git log ${range} --pretty=format:"%s" --no-merges`
-  ).toString().trim();
-} catch {
-  commitLog = execSync('git log -10 --pretty=format:"%s" --no-merges').toString().trim();
+const targets = BUMPED_FILES.split(',').map(entry => {
+  const [file, newVer, oldVer] = entry.split(':');
+  return { file, newVer, oldVer: oldVer || '' };
+});
+
+// ── commit message 分类规则（Conventional Commits） ──────────────────────
+const SKIP_PATTERNS = [
+  /^\[skip ci\]/i,
+  /^docs: update changelog/i,
+  /^chore:/i,
+];
+
+const CAT_ORDER = ['Added', 'Changed', 'Fixed', 'Removed', 'Security', 'Other'];
+
+function categorize(messages) {
+  const cats = { Added: [], Changed: [], Fixed: [], Removed: [], Security: [], Other: [] };
+
+  for (const msg of messages) {
+    if (SKIP_PATTERNS.some(p => p.test(msg))) continue;
+
+    // 去掉 conventional commit 前缀，保留可读描述
+    const clean = msg
+      .replace(/^(feat|fix|refactor|perf|style|test|build|ci|chore|docs)(\(.+?\))?!?:\s*/i, '')
+      .trim();
+
+    if      (/^feat/i.test(msg))           cats.Added.push(clean);
+    else if (/^fix/i.test(msg))            cats.Fixed.push(clean);
+    else if (/^refactor|^perf/i.test(msg)) cats.Changed.push(clean);
+    else if (/^remove|^drop/i.test(msg))   cats.Removed.push(clean);
+    else if (/security/i.test(msg))        cats.Security.push(clean);
+    else                                   cats.Other.push(clean);
+  }
+
+  return cats;
 }
 
-const commits = commitLog.split('\n').filter(Boolean);
+// ── 为单个脚本生成版本段落 ───────────────────────────────────────────────
+function buildSection(file, newVer, oldVer) {
+  const scriptName = path.basename(file, '.js');
+  const today = new Date().toISOString().slice(0, 10);
 
-// ── 2. 按 Conventional Commits 关键词分类 ────────────────────────────────
-const categories = {
-  Added:    [],
-  Changed:  [],
-  Fixed:    [],
-  Removed:  [],
-  Security: [],
-  Other:    [],
-};
+  // 若有旧版本的 tag，从 tag 取 commit range；否则取最近 20 条
+  let commitMessages = [];
+  try {
+    const tagExists = execSync(`git tag -l "v${oldVer}"`).toString().trim();
+    const range = tagExists ? `v${oldVer}..HEAD` : '-20';
+    const raw = execSync(
+      `git log ${range} --pretty=format:"%s" --no-merges`
+    ).toString().trim();
+    commitMessages = raw.split('\n').filter(Boolean);
+  } catch {
+    commitMessages = [];
+  }
 
-const SKIP_PATTERNS = [/^\[skip ci\]/i, /^docs: update changelog/i, /^chore: /i];
+  const cats = categorize(commitMessages);
+  const hasContent = Object.values(cats).some(a => a.length > 0);
 
-for (const msg of commits) {
-  if (SKIP_PATTERNS.some(p => p.test(msg))) continue;
+  const lines = [`## [${scriptName}] ${newVer} - ${today}`];
 
-  const clean = msg.replace(/^(feat|fix|refactor|perf|style|test|build|ci|chore|docs)(\(.+?\))?!?:\s*/i, '').trim();
+  if (hasContent) {
+    for (const cat of CAT_ORDER) {
+      if (cats[cat].length === 0) continue;
+      lines.push(`\n### ${cat}`);
+      cats[cat].forEach(item => lines.push(`- ${item}`));
+    }
+  } else {
+    lines.push('\n_No significant changes recorded._');
+  }
 
-  if (/^feat/i.test(msg))     categories.Added.push(clean);
-  else if (/^fix/i.test(msg)) categories.Fixed.push(clean);
-  else if (/^refactor|perf/i.test(msg)) categories.Changed.push(clean);
-  else if (/^remove|^drop/i.test(msg))  categories.Removed.push(clean);
-  else if (/security/i.test(msg))       categories.Security.push(clean);
-  else                                  categories.Other.push(clean);
+  return lines.join('\n');
 }
 
-// 如果所有分类都是空的，把所有提交放进 Other
-const hasAny = Object.values(categories).some(a => a.length > 0);
-if (!hasAny) {
-  commits.forEach(m => {
-    if (!SKIP_PATTERNS.some(p => p.test(m))) categories.Other.push(m);
-  });
-}
-
-// ── 3. 拼装新版本段落 ─────────────────────────────────────────────────────
-const today = new Date().toISOString().slice(0, 10);
-const lines = [`## [${NEW_VERSION}] - ${today}`];
-
-if (BUMPED_FILE) {
-  lines.push(`\n> 📦 \`${BUMPED_FILE}\``);
-}
-
-const ORDER = ['Added', 'Changed', 'Fixed', 'Removed', 'Security', 'Other'];
-for (const cat of ORDER) {
-  if (categories[cat].length === 0) continue;
-  lines.push(`\n### ${cat}`);
-  categories[cat].forEach(item => lines.push(`- ${item}`));
-}
-
-const newSection = lines.join('\n');
-
-// ── 4. 插入到 CHANGELOG.md ────────────────────────────────────────────────
+// ── 将所有新段落插入 CHANGELOG.md 顶部 ──────────────────────────────────
 let content = '';
 if (fs.existsSync(CHANGELOG_PATH)) {
   content = fs.readFileSync(CHANGELOG_PATH, 'utf8');
 } else {
-  content = `# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).\n`;
+  content = [
+    '# Changelog',
+    '',
+    'All notable changes to this project will be documented in this file.',
+    '',
+    'The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),',
+    'and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).',
+  ].join('\n') + '\n';
 }
 
-// 找到第一个 ## 版本段落的位置，在它之前插入
-const insertAfterHeader = content.indexOf('\n## ');
-if (insertAfterHeader === -1) {
-  // 没有已有版本段落，直接追加
-  content = content.trimEnd() + '\n\n' + newSection + '\n';
+const newSections = targets
+  .map(({ file, newVer, oldVer }) => {
+    const section = buildSection(file, newVer, oldVer);
+    console.log(`✅ Generated section for ${file} → v${newVer}`);
+    return section;
+  })
+  .join('\n\n');
+
+// 在第一个 ## 版本段落之前插入；若还没有版本段落则直接追加
+const insertPos = content.indexOf('\n## ');
+if (insertPos === -1) {
+  content = content.trimEnd() + '\n\n' + newSections + '\n';
 } else {
-  content = content.slice(0, insertAfterHeader) + '\n\n' + newSection + '\n' + content.slice(insertAfterHeader);
+  content = content.slice(0, insertPos) + '\n\n' + newSections + '\n' + content.slice(insertPos);
 }
 
 fs.writeFileSync(CHANGELOG_PATH, content, 'utf8');
-console.log(`✅ CHANGELOG.md updated → v${NEW_VERSION}`);
