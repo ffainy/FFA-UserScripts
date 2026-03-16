@@ -27,7 +27,6 @@ jobs:
       - name: Detect version bumps in JS files
         id: detect
         run: |
-          # 获取本次 push 中变动的 .js 文件列表
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- '*.js')
           echo "Changed JS files: $CHANGED_FILES"
 
@@ -39,10 +38,9 @@ jobs:
           for FILE in $CHANGED_FILES; do
             if [ ! -f "$FILE" ]; then continue; fi
 
-            # 提取当前版本
-            CUR=$(grep -oP '(?<=// @version\s{1,10})\S+' "$FILE" || true)
-            # 提取上个 commit 的版本
-            PREV=$(git show HEAD~1:"$FILE" 2>/dev/null | grep -oP '(?<=// @version\s{1,10})\S+' || true)
+            # 用 sed 替代 grep -P lookbehind
+            CUR=$(sed -n 's|.*// @version[[:space:]]\+\([^[:space:]]\+\).*|\1|p' "$FILE" | head -1)
+            PREV=$(git show HEAD~1:"$FILE" 2>/dev/null | sed -n 's|.*// @version[[:space:]]\+\([^[:space:]]\+\).*|\1|p' | head -1)
 
             echo "File: $FILE | prev: $PREV | current: $CUR"
 
