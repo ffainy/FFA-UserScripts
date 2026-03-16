@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.0.1
+// @version      3.0.2
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -517,15 +517,16 @@
         `.wrapper.mini-mode .toolbar{will-change:opacity,transform}`,
         `.toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--nbt);backdrop-filter:var(--ng);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:border-color 0.3s var(--sp),box-shadow 0.3s var(--sp),background 0.4s var(--sp)}`,
         `.toolbar.focused{background:var(--nbp);border-color:var(--na);box-shadow:var(--sd),0 0 0 1px var(--na),0 0 18px var(--nag)}`,
-        `.engine-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.4s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp),background 0.3s var(--sp),transform 0.3s var(--sp),max-width 0.35s var(--sp),padding 0.3s var(--sp);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:36px;overflow:hidden}`,
-        `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;width:16px;height:16px}`,
-        `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;transition:opacity 0.25s var(--sp)}`,
+        `.engine-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:36px;overflow:hidden;will-change:max-width,transform}`,
+        `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;width:16px;height:16px;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
+        `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
         `.toolbar:hover .engine-btn:not(.active),.toolbar.pinned .engine-btn:not(.active){opacity:1}`,
-        `.engine-btn:hover{border-color:var(--na);background:var(--nag);transform:translateY(-3px);box-shadow:0 8px 20px var(--nag),0 0 12px var(--nag);text-shadow:0 0 12px var(--na),0 0 25px var(--na);max-width:160px;padding-right:8px}`,
-        `.engine-btn:hover .btn-label{opacity:1;transition-delay:0.1s}`,
-        `.engine-btn.active{border-color:var(--na);box-shadow:0 0 8px var(--nag),0 0 16px var(--nag);opacity:1 !important;max-width:160px;padding-right:8px}`,
-        `.engine-btn.active .btn-label{opacity:1}`,
-        `.engine-btn.active:hover{background:var(--nag);transform:translateY(-3px)}`,
+        `.engine-btn:hover{border-color:var(--na);background:var(--nag);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--nag),0 0 10px var(--nag);text-shadow:0 0 12px var(--na),0 0 25px var(--na);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
+        `.engine-btn:hover .btn-icon{transform:scale(1.1)}`,
+        `.engine-btn:hover .btn-label{opacity:1;max-width:120px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
+        `.engine-btn.active{border-color:var(--na);box-shadow:0 0 8px var(--nag),0 0 16px var(--nag);opacity:1 !important;max-width:160px;padding-right:10px}`,
+        `.engine-btn.active .btn-label{opacity:1;max-width:120px;transform:translateX(0)}`,
+        `.engine-btn.active:hover{background:var(--nag);transform:translateY(-2px) scale(1.02)}`,
         `.input-container{position:relative;display:flex;align-items:center;transition:width 0.45s var(--sp),background 0.3s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp);width:34px;border-radius:var(--ni);border:1px solid transparent;box-sizing:border-box}`,
         `.input-container.expanded{width:236px;background:var(--nib);border-color:transparent;box-shadow:none;border-radius:var(--ni)}`,
         `.input-container.expanded .search-btn{background:var(--nib2);border-color:transparent;box-shadow:none;color:var(--na);opacity:1}`,
