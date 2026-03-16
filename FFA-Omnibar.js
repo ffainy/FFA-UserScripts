@@ -28,7 +28,6 @@
     const HISTORY_KEY = 'ffa_omnibar_history';
     const HISTORY_MAX = 20;
 
-    /** 内置搜索引擎列表（内置图标使用内联 SVG 以支持 currentColor 主题色） */
     const DEFAULT_ENGINES = [
         { name: 'Google',    url: 'https://www.google.com/search?q=%s',                host: 'www.google.com',         enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133c-1.147 1.147-2.933 2.4-6.053 2.4c-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0C5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36c2.16-2.16 2.84-5.213 2.84-7.667c0-.76-.053-1.467-.173-2.053z"/></svg>' },
         { name: 'DuckDuckGo',url: 'https://duckduckgo.com/?q=%s',                      host: 'duckduckgo.com',         enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12s12-5.37 12-12S18.63 0 12 0m0 .984C18.083.984 23.016 5.916 23.016 12S18.084 23.016 12 23.016S.984 18.084.984 12S5.916.984 12 .984m0 .938C6.434 1.922 1.922 6.434 1.922 12c0 4.437 2.867 8.205 6.85 9.55c-.237-.82-.776-2.753-1.6-6.052c-1.184-4.741-2.064-8.606 2.379-9.813c.047-.011.064-.064.03-.093c-.514-.467-1.382-.548-2.233-.38a.06.06 0 0 1-.07-.058c0-.011 0-.023.011-.035c.205-.286.572-.507.822-.64a1.8 1.8 0 0 0-.607-.335c-.059-.022-.059-.12-.006-.144q.008-.01.024-.012c1.749-.233 3.586.292 4.49 1.448a.1.1 0 0 0 .035.023c2.968.635 3.509 4.837 3.328 5.998a9.6 9.6 0 0 0 2.346-.576c.746-.286 1.008-.222 1.101-.053c.1.193-.018.513-.28.81c-.496.567-1.393 1.01-2.974 1.137c-.546.044-1.029.024-1.445.006c-.789-.035-1.339-.059-1.633.39c-.192.298-.041.998 1.487 1.22c1.09.157 2.078.047 2.798-.034c.643-.07 1.073-.118 1.172.069c.21.402-.996 1.207-3.066 1.224q-.238-.002-.467-.011c-1.283-.065-2.227-.414-2.816-.735a.1.1 0 0 1-.035-.017c-.105-.059-.31.045-.188.267c.07.134.444.478 1.004.776c-.058.466.087 1.184.338 2l.088-.016q.063-.015.134-.025c.507-.082.775.012.926.175c.717-.536 1.913-1.294 2.03-1.154c.583.694.66 2.332.53 2.99q-.006.018-.04.035c-.274.117-1.783-.296-1.783-.511c-.059-1.075-.26-1.173-.493-1.225h-.156a.1.1 0 0 1 .018.03l.052.12c.093.257.24 1.063.13 1.26c-.112.199-.835.297-1.284.303c-.443.006-.543-.158-.637-.408c-.07-.204-.103-.675-.103-.95a1 1 0 0 1 .012-.216c-.134.058-.333.193-.397.281c-.017.262-.017.682.123 1.149c.07.221-1.518 1.164-1.74.99c-.227-.181-.634-1.952-.459-2.67c-.187.017-.338.075-.42.191c-.367.508.093 2.933.582 3.248c.257.169 1.54-.553 2.176-1.095c.105.145.305.158.553.158c.326-.012.782-.06 1.103-.158c.192.45.423.972.613 1.388c4.47-1.032 7.803-5.037 7.803-9.82c0-5.566-4.512-10.078-10.078-10.078m1.791 5.646c-.42 0-.678.146-.795.332c-.023.047.047.094.094.07c.14-.075.357-.161.701-.156c.328.006.516.09.67.159l.023.01c.041.017.088-.03.059-.065c-.134-.18-.332-.35-.752-.35m-5.078.198a1.2 1.2 0 0 0-.522.082c-.454.169-.67.526-.67.76c0 .051.112.057.141.011c.081-.123.21-.31.617-.478c.408-.17.73-.146.951-.094c.047.012.083-.041.041-.07a1 1 0 0 0-.558-.211m5.434 1.423a.65.65 0 0 0-.655.647a.652.652 0 0 0 1.307 0a.646.646 0 0 0-.652-.647m.283.262h.008a.17.17 0 0 1 .17.17c0 .093-.077.17-.17.17a.17.17 0 0 1-.17-.17c0-.09.072-.165.162-.17m-5.358.076a.75.75 0 0 0-.758.758c0 .42.338.758.758.758s.758-.337.758-.758a.756.756 0 0 0-.758-.758m.328.303h.01a.199.199 0 1 1 0 .397a.195.195 0 0 1-.197-.198c0-.107.082-.194.187-.199"/></svg>' },
@@ -42,19 +41,13 @@
         { name: 'Steam',     url: 'https://store.steampowered.com/search/?term=%s',    host: 'store.steampowered.com', enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658a3.4 3.4 0 0 1 1.912-.59q.094.001.188.006l2.861-4.142V8.91a4.53 4.53 0 0 1 4.524-4.524c2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911l.004.159a3.39 3.39 0 0 1-3.39 3.396a3.41 3.41 0 0 1-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0M7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25a2.551 2.551 0 0 0 3.337-3.324a2.547 2.547 0 0 0-3.255-1.413l1.523.63a1.878 1.878 0 0 1-1.445 3.467zm11.415-9.303a3.02 3.02 0 0 0-3.015-3.015a3.015 3.015 0 1 0 3.015 3.015m-5.273-.005a2.264 2.264 0 1 1 4.531 0a2.267 2.267 0 0 1-2.266 2.265a2.264 2.264 0 0 1-2.265-2.265"/></svg>' },
     ];
 
-    /** 内置主题 */
     const THEMES = {
-        // 墨水屏清晰感：近白背景，深墨强调色，几乎无圆角，极低透明度，克制的发光
         minimal: { n: { en: 'Clean Steel',  zh: '极简工业' }, b: '#F4F4F5', a: '#1A1A2E', r: 8,  ir: 6,  ta: 70, pa: 80, glow: 0.6 },
-        // 午后书屋：暖米色背景，深焦糖咖啡强调色，适中圆角，温润的发光
         warm:    { n: { en: 'Warm Reading', zh: '午后书屋' }, b: '#F5ECD8', a: '#8B5E3C', r: 20, ir: 10, ta: 65, pa: 75, glow: 0.9 },
-        // 暗夜霓虹：深黑背景，电光蓝强调色，大圆角，高透明度，强烈的霓虹光晕
         cyber:   { n: { en: 'Neon Noir',    zh: '暗夜霓虹' }, b: '#080810', a: '#00FFEA', r: 28, ir: 14, ta: 35, pa: 45, glow: 1.6 },
-        // 宁静森林：深绿背景，苔藓灰绿强调色，圆润圆角，柔和的自然光晕
         forest:  { n: { en: 'Deep Forest',  zh: '宁静森林' }, b: '#0A1A0F', a: '#5C7A5A', r: 16, ir: 10, ta: 40, pa: 50, glow: 1.2 },
     };
 
-    /** 国际化文本表 */
     const LOCALES = {
         panelTitle:          { en: 'FFA Omnibar',                    zh: 'FFA Omnibar'         },
         cardTheme:           { en: 'Theme',                          zh: '主题'                },
@@ -129,49 +122,41 @@
         cardOpacity:         { en: 'Opacity & Blur',                              zh: '透明度与模糊'                      },
     };
 
-    /** 全局默认设置 */
     const DEFAULT_SETTINGS = {
-        bt: 30,           // 工具栏距底部距离 (px)
-        fs: 14,           // 字体大小 (px)
-        ta: 50,           // 工具栏背景透明度 (%)
-        pa: 60,           // 面板背景透明度 (%)
-        tb: 40,           // 工具栏模糊系数 (px)
-        pb: 45,           // 面板模糊系数 (px)
-        mm: true,         // 迷你模式
-        lang: 'en',       // 语言
-        font: '',         // 自定义字体
+        bt: 30,           // 搜索条距页面底部的距离 (px)
+        fs: 14,           // 基准字号 (px)，所有 UI 字号均基于此缩放
+        ta: 50,           // 搜索条背景透明度 (%)
+        pa: 60,           // 设置面板背景透明度 (%)
+        tb: 40,           // 搜索条背景模糊半径 (px)
+        pb: 45,           // 设置面板背景模糊半径 (px)
+        mm: true,         // 迷你模式：空闲时收起为小图标
+        lang: 'en',       // 界面语言：'en' | 'zh'
+        font: '',         // 自定义字体族（CSS font-family 字符串）
         searchBehavior: {
-            openInNewTab: true,  // 搜索时是否在新标签页打开
+            openInNewTab: true,  // 搜索结果是否在新标签页打开
         },
-        bl: [],           // 黑名单域名列表
-        en: DEFAULT_ENGINES,
-        ...THEMES.cyber,
+        bl: [],           // 黑名单：在这些精确域名上隐藏搜索栏
+        en: DEFAULT_ENGINES,   // 搜索引擎列表
+        ...THEMES.cyber,  // 当前主题（展开字段：b 背景色、a 强调色、r 面板圆角、ir 元素圆角、ta/pa 透明度、glow 光晕强度）
     };
 
     let _activeTab = 'general'; // 当前激活的设置 tab，内存状态不持久化
 
     const EventBus = {
         _h: new Map(),
-        on(event, handler) {
-            if (!this._h.has(event)) this._h.set(event, new Set());
-            this._h.get(event).add(handler);
-            return () => this._h.get(event)?.delete(handler);
+        on(e, fn) {
+            if (!this._h.has(e)) this._h.set(e, new Set());
+            this._h.get(e).add(fn);
+            return () => this._h.get(e)?.delete(fn);
         },
-        emit(event, data) {
-            this._h.get(event)?.forEach(fn => {
-                try { fn(data); } catch (e) { console.error('[FFA EventBus]', event, e); }
-            });
+        emit(e, d) {
+            this._h.get(e)?.forEach(fn => { try { fn(d); } catch(err) { console.error('[FFA]',e,err); } });
         },
     };
 
     const SecurityUtils = {
         escapeHtml(str) {
-            return String(str ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+            return String(str??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
         },
 
         validateIcon(raw) {
@@ -185,35 +170,21 @@
     };
 
     function hexToRgba(hex, alpha) {
-        const r = parseInt(hex.slice(1, 3), 16) || 0;
-        const g = parseInt(hex.slice(3, 5), 16) || 0;
-        const b = parseInt(hex.slice(5, 7), 16) || 0;
+        const [r,g,b] = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)||0);
         return `rgba(${r},${g},${b},${alpha})`;
     }
 
     function contrastColor(hex) {
-        const r = parseInt(hex.slice(1, 3), 16) || 0;
-        const g = parseInt(hex.slice(3, 5), 16) || 0;
-        const b = parseInt(hex.slice(5, 7), 16) || 0;
-        return (r * 299 + g * 587 + b * 114) / 1000 >= 150 ? '#000' : '#fff';
+        const [r,g,b] = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)||0);
+        return (r*299+g*587+b*114)/1000 >= 150 ? '#000' : '#fff';
     }
 
-    function escAttr(str) {
-        return String(str ?? '').replace(/"/g, '&quot;');
+    const escAttr = str => String(str ?? '').replace(/"/g, '&quot;');
+
+    function debounce(fn, delay=16) {
+        let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a),delay); };
     }
 
-    function debounce(fn, delay = 16) {
-        let timer = null;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => fn(...args), delay);
-        };
-    }
-
-    /**
-     * 用户未设置图标时的默认图标（base64 data URI）
-     * 用于新增自定义引擎未填写图标的场景
-     */
     const DEFAULT_ICON_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGQ9Ik0xMS43MSAwQzguMjQgMy45IDYuOTIgNiA2LjY0IDkuMTRjLS4wMS0uMDEtLjAzLS4wMS0uMDQtLjAyYy0xLjI4LS43My0yLjMtMi4yMi0yLjkxLTMuNzNsLTIuMjMuODdjMS42NCA0Ljk1IDIuODEgNy4xMyA1LjM5IDguOTRjLS4wMi4wMS0uMDMuMDItLjA1LjAzYy0xLjI3Ljc0LTMuMDcuODktNC42OC42NmwtLjM2IDIuMzdjNS4xMSAxLjA2IDcuNTkgMS4xNSAxMC40Ni0uMTl2LjA2YzAgMS40Ny0uNzcgMy4wOS0xLjc4IDQuMzhMMTIuMyAyNGMzLjQ2LTMuODkgNC43OC01Ljk5IDUuMDYtOS4xM2MuMDIuMDEuMDMuMDEuMDUuMDJjMS4yNy43MyAyLjI5IDIuMjEgMi45IDMuNzNsMi4yMy0uODdjLTEuNjQtNC45NS0yLjgtNy4xNC01LjM5LTguOTVjLjAyLS4wMS4wMy0uMDIuMDUtLjAzYzEuMjctLjc0IDMuMDctLjg4IDQuNjgtLjY1bC4zNi0yLjM4Yy01LjEtMS4wNi03LjU4LTEuMTQtMTAuNDQuMTl2LS4wNmMwLTEuNDcuNzctMy4wOSAxLjc4LTQuMzh6bS4xOSA4LjgyYTMuMTggMy4xOCAwIDAgMSAzLjI4IDMuMDdhMy4xOCAzLjE4IDAgMCAxLTMuMDcgMy4yOGEzLjE4IDMuMTggMCAwIDEtMy4yOC0zLjA3YTMuMTggMy4xOCAwIDAgMSAzLjA3LTMuMjgiLz48L3N2Zz4=';
 
     function decodeBase64Icon(dataUri, size = 16) {
@@ -253,10 +224,6 @@
         return p.get('q') || p.get('wd') || p.get('keyword') || p.get('search') || '';
     }
 
-    /**
-     * 根据当前页面host匹配对应的搜索引擎
-     * @returns {object|null} 匹配的引擎对象，未匹配返回null
-     */
     function matchCurrentPageToEngine() {
         const currentHost = window.location.host;
         const enabled = SettingsManager.current?.en?.filter(e => e.enabled) ?? [];
@@ -266,19 +233,15 @@
     }
 
     function performSearch(engineUrl, query) {
-        if (!engineUrl || !query?.trim()) return;
-        const term = query.trim();
+        const term = query?.trim();
+        if (!engineUrl || !term) return;
         const url = engineUrl.replace('%s', encodeURIComponent(term));
         HistoryModule.push(term);
-        if (SettingsManager.current?.searchBehavior?.openInNewTab) {
-            window.open(url, '_blank');
-        } else {
-            location.href = url;
-        }
+        SettingsManager.current?.searchBehavior?.openInNewTab
+            ? window.open(url, '_blank') : (location.href = url);
     }
 
     
-    /** 内置引擎的 host 集合，编辑时图标输入框不回填内置图标 */
     const BUILTIN_HOSTS = new Set(DEFAULT_ENGINES.map(e => e.host));
 
     function updateIconPreview(raw, el) {
@@ -312,35 +275,40 @@
             ? s.font.split(',').map(f => `"${f.trim().replace(/^["']+|["']+$/g, '')}"`).filter(f => f !== '""').join(',') + ','
             : '';
 
+        // CSS 自定义属性，同时注入 :root（面板/普通 DOM）和 :host（搜索条 Shadow DOM）。
+        // 命名规范：--n 前缀为 omnibar 命名空间，避免与页面 CSS 冲突。
         return `:host,:root{` +
-            `--nb:${s.bt}px;` +
-            `--nr:${s.r}px;` +
-            `--ni:${s.ir}px;` +
-            `--nfs:${s.fs}px;` +
+            `--nb:${s.bt}px;`  +   // 搜索条距底部距离
+            `--nr:${s.r}px;`   +   // 面板圆角半径
+            `--ni:${s.ir}px;`  +   // 元素（按钮/输入框）圆角半径
+            `--nfs:${s.fs}px;` +   // 基准字号
+            // 主题色文字光晕，三档强度（sm 弱 / md 中 / lg 强）
             `--ts-na-sm:0 0 6px ${hexToRgba(s.a, 0.55)};` +
             `--ts-na-md:0 0 8px ${hexToRgba(s.a, 0.7)},0 0 20px ${hexToRgba(s.a, 0.35)};` +
             `--ts-na-lg:0 0 10px ${hexToRgba(s.a, 0.9)},0 0 25px ${hexToRgba(s.a, 0.55)},0 0 50px ${hexToRgba(s.a, 0.25)};` +
-            `--ts-noa:0 0 6px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.35)};` +
-            `--ts-ntm:0 0 5px ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'};` +
-            `--nfs-xs:${Math.max(s.fs - 3, 9)}px;` +
-            `--nfs-sm:${Math.max(s.fs - 2, 9)}px;` +
-            `--nfs-md:${s.fs + 2}px;` +
-            `--nfs-lg:${s.fs + 6}px;` +
-            `--nbp:${hexToRgba(s.b, s.pa / 100)};` +
-            `--nbs:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` +
-            `--nbt:${hexToRgba(s.b, s.ta / 100)};` +
-            `--na:${s.a};` +
-            `--ntm:${textColor};` +
-            `--ntd:${dimText};` +
-            `--noa:${contrastColor(s.a)};` +
-            `--nbd:${borderColor};` +
-            `--nag:${hexToRgba(s.a, nagAlpha)};` +
-            `--nib:${innerBg};--nib2:${innerBg2};` +
-            `--nf:${fontStack}system-ui,sans-serif;` +
-            `--sp:cubic-bezier(0.23,1,0.32,1);` +
-            `--sd:${shadowSpec};` +
-            `--ng:blur(${s.tb}px) saturate(${saturation});` +
-            `--ngp:blur(${s.pb}px) saturate(${saturation});` +
+            `--ts-noa:0 0 6px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.35)};` + // 主题色背景上的文字光晕
+            `--ts-ntm:0 0 5px ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'};` + // 正文色文字光晕
+            // 字号缩放层级，基于基准字号 --nfs 派生
+            `--nfs-xs:${Math.max(s.fs - 3, 9)}px;` + // 辅助文字：提示、徽章、标注
+            `--nfs-sm:${Math.max(s.fs - 2, 9)}px;` + // 次要文字：标签、幽灵按钮
+            `--nfs-md:${s.fs + 2}px;` +               // 强调文字：卡片标题、列表项
+            `--nfs-lg:${s.fs + 6}px;` +               // 大标题：设置面板顶部标题
+            // 背景色系列（基于主题背景色 + 不同透明度）
+            `--nbp:${hexToRgba(s.b, s.pa / 100)};`  +    // 面板背景（面板透明度）
+            `--nbs:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` + // 面板背景加深版（最低 85%，用于子面板）
+            `--nbt:${hexToRgba(s.b, s.ta / 100)};`  +    // 搜索条背景（搜索条透明度）
+            `--na:${s.a};`   +   // 强调色（原始十六进制）
+            `--ntm:${textColor};` + // 主文字色（根据背景亮暗自动取黑或白）
+            `--ntd:${dimText};`   + // 次文字色（灰化处理）
+            `--noa:${contrastColor(s.a)};` + // 强调色背景上的文字色（自动黑或白）
+            `--nbd:${borderColor};` +          // 边框色
+            `--nag:${hexToRgba(s.a, nagAlpha)};` + // 强调色光晕（半透明强调色，用于阴影/发光）
+            `--nib:${innerBg};--nib2:${innerBg2};` + // 内部元素背景（淡化的强调色底色）
+            `--nf:${fontStack}system-ui,sans-serif;` + // 字体栈
+            `--sp:cubic-bezier(0.23,1,0.32,1);` + // 弹性缓动曲线
+            `--sd:${shadowSpec};`  +   // 投影（发光效果）
+            `--ng:blur(${s.tb}px) saturate(${saturation});`  + // 搜索条 backdrop-filter
+            `--ngp:blur(${s.pb}px) saturate(${saturation});` + // 面板 backdrop-filter
             `}` +
             `:host *{font-family:${fontStack}system-ui,sans-serif !important}`;
     }
@@ -430,9 +398,10 @@
         importJSON(jsonStr) {
             try {
                 const saved = JSON.parse(jsonStr);
-                if (typeof saved !== 'object' || !saved) throw new Error();
+                if (!saved || typeof saved !== 'object') throw 0;
                 this._s = { ...DEFAULT_SETTINGS, ...saved };
                 this._s.en = this._mergeEngines(saved);
+                if (!Array.isArray(this._s.bl)) this._s.bl = [];
                 this.save();
                 EventBus.emit('settings:reset');
                 return true;
@@ -456,40 +425,37 @@
         },
     };
 
+    // 通过 <style id="ffa-global-style"> 注入 document.head，作用于直接挂载在 document.body 上的元素：
+    //   .neo-mask          — 设置面板背后的全屏遮罩
+    //   .neo-panel-shell   — 设置面板容器（定位面板主体与左侧切换按钮）
+    //   .neo-panel         — 设置面板主体（含滚动内容区和底部按钮）
+    //   .neo-tab-nav       — 面板左侧悬浮的 tab 切换抽屉
+    //   .ffa-mini-icon     — 迷你模式下的收起图标
+    //   .ffa-mini-hitarea  — 迷你图标上方的透明 hover 触发区域
     const PANEL_CSS = [
-        /* 遮罩 */
-        `.neo-mask{position:fixed;inset:0;background:var(--nib2);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;transition:0.5s}`,
-        `.neo-mask.show{visibility:visible;opacity:1}`,
-        /* 面板主体 */
-        `.neo-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);width:520px;min-height:40vh;max-height:70vh;border-radius:var(--nr);padding:30px 0;z-index:2147483645;visibility:hidden;opacity:0;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:0.5s var(--sp);background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ngp);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
-        `.neo-panel.show{visibility:visible;opacity:1;transform:translate(-50%,-50%) scale(1)}`,
+        `.neo-mask{position:fixed;inset:0;background:var(--nib2);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s}`,
+        `.neo-mask.show{visibility:visible;opacity:1;pointer-events:auto}`,
         `.neo-panel *{font-family:var(--nf) !important;color:inherit;box-sizing:border-box;text-shadow:none}`,
         `.neo-panel a,.neo-panel a:visited,.neo-panel a:hover{color:inherit;text-decoration:none}`,
-        /* 滚动区 */
         `.neo-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 28px}`,
         `.neo-scroll::-webkit-scrollbar{width:4px}`,
         `.neo-scroll::-webkit-scrollbar-track{background:transparent}`,
         `.neo-scroll::-webkit-scrollbar-thumb{background:var(--nag);border-radius:10px;transition:background 0.2s}`,
         `.neo-scroll::-webkit-scrollbar-thumb:hover{background:var(--na)}`,
         `.neo-scroll{scrollbar-width:thin;scrollbar-color:var(--nag) transparent}`,
-        /* 引擎行 */
         `.neo-engine-host{font-size:var(--nfs-xs);color:var(--ntd) !important}`,
         `.neo-engine-row{display:flex;align-items:center;gap:15px;padding:12px 15px;background:var(--nib);border-radius:var(--ni);border:1px solid var(--nbd);margin-bottom:12px;cursor:grab;transition:0.25s var(--sp);position:relative}`,
         `.neo-engine-row:hover{border-color:var(--na);background:var(--nag);transform:translateY(-3px);box-shadow:0 6px 20px var(--nag),0 0 10px var(--nag)}`,
         `.neo-engine-row.dragging{opacity:0.5;border-color:var(--na);background:var(--na);color:var(--noa);cursor:grabbing;box-shadow:0 10px 40px var(--nag),0 0 20px var(--nag);transform:scale(1.02) rotate(2deg);transition:0.15s var(--sp)}`,
         `.n-list.drag-active{background:rgba(0,0,0,0.02);border-radius:var(--ni);padding:8px}`,
-        /* 开关 */
         `.neo-switch{width:40px;height:20px;border-radius:20px;background:var(--nbd);position:relative;cursor:pointer;transition:0.25s var(--sp)}`,
         `.neo-switch::after{content:'';position:absolute;left:4px;top:4px;width:12px;height:12px;background:var(--ntd);border-radius:50%;transition:0.25s var(--sp)}`,
         `.neo-switch.on{background:var(--na)}`,
         `.neo-switch.on::after{left:24px;background:var(--noa)}`,
-        /* 卡片 */
         `.neo-card{background:var(--nbp);backdrop-filter:blur(15px);border-radius:min(calc(var(--nr) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--nbd);box-shadow:0 10px 30px rgba(0,0,0,0.05);box-sizing:border-box}`,
         `.neo-card-title{font-size:var(--nfs-md);font-weight:900;letter-spacing:1px;color:var(--na);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ts-na-md) !important}`,
-        /* 标签行 */
         `.neo-label{display:flex;justify-content:space-between;align-items:center;font-size:var(--nfs-sm);color:var(--ntm);margin-bottom:8px;font-weight:600;transform:translateZ(0)}`,
         `.neo-label b{font-weight:400;color:var(--ntd);font-size:var(--nfs-xs);background:var(--nib);padding:2px 8px;border-radius:10px}`,
-        /* range 滑块 */
         `input[type=range]{width:100%;cursor:pointer;margin:12px 0;height:18px;background:transparent;outline:none;border:none;padding:0;-webkit-appearance:none;appearance:none;font-family:var(--nf)}`,
         `input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--nbd);border-radius:2px}`,
         `input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--na);margin-top:-5px;box-shadow:0 0 6px var(--nag);transition:box-shadow 0.2s,transform 0.2s;border:none}`,
@@ -497,7 +463,6 @@
         `input[type=range]::-moz-range-track{height:4px;background:var(--nbd);border-radius:2px;border:none}`,
         `input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--na);box-shadow:0 0 6px var(--nag);transition:box-shadow 0.2s,transform 0.2s;border:none;cursor:pointer}`,
         `input[type=range]:hover::-moz-range-thumb{box-shadow:0 0 10px var(--na),0 0 20px var(--nag);transform:scale(1.15)}`,
-        /* 底部按钮区 */
         `.neo-footer{padding:20px 28px;display:flex;gap:15px;border-top:1px solid var(--nbd)}`,
         `.neo-btn-main{padding:14px;background:var(--na);color:var(--noa);border:none;border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;box-shadow:0 4px 15px var(--nag);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
         `.neo-btn-main:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);text-shadow:var(--ts-noa) !important}`,
@@ -505,7 +470,6 @@
         `.neo-btn-ghost:hover{background:var(--nag);border-color:var(--na);transform:translateY(-3px);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);color:var(--ntm);text-shadow:var(--ts-na-sm) !important}`,
         `.neo-btn-danger{padding:14px;background:var(--nib);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
         `.neo-btn-danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5) !important}`,
-        /* 编辑引擎子面板 */
         `.neo-sub-panel{position:absolute;inset:0;background:var(--nbs);backdrop-filter:var(--ngp);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--sp);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--nbd)}`,
         `.neo-sub-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:30px;box-sizing:border-box}`,
         `.neo-sub-scroll::-webkit-scrollbar{width:4px}`,
@@ -516,18 +480,15 @@
         `.neo-sub-panel.show{transform:translateY(0)}`,
         `.neo-edit-input{width:100%;padding:14px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--nf)}`,
         `.neo-edit-input:focus{border-color:var(--na);background:var(--nbp);box-shadow:0 0 12px var(--nag)}`,
-        /* 主题切换按钮 */
         `.neo-theme-btn{flex:1;padding:12px 5px;font-size:var(--nfs-sm);border-radius:var(--ni);cursor:pointer;border:1px solid var(--nbd);background:var(--nib);color:var(--ntm);font-weight:bold;transition:0.25s var(--sp);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
         `.neo-theme-btn:hover{background:var(--nag);border-color:var(--na);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);text-shadow:var(--ts-na-sm) !important}`,
         `.neo-theme-btn.active{border-color:var(--na);background:var(--na);color:var(--noa);text-shadow:var(--ts-noa) !important}`,
-        /* 字段说明 */
         `.neo-field-hint{font-size:var(--nfs-xs);color:var(--ntd);margin:4px 0 12px;line-height:1.6}`,
         `.neo-field-hint code{font-family:monospace;font-size:var(--nfs-xs);color:var(--na);background:var(--nib);padding:1px 5px;border-radius:4px;border:1px solid var(--nbd)}`,
         `.neo-field-ex{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--nib);border:1px solid var(--nbd);border-radius:8px;font-size:var(--nfs-xs);font-family:monospace;color:var(--na);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--sp);user-select:none}`,
         `.neo-field-ex:hover{border-color:var(--na);background:var(--nag);box-shadow:0 0 8px var(--nag)}`,
         `.neo-field-ex .ex-icon{font-size:var(--nfs-xs);opacity:0.6}`,
         `.neo-field-tip{font-size:var(--nfs-xs);color:var(--ntd);margin-top:6px;padding-left:2px;opacity:0.8;font-style:italic}`,
-        /* 图标行 */
         `.neo-icon-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
         `.neo-icon-textarea{flex:1;height:48px;padding:10px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);outline:none;box-sizing:border-box;font-family:monospace;font-size:var(--nfs-xs);resize:none;line-height:1.5}`,
         `.neo-icon-textarea:focus{border-color:var(--na);background:var(--nbp);box-shadow:0 0 12px var(--nag)}`,
@@ -535,7 +496,6 @@
         `.neo-icon-preview svg,.neo-icon-preview img{width:24px;height:24px}`,
         `.neo-icon-error{font-size:var(--nfs-xs);color:#ff4757;margin-top:5px;display:none}`,
         `.neo-icon-error.show{display:block}`,
-        /* 色板 */
         `.neo-swatch-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}`,
         `.neo-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:0.2s var(--sp);flex-shrink:0;box-sizing:border-box}`,
         `.neo-swatch:hover{transform:scale(1.2);box-shadow:0 0 8px rgba(0,0,0,0.3)}`,
@@ -543,7 +503,6 @@
         `.neo-swatch-custom{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px dashed var(--ntd);transition:0.2s var(--sp);flex-shrink:0;overflow:hidden;position:relative;box-sizing:border-box}`,
         `.neo-swatch-custom:hover{border-color:var(--na);transform:scale(1.2)}`,
         `.neo-swatch-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none}`,
-        /* 迷你模式图标（挂在 document.body，不受 Shadow DOM transform 影响）*/
         `.ffa-mini-icon{position:fixed;bottom:calc(44px * -1 / 3);left:50%;transform:translateX(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 0.7s,transform 0.7s;opacity:0;pointer-events:none;z-index:2147483641;overflow:visible}`,
         `.ffa-mini-icon svg{width:28px;height:28px;transition:all 0.6s;filter:drop-shadow(0 0 4px var(--na));color:var(--na)}`,
         `.ffa-mini-icon.hovered svg{transform:scale(1.15) rotate(8deg);filter:drop-shadow(0 0 8px var(--na)) drop-shadow(0 0 16px var(--na))}`,
@@ -551,9 +510,8 @@
         `.ffa-mini-icon.hidden{opacity:0;transform:translateX(-50%) translateY(25px) scale(0.7);pointer-events:none}`,
         `.ffa-mini-hitarea{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:64px;height:36px;z-index:2147483642;cursor:pointer;pointer-events:none}`,
         `.ffa-mini-hitarea.active{pointer-events:auto}`,
-        /* 侧边 tab 导航 */
-        `.neo-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;transition:0.5s var(--sp);display:inline-block}`,
-        `.neo-panel-shell.show{visibility:visible;opacity:1;transform:translate(-50%,-50%) scale(1)}`,
+        `.neo-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s var(--sp);display:inline-block}`,
+        `.neo-panel-shell.show{visibility:visible;opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}`,
         `.neo-tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:40px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--nbs);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:width 0.35s var(--sp);z-index:1}`,
         `.neo-tab-nav:hover{width:160px}`,
         
@@ -574,6 +532,16 @@
         `.neo-panel-title{text-align:center;font-weight:900;letter-spacing:4px;padding:26px 28px 20px;color:var(--na);font-size:var(--nfs-lg);text-shadow:var(--ts-na-lg) !important;border-bottom:1px solid var(--nbd);flex-shrink:0}`,
     ].join('');
 
+    // 注入搜索条 Shadow DOM 内部的 <style> 标签，完全隔离于页面 CSS，不会相互污染。
+    // 作用于 shadow root 内的元素：
+    //   :host / .wrapper   — Shadow DOM 宿主及动画包装层
+    //   .toolbar           — 悬浮搜索条主体
+    //   .engine-btn        — 各搜索引擎切换按钮
+    //   .input-container   — 可展开的搜索输入区域
+    //   .search-input      — 文本输入框
+    //   .suggest-box       — 自动补全下拉框
+    //   .suggest-item      — 补全建议条目
+    //   .history-item      — 最近搜索历史条目
     const TOOLBAR_CSS = [
         `:host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--nb);z-index:2147483642;font-family:var(--nf)}`,
         `.wrapper{transition:0.8s var(--sp)}`,
@@ -649,8 +617,6 @@
         _focusedIndex: -1,
         _navItems: [],         // 当前可导航的词条列表
 
-        // ── 缓存 ──────────────────────────────────────────────────────────────
-
         _cacheGet(key) {
             const item = this._cache.get(key);
             if (!item) return null;
@@ -678,8 +644,6 @@
             }
         },
 
-        // ── 可访问性探测（初始化时一次性检测）────────────────────────────────
-
         initAccessibility() {
             if (this._initialized) return;
             this._initialized = true;
@@ -696,8 +660,6 @@
                 probe('baidu',  'https://suggestion.baidu.com/su?wd=a'),
             ]).catch(() => {});
         },
-
-        // ── 底层 GM_xmlhttpRequest 封装 ──────────────────────────────────────
 
         _gmFetch(url, parser) {
             return new Promise((resolve, reject) => {
@@ -737,8 +699,6 @@
             );
         },
 
-        // ── 多源瀑布（Google → Baidu → DuckDuckGo）──────────────────────────
-
         async _fetchFromSources(q) {
             const cached = this._cacheGet(q);
             if (cached) return cached;
@@ -761,8 +721,6 @@
             if (baidu.length > 0) return baidu;
             return trySource('duckduckgo', this._fetchDuckDuckGo.bind(this));
         },
-
-        // ── 公开接口：获取建议并渲染 ─────────────────────────────────────────
 
         async fetch(query, box, mask, engineUrl) {
             this._cleanupCache();
@@ -791,8 +749,6 @@
                 this._render(box, mask, engineUrl, matchedHistory, []);
             }
         },
-
-        // ── 渲染（使用 textContent 插入词条，完全无 XSS 风险）────────────────
 
         _render(box, mask, engineUrl, history, suggests, keepOpen = false) {
             if (history.length === 0 && suggests.length === 0) {
@@ -864,8 +820,6 @@
             box.classList.add('show');
         },
 
-        // ── 键盘导航（↑↓ 选择，Enter 跳转，Escape 关闭）────────────────────
-
         handleKeyNav(e, box, mask, engineUrl) {
             const items = this._navItems;
             if (!box.classList.contains('show') || items.length === 0) return false;
@@ -913,20 +867,15 @@
         },
     };
 
-    /** 防抖版建议请求：300ms 内连续输入只触发最后一次 */
     const fetchSuggestions = debounce(
         (query, box, mask, engineUrl) => SuggestModule.fetch(query, box, mask, engineUrl),
         300
     );
 
     function isBlacklisted(list) {
-        if (!list || !list.length) return false;
+        if (!list?.length) return false;
         const host = window.location.hostname.toLowerCase();
-        return list.some(entry => {
-            const e = String(entry).trim().toLowerCase();
-            if (!e) return false;
-            return host === e;
-        });
+        return list.some(e => String(e).trim().toLowerCase() === host);
     }
 
     function init() {
@@ -939,12 +888,10 @@
 
         SettingsManager.load();
 
-        // ── 黑名单检查：命中则直接退出，不渲染任何 UI ──────────────────────
         if (isBlacklisted(SettingsManager.current.bl)) {
             window.ffaOmnibarInitialized = false; // 允许设置变更后重新初始化
             return;
         }
-        // ──────────────────────────────────────────────────────────────────
 
         StyleEngine.init();
         SuggestModule.initAccessibility();
@@ -952,7 +899,6 @@
         const mask  = document.createElement('div');
         mask.className = 'neo-mask';
 
-        // ── 侧边 tab 导航 shell ──────────────────────────────────────────────
         const shell = document.createElement('div');
         shell.className = 'neo-panel-shell';
 
@@ -976,9 +922,17 @@
             btn.onclick = () => {
                 _activeTab = def.key;
                 tabNav.querySelectorAll('.neo-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === def.key));
-                panel.querySelectorAll('.neo-tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === def.key));
-                // 更新 btn title（语言切换后重渲染时同步）
-            };
+                panel.querySelectorAll('.neo-tab-content').forEach(c => {
+                    const isActive = c.dataset.tab === def.key;
+                    if (isActive) {
+                                        c.classList.remove('active');
+                        void c.offsetWidth; // force reflow
+                        c.classList.add('active');
+                    } else {
+                        c.classList.remove('active');
+                    }
+                });
+                    };
             tabNav.append(btn);
         });
 
@@ -987,7 +941,6 @@
 
         shell.append(tabNav, panel);
         document.body.append(mask, shell);
-        // ────────────────────────────────────────────────────────────────────
 
         const host        = document.createElement('div');
         const shadowRoot  = host.attachShadow({ mode: 'open' });
@@ -1131,7 +1084,6 @@
             const inputContainer = document.createElement('div');
             inputContainer.className = 'input-container';
 
-            // 搜索图标按钮（currentColor 跟随主题强调色）
             const searchBtn = document.createElement('div');
             searchBtn.className = 'search-btn';
             searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"/></svg>`;
@@ -1146,7 +1098,6 @@
                 return btn ? btn.dataset.engineUrl : enabled[0]?.url;
             };
 
-            // 统一的收起函数，供所有关闭路径调用
             const collapseInput = () => {
                 if (input.value.trim()) return;
                 inputContainer.classList.remove('expanded');
@@ -1163,7 +1114,6 @@
                 suggestBox.classList.add('show');
             };
 
-            // 页面有预填内容则默认展开
             if (currentQuery) inputContainer.classList.add('expanded');
 
             searchBtn.onclick = () => {
@@ -1183,7 +1133,6 @@
                 const url = getEngineUrl();
                 if (url) fetchSuggestions(input.value, suggestBox, mask, url);
             };
-            // onblur 用 setTimeout 让 mask.onclick 先执行完再判断状态
             input.onblur = () => {
                 setTimeout(() => {
                     if (!suggestBox.classList.contains('show') && !shell.classList.contains('show')) {
@@ -1465,21 +1414,13 @@
                     </div>
                 </div>`;
 
-            // 同步侧边 tab 按钮的 active 状态（renderPanel 每次重建 panel 内容，tabNav 不重建）
-            tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
+                tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === _activeTab);
             });
 
             bindPanelInputs();
         }
 
-        //
-        // 策略：
-        //   • 点击动作 → 事件委托（panel 上 1 个监听器，通过 data-action 分发）
-        //   • range/color/text 输入 → 每次渲染后重新绑定（元素已重建）
-        //   • 委托监听器在 init() 中注册一次，永不重复添加
-
-        // 事件委托主监听器（在 init() 中只注册一次）
         panel.addEventListener('click', function onPanelClick(e) {
             const s = SettingsManager.current;
             const el = e.target.closest('[data-action]');
@@ -1610,8 +1551,7 @@
                 case 'lang': {
                     SettingsManager.update({ lang: el.dataset.lang });
                     renderPanel();
-                    // 语言切换后同步 tab 按钮 title
-                    tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
+                                tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
                         const key = btn.dataset.tab;
                         const _lt = t('tab' + key.charAt(0).toUpperCase() + key.slice(1));
                         btn.title = _lt;
@@ -1676,10 +1616,6 @@
             }
         });
 
-        /**
-         * 绑定 range/color/text 输入类控件（每次 renderPanel 调用一次）
-         * 这些控件在 innerHTML 替换后被重新创建，必须重新绑定
-         */
         function bindPanelInputs() {
             const s = SettingsManager.current;
 
@@ -1765,8 +1701,7 @@
                 };
             }
 
-            // ── 黑名单输入框 Enter 键支持 ─────────────────────────────────────
-            const blInput = panel.querySelector('#bl-input');
+                const blInput = panel.querySelector('#bl-input');
             if (blInput) {
                 blInput.onkeydown = e => {
                     if (e.key !== 'Enter') return;
@@ -1785,8 +1720,7 @@
                 };
             }
 
-            // ── 引擎列表拖拽排序 ──────────────────────────────────────────────
-            const list = panel.querySelector('.n-list');
+                const list = panel.querySelector('.n-list');
             if (!list) return;
             let draggingEngine = null;
 
@@ -1879,7 +1813,6 @@
             }
         }
 
-        // 监听设置变化，更新迷你模式
         EventBus.on('settings:changed', updateMiniMode);
 
         function observePanelChanges() {
@@ -1895,8 +1828,7 @@
                 panel.querySelector('#n-sub')?.classList.remove('show');
                 wrapper.classList.remove('active', 'pinned');
                 toolbar.classList.remove('focused', 'pinned');
-                // 收起输入框（无内容时）
-                const ic = toolbar.querySelector('.input-container');
+                        const ic = toolbar.querySelector('.input-container');
                 const inp = toolbar.querySelector('.search-input');
                 if (ic && !inp?.value?.trim()) ic.classList.remove('expanded');
                 updateMiniMode();
