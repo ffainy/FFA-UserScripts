@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.0.2
+// @version      3.1.0
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -113,6 +113,13 @@
         hintIconFmt1:        { en: 'Format — Base64 data URI:',      zh: '格式 — Base64 data URI：' },
         hintIconEx1:         { en: 'data:image/svg+xml;base64,PHN2Zy4uLg==', zh: 'data:image/svg+xml;base64,PHN2Zy4uLg==' },
         hintIconErr:         { en: 'Invalid format. Must start with data:image/', zh: '格式错误，必须以 data:image/ 开头。' },
+        cardBlacklist:       { en: 'Blocklist',                                   zh: '黑名单'                           },
+        labelBlacklistHint:  { en: 'Omnibar is hidden on these domains.',         zh: '以下域名上不显示搜索栏。'           },
+        labelBlacklistInput: { en: 'e.g. github.com',                             zh: '例如 github.com'                  },
+        btnAddDomain:        { en: 'Add',                                         zh: '添加'                             },
+        btnAddCurrent:       { en: '+ Add current site',                          zh: '+ 添加当前网站'                   },
+        blacklistEmpty:      { en: 'No sites blocked.',                           zh: '暂无屏蔽站点。'                   },
+        blacklistDuplicate:  { en: 'Already in blocklist.',                       zh: '该域名已在黑名单中。'              },
     };
 
     /** 全局默认设置 */
@@ -129,6 +136,7 @@
         searchBehavior: {
             openInNewTab: true,  // 搜索时是否在新标签页打开
         },
+        bl: [],           // 黑名单域名列表
         en: DEFAULT_ENGINES,
         ...THEMES.cyber,
     };
@@ -338,6 +346,7 @@
             const saved = GM_getValue(STORAGE_KEY, {});
             this._s = { ...DEFAULT_SETTINGS, ...saved };
             this._s.en = this._mergeEngines(saved);
+            if (!Array.isArray(this._s.bl)) this._s.bl = [];
             return this._s;
         },
 
@@ -380,6 +389,22 @@
             this.save();
             EventBus.emit('settings:engines:changed');
             return true;
+        },
+
+        addToBlacklist(domain) {
+            const d = domain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0];
+            if (!d) return false;
+            if (!this._s.bl) this._s.bl = [];
+            if (this._s.bl.includes(d)) return 'duplicate';
+            this._s.bl.push(d);
+            this.save();
+            return true;
+        },
+
+        removeFromBlacklist(domain) {
+            if (!this._s.bl) return;
+            this._s.bl = this._s.bl.filter(d => d !== domain);
+            this.save();
         },
 
         exportJSON() { return JSON.stringify(this._s, null, 2); },
@@ -854,6 +879,18 @@
         300
     );
 
+    function isBlacklisted(list) {
+        if (!list || !list.length) return false;
+        const host = window.location.hostname.toLowerCase();
+        return list.some(entry => {
+            const e = String(entry).trim().toLowerCase();
+            if (!e) return false;
+            if (host === e) return true;
+            if (host.endsWith('.' + e)) return true;
+            return false;
+        });
+    }
+
     function init() {
         if (window.ffaOmnibarInitialized) return;
         window.ffaOmnibarInitialized = true;
@@ -863,6 +900,14 @@
         }
 
         SettingsManager.load();
+
+        // ── 黑名单检查：命中则直接退出，不渲染任何 UI ──────────────────────
+        if (isBlacklisted(SettingsManager.current.bl)) {
+            window.ffaOmnibarInitialized = false; // 允许设置变更后重新初始化
+            return;
+        }
+        // ──────────────────────────────────────────────────────────────────
+
         StyleEngine.init();
         SuggestModule.initAccessibility();
 
@@ -1240,6 +1285,33 @@
                     </div>
 
                     <div class="neo-card">
+                        <span class="neo-card-title">${t('cardBlacklist')}</span>
+                        <div class="neo-field-hint" style="margin-top:0;margin-bottom:14px">${t('labelBlacklistHint')}</div>
+                        <div id="bl-list">
+                            ${(!s.bl || s.bl.length === 0)
+                                ? `<div style="opacity:0.4;font-size:12px;padding:6px 4px;font-style:italic">${t('blacklistEmpty')}</div>`
+                                : s.bl.map(d => `
+                                    <div class="neo-engine-row" style="padding:9px 12px;margin-bottom:8px;cursor:default">
+                                        <div style="flex:1;font-size:12px;font-family:monospace;letter-spacing:0.3px;color:var(--ntm)">${SecurityUtils.escapeHtml(d)}</div>
+                                        <div data-action="remove-blacklist" data-domain="${escAttr(d)}" title="Remove" style="color:#ff6b6b;cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;transition:0.2s;line-height:1">✕</div>
+                                    </div>`).join('')
+                            }
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:12px;align-items:stretch">
+                            <input type="text" id="bl-input" class="neo-edit-input"
+                                placeholder="${escAttr(t('labelBlacklistInput'))}"
+                                style="flex:1;margin-bottom:0">
+                            <button data-action="add-blacklist" class="neo-btn-ghost"
+                                style="flex-shrink:0;padding:10px 16px;white-space:nowrap">${t('btnAddDomain')}</button>
+                        </div>
+                        <div id="bl-feedback" style="font-size:11px;color:#ff6b6b;min-height:16px;margin-top:4px;padding-left:2px;display:none"></div>
+                        <button data-action="add-current-site" class="neo-btn-ghost"
+                            style="width:100%;margin-top:10px;opacity:0.7;font-size:11px">
+                            ${t('btnAddCurrent')} — ${SecurityUtils.escapeHtml(window.location.hostname)}
+                        </button>
+                    </div>
+
+                    <div class="neo-card">
                         <span class="neo-card-title">${t('cardData')}</span>
                         <div style="display:flex;gap:10px">
                             <button data-action="export" class="neo-btn-ghost" style="flex:1">
@@ -1459,6 +1531,35 @@
                     break;
                 }
 
+                case 'remove-blacklist': {
+                    SettingsManager.removeFromBlacklist(el.dataset.domain);
+                    renderPanel();
+                    break;
+                }
+
+                case 'add-blacklist': {
+                    const blInput = panel.querySelector('#bl-input');
+                    const blFeedback = panel.querySelector('#bl-feedback');
+                    const val = blInput?.value?.trim();
+                    if (!val) break;
+                    const result = SettingsManager.addToBlacklist(val);
+                    if (result === 'duplicate') {
+                        if (blFeedback) { blFeedback.textContent = t('blacklistDuplicate'); blFeedback.style.display = 'block'; }
+                        setTimeout(() => { if (blFeedback) blFeedback.style.display = 'none'; }, 2000);
+                    } else {
+                        if (blInput) blInput.value = '';
+                        if (blFeedback) blFeedback.style.display = 'none';
+                        renderPanel();
+                    }
+                    break;
+                }
+
+                case 'add-current-site': {
+                    const result = SettingsManager.addToBlacklist(window.location.hostname);
+                    if (result !== 'duplicate') renderPanel();
+                    break;
+                }
+
                 case 'export': {
                     const blob = new Blob([SettingsManager.exportJSON()], { type: 'application/json' });
                     const a = document.createElement('a');
@@ -1557,6 +1658,26 @@
                     };
                     reader.readAsText(file);
                     importInput.value = '';
+                };
+            }
+
+            // ── 黑名单输入框 Enter 键支持 ─────────────────────────────────────
+            const blInput = panel.querySelector('#bl-input');
+            if (blInput) {
+                blInput.onkeydown = e => {
+                    if (e.key !== 'Enter') return;
+                    const val = blInput.value.trim();
+                    if (!val) return;
+                    const blFeedback = panel.querySelector('#bl-feedback');
+                    const result = SettingsManager.addToBlacklist(val);
+                    if (result === 'duplicate') {
+                        if (blFeedback) { blFeedback.textContent = t('blacklistDuplicate'); blFeedback.style.display = 'block'; }
+                        setTimeout(() => { if (blFeedback) blFeedback.style.display = 'none'; }, 2000);
+                    } else {
+                        blInput.value = '';
+                        if (blFeedback) blFeedback.style.display = 'none';
+                        renderPanel();
+                    }
                 };
             }
 
