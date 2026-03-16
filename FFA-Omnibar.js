@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.1.0
+// @version      3.2.0
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -32,11 +32,11 @@
     const DEFAULT_ENGINES = [
         { name: 'Google',    url: 'https://www.google.com/search?q=%s',                host: 'www.google.com',         enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133c-1.147 1.147-2.933 2.4-6.053 2.4c-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0C5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36c2.16-2.16 2.84-5.213 2.84-7.667c0-.76-.053-1.467-.173-2.053z"/></svg>' },
         { name: 'DuckDuckGo',url: 'https://duckduckgo.com/?q=%s',                      host: 'duckduckgo.com',         enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12s12-5.37 12-12S18.63 0 12 0m0 .984C18.083.984 23.016 5.916 23.016 12S18.084 23.016 12 23.016S.984 18.084.984 12S5.916.984 12 .984m0 .938C6.434 1.922 1.922 6.434 1.922 12c0 4.437 2.867 8.205 6.85 9.55c-.237-.82-.776-2.753-1.6-6.052c-1.184-4.741-2.064-8.606 2.379-9.813c.047-.011.064-.064.03-.093c-.514-.467-1.382-.548-2.233-.38a.06.06 0 0 1-.07-.058c0-.011 0-.023.011-.035c.205-.286.572-.507.822-.64a1.8 1.8 0 0 0-.607-.335c-.059-.022-.059-.12-.006-.144q.008-.01.024-.012c1.749-.233 3.586.292 4.49 1.448a.1.1 0 0 0 .035.023c2.968.635 3.509 4.837 3.328 5.998a9.6 9.6 0 0 0 2.346-.576c.746-.286 1.008-.222 1.101-.053c.1.193-.018.513-.28.81c-.496.567-1.393 1.01-2.974 1.137c-.546.044-1.029.024-1.445.006c-.789-.035-1.339-.059-1.633.39c-.192.298-.041.998 1.487 1.22c1.09.157 2.078.047 2.798-.034c.643-.07 1.073-.118 1.172.069c.21.402-.996 1.207-3.066 1.224q-.238-.002-.467-.011c-1.283-.065-2.227-.414-2.816-.735a.1.1 0 0 1-.035-.017c-.105-.059-.31.045-.188.267c.07.134.444.478 1.004.776c-.058.466.087 1.184.338 2l.088-.016q.063-.015.134-.025c.507-.082.775.012.926.175c.717-.536 1.913-1.294 2.03-1.154c.583.694.66 2.332.53 2.99q-.006.018-.04.035c-.274.117-1.783-.296-1.783-.511c-.059-1.075-.26-1.173-.493-1.225h-.156a.1.1 0 0 1 .018.03l.052.12c.093.257.24 1.063.13 1.26c-.112.199-.835.297-1.284.303c-.443.006-.543-.158-.637-.408c-.07-.204-.103-.675-.103-.95a1 1 0 0 1 .012-.216c-.134.058-.333.193-.397.281c-.017.262-.017.682.123 1.149c.07.221-1.518 1.164-1.74.99c-.227-.181-.634-1.952-.459-2.67c-.187.017-.338.075-.42.191c-.367.508.093 2.933.582 3.248c.257.169 1.54-.553 2.176-1.095c.105.145.305.158.553.158c.326-.012.782-.06 1.103-.158c.192.45.423.972.613 1.388c4.47-1.032 7.803-5.037 7.803-9.82c0-5.566-4.512-10.078-10.078-10.078m1.791 5.646c-.42 0-.678.146-.795.332c-.023.047.047.094.094.07c.14-.075.357-.161.701-.156c.328.006.516.09.67.159l.023.01c.041.017.088-.03.059-.065c-.134-.18-.332-.35-.752-.35m-5.078.198a1.2 1.2 0 0 0-.522.082c-.454.169-.67.526-.67.76c0 .051.112.057.141.011c.081-.123.21-.31.617-.478c.408-.17.73-.146.951-.094c.047.012.083-.041.041-.07a1 1 0 0 0-.558-.211m5.434 1.423a.65.65 0 0 0-.655.647a.652.652 0 0 0 1.307 0a.646.646 0 0 0-.652-.647m.283.262h.008a.17.17 0 0 1 .17.17c0 .093-.077.17-.17.17a.17.17 0 0 1-.17-.17c0-.09.072-.165.162-.17m-5.358.076a.75.75 0 0 0-.758.758c0 .42.338.758.758.758s.758-.337.758-.758a.756.756 0 0 0-.758-.758m.328.303h.01a.199.199 0 1 1 0 .397a.195.195 0 0 1-.197-.198c0-.107.082-.194.187-.199"/></svg>' },
-        { name: 'Bing',      url: 'https://www.bing.com/search?q=%s',                  host: 'bing.com',               enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M5 3v16l3.72 2L18 15.82v-4.09L9.77 8.95l1.61 3.89L13.94 14L8.7 16.92V4.27z"/></svg>' },
+        { name: 'Bing',      url: 'https://www.bing.com/search?q=%s',                  host: 'bing.com',               enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-4 -2 24 24"><path fill="currentColor" d="M15.973 8.57a.48.48 0 0 0-.317-.434L6.273 5.23c-.175-.054-.255.039-.178.206L7.84 9.269c.077.168.276.367.442.443l2.394 1.096c.166.076.17.209.008.295L.47 16.535c-.161.086-.182.056-.046-.067l3.924-3.534a.86.86 0 0 0 .248-.558L4.6 1.664a.48.48 0 0 0-.318-.435L.355.014C.18-.04.037.067.037.252v16.25c0 .185.122.423.272.529l3.99 2.827c.15.106.4.115.557.02l10.832-6.523a.66.66 0 0 0 .286-.507V8.57z"/></svg>' },
         { name: 'Baidu',     url: 'https://www.baidu.com/s?wd=%s',                     host: 'www.baidu.com',          enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9.154 0C7.71 0 6.54 1.658 6.54 3.707c0 2.051 1.171 3.71 2.615 3.71c1.446 0 2.614-1.659 2.614-3.71C11.768 1.658 10.6 0 9.154 0m7.025.594C14.86.58 13.347 2.589 13.2 3.927c-.187 1.745.25 3.487 2.179 3.735c1.933.25 3.175-1.806 3.422-3.364c.252-1.555-.995-3.364-2.362-3.674a1.2 1.2 0 0 0-.261-.03zM3.582 5.535a3 3 0 0 0-.156.008c-2.118.19-2.428 3.24-2.428 3.24c-.287 1.41.686 4.425 3.297 3.864c2.617-.561 2.262-3.68 2.183-4.362c-.125-1.018-1.292-2.773-2.896-2.75m16.534 1.753c-2.308 0-2.617 2.119-2.617 3.616c0 1.43.121 3.425 2.988 3.362s2.553-3.238 2.553-3.988c0-.745-.62-2.99-2.924-2.99m-8.264 2.478c-1.424.014-2.708.925-3.323 1.947c-1.118 1.868-2.863 3.05-3.112 3.363c-.25.309-3.61 2.116-2.864 5.42c.746 3.301 3.365 3.237 3.365 3.237s1.93.19 4.171-.31c2.24-.495 4.17.123 4.17.123s5.233 1.748 6.665-1.616c1.43-3.364-.808-5.109-.808-5.109s-2.99-2.306-4.736-4.798c-1.072-1.665-2.348-2.268-3.528-2.257m-2.234 3.84l1.542.024v8.197H7.758c-1.47-.291-2.055-1.292-2.13-1.462c-.072-.173-.488-.976-.268-2.343c.635-2.049 2.447-2.196 2.447-2.196h1.81zm3.964 2.39v3.881c.096.413.612.488.612.488h1.614v-4.343h1.689v5.782h-3.915c-1.517-.39-1.59-1.465-1.59-1.465v-4.317zm-5.458 1.147c-.66.197-.978.708-1.05.928c-.076.22-.247.78-.1 1.269c.294 1.095 1.248 1.144 1.248 1.144h1.37v-3.34z"/></svg>' },
-        { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?search=%s',    host: 'en.wikipedia.org',       enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12.09 13.119c-.936 1.932-2.217 4.548-2.853 5.728c-.616 1.074-1.127.931-1.532.029c-1.406-3.321-4.293-9.144-5.651-12.409c-.251-.601-.441-.987-.619-1.139q-.27-.225-1.122-.271q-.314-.034-.313-.159v-.455l.052-.045c.924-.005 5.401 0 5.401 0l.051.045v.434q0 .177-.225.176l-.564.031c-.485.029-.727.164-.727.436c0 .135.053.33.166.601c1.082 2.646 4.818 10.521 4.818 10.521l.136.046l2.411-4.81l-.482-1.067l-1.658-3.264s-.318-.654-.428-.872c-.728-1.443-.712-1.518-1.447-1.617c-.207-.023-.313-.05-.313-.149v-.468l.06-.045h4.292l.113.037v.451c0 .105-.076.15-.227.15l-.308.047c-.792.061-.661.381-.136 1.422l1.582 3.252l1.758-3.504c.293-.64.233-.801.111-.947c-.07-.084-.305-.22-.812-.24l-.201-.021a.23.23 0 0 1-.145-.051a.15.15 0 0 1-.067-.129v-.427l.061-.045c1.247-.008 4.043 0 4.043 0l.059.045v.436c0 .121-.059.178-.193.178c-.646.03-.782.095-1.023.439c-.12.186-.375.589-.646 1.039l-2.301 4.273l-.065.135l2.792 5.712l.17.048l4.396-10.438c.154-.422.129-.722-.064-.895c-.197-.172-.346-.273-.857-.295l-.42-.016a.26.26 0 0 1-.152-.045c-.043-.029-.072-.075-.072-.119v-.436l.059-.045h4.961l.041.045v.437c0 .119-.074.18-.209.18c-.648.03-1.127.18-1.443.421c-.314.255-.557.616-.736 1.067c0 0-4.043 9.258-5.426 12.339c-.525 1.007-1.053.917-1.503-.031c-.571-1.171-1.773-3.786-2.646-5.71z"/></svg>' },
+        { name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?search=%s',    host: 'en.wikipedia.org',       enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 4.984h2m3 0h2.5m4 0H17m5 0h-2m-16 0L9.455 19.5L16 4.984"/><path d="M9 4.984L15 19.5l6-14.516"/></g></svg>' },
         { name: 'GitHub',    url: 'https://github.com/search?q=%s',                    host: 'github.com',             enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>' },
-        { name: 'Twitter',   url: 'https://twitter.com/search?q=%s',                   host: 'twitter.com',            enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg>' },
+        { name: 'X',         url: 'https://x.com/search?q=%s',                         host: 'x.com',                  enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="m17.687 3.063l-4.996 5.711l-4.32-5.711H2.112l7.477 9.776l-7.086 8.099h3.034l5.469-6.25l4.78 6.25h6.102l-7.794-10.304l6.625-7.571zm-1.064 16.06L5.654 4.782h1.803l10.846 14.34z"/></svg>' },
         { name: 'YouTube',   url: 'https://www.youtube.com/results?search_query=%s',   host: 'www.youtube.com',        enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg>' },
         { name: 'Bilibili',  url: 'https://search.bilibili.com/all?keyword=%s',        host: 'search.bilibili.com',    enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.813 4.653h.854q2.266.08 3.773 1.574Q23.946 7.72 24 9.987v7.36q-.054 2.266-1.56 3.773c-1.506 1.507-2.262 1.524-3.773 1.56H5.333q-2.266-.054-3.773-1.56C.053 19.614.036 18.858 0 17.347v-7.36q.054-2.267 1.56-3.76t3.773-1.574h.774l-1.174-1.12a1.23 1.23 0 0 1-.373-.906q0-.534.373-.907l.027-.027q.4-.373.92-.373t.92.373L9.653 4.44q.107.106.187.213h4.267a.8.8 0 0 1 .16-.213l2.853-2.747q.4-.373.92-.373c.347 0 .662.151.929.4s.391.551.391.907q0 .532-.373.906zM5.333 7.24q-1.12.027-1.88.773q-.76.748-.786 1.894v7.52q.026 1.146.786 1.893t1.88.773h13.334q1.12-.026 1.88-.773t.786-1.893v-7.52q-.026-1.147-.786-1.894t-1.88-.773zM8 11.107q.56 0 .933.373q.375.374.4.96v1.173q-.025.586-.4.96q-.373.375-.933.374c-.56-.001-.684-.125-.933-.374q-.375-.373-.4-.96V12.44q0-.56.386-.947q.387-.386.947-.386m8 0q.56 0 .933.373q.375.374.4.96v1.173q-.025.586-.4.96q-.373.375-.933.374c-.56-.001-.684-.125-.933-.374q-.375-.373-.4-.96V12.44q.025-.586.4-.96q.373-.373.933-.373"/></svg>' },
         { name: 'Steam',     url: 'https://store.steampowered.com/search/?term=%s',    host: 'store.steampowered.com', enabled: true,  icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658a3.4 3.4 0 0 1 1.912-.59q.094.001.188.006l2.861-4.142V8.91a4.53 4.53 0 0 1 4.524-4.524c2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911l.004.159a3.39 3.39 0 0 1-3.39 3.396a3.41 3.41 0 0 1-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0M7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25a2.551 2.551 0 0 0 3.337-3.324a2.547 2.547 0 0 0-3.255-1.413l1.523.63a1.878 1.878 0 0 1-1.445 3.467zm11.415-9.303a3.02 3.02 0 0 0-3.015-3.015a3.015 3.015 0 1 0 3.015 3.015m-5.273-.005a2.264 2.264 0 1 1 4.531 0a2.267 2.267 0 0 1-2.266 2.265a2.264 2.264 0 0 1-2.265-2.265"/></svg>' },
@@ -114,12 +114,19 @@
         hintIconEx1:         { en: 'data:image/svg+xml;base64,PHN2Zy4uLg==', zh: 'data:image/svg+xml;base64,PHN2Zy4uLg==' },
         hintIconErr:         { en: 'Invalid format. Must start with data:image/', zh: '格式错误，必须以 data:image/ 开头。' },
         cardBlacklist:       { en: 'Blocklist',                                   zh: '黑名单'                           },
-        labelBlacklistHint:  { en: 'Omnibar is hidden on these domains.',         zh: '以下域名上不显示搜索栏。'           },
-        labelBlacklistInput: { en: 'e.g. github.com',                             zh: '例如 github.com'                  },
+        labelBlacklistHint:  { en: 'Omnibar is hidden on exact matching domains. Add each domain separately — <code>example.com</code> and <code>www.example.com</code> are treated as different entries.', zh: '以下域名上不显示搜索栏，精确匹配。<code>example.com</code> 和 <code>www.example.com</code> 视为不同条目，需分别添加。' },
+        labelBlacklistInput: { en: 'e.g. google.com',                             zh: '例如 google.com'                  },
         btnAddDomain:        { en: 'Add',                                         zh: '添加'                             },
         btnAddCurrent:       { en: '+ Add current site',                          zh: '+ 添加当前网站'                   },
         blacklistEmpty:      { en: 'No sites blocked.',                           zh: '暂无屏蔽站点。'                   },
         blacklistDuplicate:  { en: 'Already in blocklist.',                       zh: '该域名已在黑名单中。'              },
+        tabGeneral:          { en: 'General',                                     zh: '通用'                             },
+        tabAppearance:       { en: 'Appearance',                                  zh: '外观'                             },
+        tabEngines:          { en: 'Engines',                                     zh: '引擎'                             },
+        tabBlocklist:        { en: 'Blocklist',                                   zh: '黑名单'                           },
+        cardColors:          { en: 'Colors & Font',                               zh: '颜色与字体'                        },
+        cardLayout:          { en: 'Size & Shape',                                zh: '尺寸与形状'                        },
+        cardOpacity:         { en: 'Opacity & Blur',                              zh: '透明度与模糊'                      },
     };
 
     /** 全局默认设置 */
@@ -140,6 +147,8 @@
         en: DEFAULT_ENGINES,
         ...THEMES.cyber,
     };
+
+    let _activeTab = 'general'; // 当前激活的设置 tab，内存状态不持久化
 
     const EventBus = {
         _h: new Map(),
@@ -275,12 +284,12 @@
     function updateIconPreview(raw, el) {
         if (!el) return;
         if (!raw?.trim()) {
-            el.innerHTML = '<span style="font-size:10px;opacity:0.4">—</span>';
+            el.innerHTML = '<span style="font-size:var(--nfs-xs);opacity:0.4">—</span>';
             return;
         }
         const result = SecurityUtils.validateIcon(raw);
         if (!result.valid) {
-            el.innerHTML = '<span style="font-size:16px">✕</span>';
+            el.innerHTML = '<span style="font-size:var(--nfs-md)">✕</span>';
             return;
         }
         el.innerHTML = '';
@@ -308,6 +317,15 @@
             `--nr:${s.r}px;` +
             `--ni:${s.ir}px;` +
             `--nfs:${s.fs}px;` +
+            `--ts-na-sm:0 0 6px ${hexToRgba(s.a, 0.55)};` +
+            `--ts-na-md:0 0 8px ${hexToRgba(s.a, 0.7)},0 0 20px ${hexToRgba(s.a, 0.35)};` +
+            `--ts-na-lg:0 0 10px ${hexToRgba(s.a, 0.9)},0 0 25px ${hexToRgba(s.a, 0.55)},0 0 50px ${hexToRgba(s.a, 0.25)};` +
+            `--ts-noa:0 0 6px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.35)};` +
+            `--ts-ntm:0 0 5px ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'};` +
+            `--nfs-xs:${Math.max(s.fs - 3, 9)}px;` +
+            `--nfs-sm:${Math.max(s.fs - 2, 9)}px;` +
+            `--nfs-md:${s.fs + 2}px;` +
+            `--nfs-lg:${s.fs + 6}px;` +
             `--nbp:${hexToRgba(s.b, s.pa / 100)};` +
             `--nbs:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` +
             `--nbt:${hexToRgba(s.b, s.ta / 100)};` +
@@ -445,7 +463,7 @@
         /* 面板主体 */
         `.neo-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);width:520px;min-height:40vh;max-height:70vh;border-radius:var(--nr);padding:30px 0;z-index:2147483645;visibility:hidden;opacity:0;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:0.5s var(--sp);background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ngp);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
         `.neo-panel.show{visibility:visible;opacity:1;transform:translate(-50%,-50%) scale(1)}`,
-        `.neo-panel *{font-family:var(--nf) !important;color:inherit;box-sizing:border-box}`,
+        `.neo-panel *{font-family:var(--nf) !important;color:inherit;box-sizing:border-box;text-shadow:none}`,
         `.neo-panel a,.neo-panel a:visited,.neo-panel a:hover{color:inherit;text-decoration:none}`,
         /* 滚动区 */
         `.neo-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 28px}`,
@@ -455,7 +473,7 @@
         `.neo-scroll::-webkit-scrollbar-thumb:hover{background:var(--na)}`,
         `.neo-scroll{scrollbar-width:thin;scrollbar-color:var(--nag) transparent}`,
         /* 引擎行 */
-        `.neo-engine-host{font-size:10px;color:var(--ntd) !important}`,
+        `.neo-engine-host{font-size:var(--nfs-xs);color:var(--ntd) !important}`,
         `.neo-engine-row{display:flex;align-items:center;gap:15px;padding:12px 15px;background:var(--nib);border-radius:var(--ni);border:1px solid var(--nbd);margin-bottom:12px;cursor:grab;transition:0.25s var(--sp);position:relative}`,
         `.neo-engine-row:hover{border-color:var(--na);background:var(--nag);transform:translateY(-3px);box-shadow:0 6px 20px var(--nag),0 0 10px var(--nag)}`,
         `.neo-engine-row.dragging{opacity:0.5;border-color:var(--na);background:var(--na);color:var(--noa);cursor:grabbing;box-shadow:0 10px 40px var(--nag),0 0 20px var(--nag);transform:scale(1.02) rotate(2deg);transition:0.15s var(--sp)}`,
@@ -467,10 +485,10 @@
         `.neo-switch.on::after{left:24px;background:var(--noa)}`,
         /* 卡片 */
         `.neo-card{background:var(--nbp);backdrop-filter:blur(15px);border-radius:min(calc(var(--nr) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--nbd);box-shadow:0 10px 30px rgba(0,0,0,0.05);box-sizing:border-box}`,
-        `.neo-card-title{font-size:13px;font-weight:900;letter-spacing:1px;color:var(--na);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:0 0 12px var(--na)}`,
+        `.neo-card-title{font-size:var(--nfs-md);font-weight:900;letter-spacing:1px;color:var(--na);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ts-na-md) !important}`,
         /* 标签行 */
-        `.neo-label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ntm);margin-bottom:8px;font-weight:600;transform:translateZ(0)}`,
-        `.neo-label b{font-weight:400;color:var(--ntd);font-size:11px;background:var(--nib);padding:2px 8px;border-radius:10px}`,
+        `.neo-label{display:flex;justify-content:space-between;align-items:center;font-size:var(--nfs-sm);color:var(--ntm);margin-bottom:8px;font-weight:600;transform:translateZ(0)}`,
+        `.neo-label b{font-weight:400;color:var(--ntd);font-size:var(--nfs-xs);background:var(--nib);padding:2px 8px;border-radius:10px}`,
         /* range 滑块 */
         `input[type=range]{width:100%;cursor:pointer;margin:12px 0;height:18px;background:transparent;outline:none;border:none;padding:0;-webkit-appearance:none;appearance:none;font-family:var(--nf)}`,
         `input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--nbd);border-radius:2px}`,
@@ -482,11 +500,11 @@
         /* 底部按钮区 */
         `.neo-footer{padding:20px 28px;display:flex;gap:15px;border-top:1px solid var(--nbd)}`,
         `.neo-btn-main{padding:14px;background:var(--na);color:var(--noa);border:none;border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;box-shadow:0 4px 15px var(--nag);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.neo-btn-main:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);text-shadow:0 0 10px var(--noa),0 0 25px var(--noa)}`,
-        `.neo-btn-ghost{padding:14px;background:var(--nib);color:var(--ntm);border:1px solid var(--nbd);border-radius:var(--ni);font-size:11px;font-weight:600;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.neo-btn-ghost:hover{background:var(--nag);border-color:var(--na);transform:translateY(-3px);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);color:var(--ntm);text-shadow:0 0 8px var(--na)}`,
+        `.neo-btn-main:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);text-shadow:var(--ts-noa) !important}`,
+        `.neo-btn-ghost{padding:14px;background:var(--nib);color:var(--ntm);border:1px solid var(--nbd);border-radius:var(--ni);font-size:var(--nfs-sm);font-weight:600;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
+        `.neo-btn-ghost:hover{background:var(--nag);border-color:var(--na);transform:translateY(-3px);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);color:var(--ntm);text-shadow:var(--ts-na-sm) !important}`,
         `.neo-btn-danger{padding:14px;background:var(--nib);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.neo-btn-danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 8px rgba(255,71,87,0.8)}`,
+        `.neo-btn-danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5) !important}`,
         /* 编辑引擎子面板 */
         `.neo-sub-panel{position:absolute;inset:0;background:var(--nbs);backdrop-filter:var(--ngp);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--sp);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--nbd)}`,
         `.neo-sub-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:30px;box-sizing:border-box}`,
@@ -499,22 +517,23 @@
         `.neo-edit-input{width:100%;padding:14px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--nf)}`,
         `.neo-edit-input:focus{border-color:var(--na);background:var(--nbp);box-shadow:0 0 12px var(--nag)}`,
         /* 主题切换按钮 */
-        `.neo-theme-btn{flex:1;padding:12px 5px;font-size:11px;border-radius:var(--ni);cursor:pointer;border:1px solid var(--nbd);background:var(--nib);color:var(--ntm);font-weight:bold;transition:0.25s var(--sp);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.neo-theme-btn:hover{background:var(--nag);border-color:var(--na);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);text-shadow:0 0 10px var(--na),0 0 20px var(--na)}`,
-        `.neo-theme-btn.active{border-color:var(--na);background:var(--na);color:var(--noa);text-shadow:0 0 6px var(--noa),0 0 16px var(--noa)}`,
+        `.neo-theme-btn{flex:1;padding:12px 5px;font-size:var(--nfs-sm);border-radius:var(--ni);cursor:pointer;border:1px solid var(--nbd);background:var(--nib);color:var(--ntm);font-weight:bold;transition:0.25s var(--sp);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
+        `.neo-theme-btn:hover{background:var(--nag);border-color:var(--na);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);text-shadow:var(--ts-na-sm) !important}`,
+        `.neo-theme-btn.active{border-color:var(--na);background:var(--na);color:var(--noa);text-shadow:var(--ts-noa) !important}`,
         /* 字段说明 */
-        `.neo-field-hint{font-size:11px;color:var(--ntd);margin:4px 0 12px;line-height:1.6}`,
-        `.neo-field-ex{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--nib);border:1px solid var(--nbd);border-radius:8px;font-size:11px;font-family:monospace;color:var(--na);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--sp);user-select:none}`,
+        `.neo-field-hint{font-size:var(--nfs-xs);color:var(--ntd);margin:4px 0 12px;line-height:1.6}`,
+        `.neo-field-hint code{font-family:monospace;font-size:var(--nfs-xs);color:var(--na);background:var(--nib);padding:1px 5px;border-radius:4px;border:1px solid var(--nbd)}`,
+        `.neo-field-ex{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--nib);border:1px solid var(--nbd);border-radius:8px;font-size:var(--nfs-xs);font-family:monospace;color:var(--na);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--sp);user-select:none}`,
         `.neo-field-ex:hover{border-color:var(--na);background:var(--nag);box-shadow:0 0 8px var(--nag)}`,
-        `.neo-field-ex .ex-icon{font-size:10px;opacity:0.6}`,
-        `.neo-field-tip{font-size:10px;color:var(--ntd);margin-top:6px;padding-left:2px;opacity:0.8;font-style:italic}`,
+        `.neo-field-ex .ex-icon{font-size:var(--nfs-xs);opacity:0.6}`,
+        `.neo-field-tip{font-size:var(--nfs-xs);color:var(--ntd);margin-top:6px;padding-left:2px;opacity:0.8;font-style:italic}`,
         /* 图标行 */
         `.neo-icon-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
-        `.neo-icon-textarea{flex:1;height:48px;padding:10px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);outline:none;box-sizing:border-box;font-family:monospace;font-size:11px;resize:none;line-height:1.5}`,
+        `.neo-icon-textarea{flex:1;height:48px;padding:10px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);outline:none;box-sizing:border-box;font-family:monospace;font-size:var(--nfs-xs);resize:none;line-height:1.5}`,
         `.neo-icon-textarea:focus{border-color:var(--na);background:var(--nbp);box-shadow:0 0 12px var(--nag)}`,
-        `.neo-icon-preview{width:48px;height:48px;flex-shrink:0;border:1px solid var(--nbd);border-radius:var(--ni);display:flex;align-items:center;justify-content:center;background:var(--nib);color:var(--na);font-size:10px;overflow:hidden}`,
+        `.neo-icon-preview{width:48px;height:48px;flex-shrink:0;border:1px solid var(--nbd);border-radius:var(--ni);display:flex;align-items:center;justify-content:center;background:var(--nib);color:var(--na);font-size:var(--nfs-xs);overflow:hidden}`,
         `.neo-icon-preview svg,.neo-icon-preview img{width:24px;height:24px}`,
-        `.neo-icon-error{font-size:10px;color:#ff4757;margin-top:5px;display:none}`,
+        `.neo-icon-error{font-size:var(--nfs-xs);color:#ff4757;margin-top:5px;display:none}`,
         `.neo-icon-error.show{display:block}`,
         /* 色板 */
         `.neo-swatch-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}`,
@@ -532,6 +551,27 @@
         `.ffa-mini-icon.hidden{opacity:0;transform:translateX(-50%) translateY(25px) scale(0.7);pointer-events:none}`,
         `.ffa-mini-hitarea{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:64px;height:36px;z-index:2147483642;cursor:pointer;pointer-events:none}`,
         `.ffa-mini-hitarea.active{pointer-events:auto}`,
+        /* 侧边 tab 导航 */
+        `.neo-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;transition:0.5s var(--sp);display:inline-block}`,
+        `.neo-panel-shell.show{visibility:visible;opacity:1;transform:translate(-50%,-50%) scale(1)}`,
+        `.neo-tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:40px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--nbs);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:width 0.35s var(--sp);z-index:1}`,
+        `.neo-tab-nav:hover{width:160px}`,
+        
+
+        `.neo-tab-btn{height:40px;display:flex;align-items:center;gap:10px;padding:0 11px;cursor:pointer;flex-shrink:0;color:var(--ntd);border-radius:var(--nr);transition:background 0.2s var(--sp),color 0.2s var(--sp);position:relative;white-space:nowrap}`,
+        `.neo-tab-btn svg{width:18px;height:18px;flex-shrink:0;transition:color 0.2s var(--sp)}`,
+        `.neo-tab-btn-label{font-size:var(--nfs);font-weight:700;letter-spacing:0.5px;opacity:0;transition:opacity 0.08s linear}`,
+        `.neo-tab-nav:hover .neo-tab-btn-label{opacity:1;transition:opacity 0.15s var(--sp) 0.15s}`,
+        `.neo-tab-btn:not(.active):hover{background:var(--nag);color:var(--ntm)}`,
+        `.neo-tab-btn.active{background:var(--na);color:var(--noa);box-shadow:0 4px 14px var(--nag),0 0 8px var(--nag)}`,
+        `.neo-tab-btn.active .neo-tab-btn-label{color:var(--noa);text-shadow:var(--ts-noa) !important}`,
+        `.neo-tab-btn.active svg{color:var(--noa)}`,
+
+        `.neo-panel{position:relative;top:auto;left:auto;transform:none;width:520px;height:70vh;max-height:70vh;border-radius:var(--nr);padding:0;z-index:0;visibility:visible;opacity:1;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:none;background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ngp);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
+        `.neo-tab-content{display:none}`,
+        `@keyframes ffa-tab-fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`,
+        `.neo-tab-content.active{display:block;animation:ffa-tab-fadein 0.2s var(--sp) both}`,
+        `.neo-panel-title{text-align:center;font-weight:900;letter-spacing:4px;padding:26px 28px 20px;color:var(--na);font-size:var(--nfs-lg);text-shadow:var(--ts-na-lg) !important;border-bottom:1px solid var(--nbd);flex-shrink:0}`,
     ].join('');
 
     const TOOLBAR_CSS = [
@@ -542,15 +582,15 @@
         `.wrapper.mini-mode .toolbar{will-change:opacity,transform}`,
         `.toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--nbt);backdrop-filter:var(--ng);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:border-color 0.3s var(--sp),box-shadow 0.3s var(--sp),background 0.4s var(--sp)}`,
         `.toolbar.focused{background:var(--nbp);border-color:var(--na);box-shadow:var(--sd),0 0 0 1px var(--na),0 0 18px var(--nag)}`,
-        `.engine-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:36px;overflow:hidden;will-change:max-width,transform}`,
-        `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;width:16px;height:16px;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
-        `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
+        `.engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
+        `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:16px;height:16px;overflow:visible;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
+        `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;padding-left:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
         `.toolbar:hover .engine-btn:not(.active),.toolbar.pinned .engine-btn:not(.active){opacity:1}`,
-        `.engine-btn:hover{border-color:var(--na);background:var(--nag);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--nag),0 0 10px var(--nag);text-shadow:0 0 12px var(--na),0 0 25px var(--na);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
+        `.engine-btn:hover{border-color:var(--na);background:var(--nag);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--nag),0 0 10px var(--nag);text-shadow:var(--ts-na-sm) !important;max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
         `.engine-btn:hover .btn-icon{transform:scale(1.1)}`,
-        `.engine-btn:hover .btn-label{opacity:1;max-width:120px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
+        `.engine-btn:hover .btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
         `.engine-btn.active{border-color:var(--na);box-shadow:0 0 8px var(--nag),0 0 16px var(--nag);opacity:1 !important;max-width:160px;padding-right:10px}`,
-        `.engine-btn.active .btn-label{opacity:1;max-width:120px;transform:translateX(0)}`,
+        `.engine-btn.active .btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0)}`,
         `.engine-btn.active:hover{background:var(--nag);transform:translateY(-2px) scale(1.02)}`,
         `.input-container{position:relative;display:flex;align-items:center;transition:width 0.45s var(--sp),background 0.3s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp);width:34px;border-radius:var(--ni);border:1px solid transparent;box-sizing:border-box}`,
         `.input-container.expanded{width:236px;background:var(--nib);border-color:transparent;box-shadow:none;border-radius:var(--ni)}`,
@@ -566,16 +606,16 @@
         `@keyframes su{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
         `@keyframes si{from{opacity:0;transform:translateY(16px) scale(0.92)}to{opacity:1;transform:translateY(0) scale(1)}}`,
         `.suggest-item:nth-child(1){animation-delay:0ms}.suggest-item:nth-child(2){animation-delay:40ms}.suggest-item:nth-child(3){animation-delay:80ms}.suggest-item:nth-child(4){animation-delay:120ms}.suggest-item:nth-child(5){animation-delay:160ms}.suggest-item:nth-child(6){animation-delay:200ms}.suggest-item:nth-child(7){animation-delay:240ms}.suggest-item:nth-child(8){animation-delay:280ms}.suggest-item:nth-child(9){animation-delay:320ms}.suggest-item:nth-child(10){animation-delay:360ms}`,
-        `.suggest-item{padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--nib),var(--nbt));color:var(--ntm);border:1px solid var(--nbd);backdrop-filter:var(--ng);transition:0.25s var(--sp);font-family:var(--nf);transform:translateZ(0);opacity:0;animation:si 0.4s var(--sp) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
-        `.suggest-item:hover,.suggest-item.kb-focus{background:linear-gradient(135deg,var(--na),var(--na));color:var(--noa);border-color:var(--na);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);transform:translateY(-4px) scale(1.02);text-shadow:0 0 8px var(--noa),0 0 20px var(--noa)}`,
+        `.suggest-item{padding:10px 24px;font-size:var(--nfs-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--nib),var(--nbt));color:var(--ntm);border:1px solid var(--nbd);backdrop-filter:var(--ng);transition:0.25s var(--sp);font-family:var(--nf);transform:translateZ(0);opacity:0;animation:si 0.4s var(--sp) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
+        `.suggest-item:hover,.suggest-item.kb-focus{background:linear-gradient(135deg,var(--na),var(--na));color:var(--noa);border-color:var(--na);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);transform:translateY(-4px) scale(1.02);text-shadow:var(--ts-noa) !important}`,
         `.suggest-divider{width:100%;display:flex;align-items:center;gap:8px;padding:0 4px;opacity:0;animation:si 0.3s var(--sp) forwards}`,
         `.suggest-divider-line{flex:1;height:1px;background:rgba(255,255,255,0.25)}`,
-        `.suggest-divider-label{font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
-        `.history-item{padding:10px 20px 10px 16px;font-size:13px;font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--nib),var(--nbt));color:var(--ntd);border:1px solid var(--nbd);backdrop-filter:var(--ng);transition:0.25s var(--sp);font-family:var(--nf);transform:translateZ(0);opacity:0;animation:si 0.4s var(--sp) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
-        `.history-item:hover,.history-item.kb-focus{background:linear-gradient(135deg,var(--na),var(--na));color:var(--noa);border-color:var(--na);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);transform:translateY(-4px) scale(1.02);text-shadow:0 0 8px var(--noa),0 0 20px var(--noa)}`,
-        `.history-icon{font-size:12px;opacity:0.5;flex-shrink:0;transition:0.25s}`,
+        `.suggest-divider-label{font-size:var(--nfs-xs);font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
+        `.history-item{padding:10px 20px 10px 16px;font-size:var(--nfs-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--nib),var(--nbt));color:var(--ntd);border:1px solid var(--nbd);backdrop-filter:var(--ng);transition:0.25s var(--sp);font-family:var(--nf);transform:translateZ(0);opacity:0;animation:si 0.4s var(--sp) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
+        `.history-item:hover,.history-item.kb-focus{background:linear-gradient(135deg,var(--na),var(--na));color:var(--noa);border-color:var(--na);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);transform:translateY(-4px) scale(1.02);text-shadow:var(--ts-noa) !important}`,
+        `.history-icon{font-size:var(--nfs-sm);opacity:0.5;flex-shrink:0;transition:0.25s}`,
         `.history-item:hover .history-icon{opacity:1}`,
-        `.history-del{margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:10px;opacity:0;transition:0.2s var(--sp);flex-shrink:0;color:inherit}`,
+        `.history-del{margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:var(--nfs-xs);opacity:0;transition:0.2s var(--sp);flex-shrink:0;color:inherit}`,
         `.history-item:hover .history-del{opacity:0.6}`,
         `.history-del:hover{opacity:1 !important;background:rgba(255,71,87,0.25);color:#ff4757}`,
         `.settings-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ntm);transition:0.5s var(--sp);border-radius:50%;opacity:0.5}`,
@@ -885,9 +925,7 @@
         return list.some(entry => {
             const e = String(entry).trim().toLowerCase();
             if (!e) return false;
-            if (host === e) return true;
-            if (host.endsWith('.' + e)) return true;
-            return false;
+            return host === e;
         });
     }
 
@@ -912,10 +950,44 @@
         SuggestModule.initAccessibility();
 
         const mask  = document.createElement('div');
+        mask.className = 'neo-mask';
+
+        // ── 侧边 tab 导航 shell ──────────────────────────────────────────────
+        const shell = document.createElement('div');
+        shell.className = 'neo-panel-shell';
+
+        const tabNav = document.createElement('div');
+        tabNav.className = 'neo-tab-nav';
+
+        const TAB_DEFS = [
+            { key: 'general',    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M11 18.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75m-8-12a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 3 6.25m13 6a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75M8.75 16a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75"/><path fill="currentColor" d="M3 18.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75m0-6a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75M16.75 10a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75M14 6.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1-.75-.75M11.25 4a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75"/></svg>' },
+            { key: 'appearance', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M14.4 3.419a.639.639 0 0 1 1.2 0l.61 1.668a9.59 9.59 0 0 0 5.703 5.703l1.668.61a.639.639 0 0 1 0 1.2l-1.668.61a9.59 9.59 0 0 0-5.703 5.703l-.61 1.668a.639.639 0 0 1-1.2 0l-.61-1.668a9.59 9.59 0 0 0-5.703-5.703l-1.668-.61a.639.639 0 0 1 0-1.2l1.668-.61a9.59 9.59 0 0 0 5.703-5.703zM8 16.675a.266.266 0 0 1 .5 0l.254.694a4 4 0 0 0 2.376 2.377l.695.254a.266.266 0 0 1 0 .5l-.695.254a4 4 0 0 0-2.376 2.377l-.254.694a.266.266 0 0 1-.5 0l-.254-.694a4 4 0 0 0-2.376-2.377l-.695-.254a.266.266 0 0 1 0-.5l.695-.254a4 4 0 0 0 2.376-2.377zM4.2.21a.32.32 0 0 1 .6 0l.305.833a4.8 4.8 0 0 0 2.852 2.852l.833.305a.32.32 0 0 1 0 .6l-.833.305a4.8 4.8 0 0 0-2.852 2.852L4.8 8.79a.32.32 0 0 1-.6 0l-.305-.833a4.8 4.8 0 0 0-2.852-2.852L.21 4.8a.32.32 0 0 1 0-.6l.833-.305a4.8 4.8 0 0 0 2.852-2.852z"/></svg>' },
+            { key: 'engines',    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M20.322.75h1.176a1.75 1.75 0 0 1 1.75 1.749v1.177a10.75 10.75 0 0 1-2.925 7.374l-1.228 1.304a24 24 0 0 1-1.596 1.542v5.038c0 .615-.323 1.184-.85 1.5l-4.514 2.709a.75.75 0 0 1-1.12-.488l-.963-4.572a1.3 1.3 0 0 1-.14-.129L8.04 15.96l-1.994-1.873a1.3 1.3 0 0 1-.129-.14l-4.571-.963a.75.75 0 0 1-.49-1.12l2.71-4.514c.316-.527.885-.85 1.5-.85h5.037a24 24 0 0 1 1.542-1.594l1.304-1.23A10.75 10.75 0 0 1 20.321.75Zm-6.344 4.018v-.001l-1.304 1.23a22.3 22.3 0 0 0-3.255 3.851l-2.193 3.29l1.859 1.744l.034.034l1.743 1.858l3.288-2.192a22.3 22.3 0 0 0 3.854-3.257l1.228-1.303a9.25 9.25 0 0 0 2.517-6.346V2.5a.25.25 0 0 0-.25-.25h-1.177a9.25 9.25 0 0 0-6.344 2.518M6.5 21c-1.209 1.209-3.901 1.445-4.743 1.49a.24.24 0 0 1-.18-.067a.24.24 0 0 1-.067-.18c.045-.842.281-3.534 1.49-4.743c.9-.9 2.6-.9 3.5 0s.9 2.6 0 3.5m-.592-8.588L8.17 9.017q.346-.519.717-1.017H5.066a.25.25 0 0 0-.214.121l-2.167 3.612ZM16 15.112q-.5.372-1.018.718l-3.393 2.262l.678 3.223l3.612-2.167a.25.25 0 0 0 .121-.214ZM17.5 8a1.5 1.5 0 1 1-3.001-.001A1.5 1.5 0 0 1 17.5 8"/></svg>' },
+            { key: 'blocklist',  svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.28 7.72a.75.75 0 0 0-1.06 1.06l2.72 2.72l-2.72 2.72a.75.75 0 1 0 1.06 1.06L12 12.56l2.72 2.72a.75.75 0 1 0 1.06-1.06l-2.72-2.72l2.72-2.72a.75.75 0 0 0-1.06-1.06L12 10.44z"/><path fill="currentColor" d="m12.54.637l8.25 2.675A1.75 1.75 0 0 1 22 4.976V10c0 6.19-3.771 10.704-9.401 12.83a1.7 1.7 0 0 1-1.198 0C5.77 20.705 2 16.19 2 10V4.976c0-.758.489-1.43 1.21-1.664L11.46.637a1.75 1.75 0 0 1 1.08 0m-.617 1.426l-8.25 2.676a.25.25 0 0 0-.173.237V10c0 5.46 3.28 9.483 8.43 11.426a.2.2 0 0 0 .14 0C17.22 19.483 20.5 15.461 20.5 10V4.976a.25.25 0 0 0-.173-.237l-8.25-2.676a.25.25 0 0 0-.154 0"/></svg>' },
+        ];
+
+        TAB_DEFS.forEach(def => {
+            const btn = document.createElement('div');
+            btn.className = 'neo-tab-btn' + (_activeTab === def.key ? ' active' : '');
+            btn.dataset.tab = def.key;
+            const _lbl = t('tab' + def.key.charAt(0).toUpperCase() + def.key.slice(1));
+            btn.innerHTML = def.svg + `<span class="neo-tab-btn-label">${_lbl}</span>`;
+            btn.title = _lbl;
+            btn.onclick = () => {
+                _activeTab = def.key;
+                tabNav.querySelectorAll('.neo-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === def.key));
+                panel.querySelectorAll('.neo-tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === def.key));
+                // 更新 btn title（语言切换后重渲染时同步）
+            };
+            tabNav.append(btn);
+        });
+
         const panel = document.createElement('div');
-        mask.className  = 'neo-mask';
         panel.className = 'neo-panel';
-        document.body.append(mask, panel);
+
+        shell.append(tabNav, panel);
+        document.body.append(mask, shell);
+        // ────────────────────────────────────────────────────────────────────
 
         const host        = document.createElement('div');
         const shadowRoot  = host.attachShadow({ mode: 'open' });
@@ -937,7 +1009,7 @@
             if (!isItem) {
                 e.preventDefault(); // 阻止 input blur，由此处统一处理关闭逻辑
                 mask.classList.remove('show');
-                panel.classList.remove('show');
+                shell.classList.remove('show');
                 suggestBox.classList.remove('show');
                 suggestBox.innerHTML = '';
                 SuggestModule.clearNav();
@@ -980,7 +1052,7 @@
                 });
 
                 const inRect = (el, x, y) => { const r = el.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
-                const anyVisible = () => panel.classList.contains('show') || suggestBox.classList.contains('show');
+                const anyVisible = () => shell.classList.contains('show') || suggestBox.classList.contains('show');
                 let _miniMoveTimer = null;
                 document.addEventListener('mousemove', (e) => {
                     if (!wrapper.classList.contains('toolbar-visible') || anyVisible()) return;
@@ -1005,7 +1077,7 @@
                 const fresh = GM_getValue(STORAGE_KEY, null);
                 if (fresh) Object.assign(SettingsManager.current, fresh);
                 mask.classList.add('show');
-                panel.classList.add('show');
+                shell.classList.add('show');
                 wrapper.classList.add('pinned');
                 toolbar.classList.add('pinned');
                 renderPanel();
@@ -1114,7 +1186,7 @@
             // onblur 用 setTimeout 让 mask.onclick 先执行完再判断状态
             input.onblur = () => {
                 setTimeout(() => {
-                    if (!suggestBox.classList.contains('show') && !panel.classList.contains('show')) {
+                    if (!suggestBox.classList.contains('show') && !shell.classList.contains('show')) {
                         collapseInput();
                     }
                 }, 150);
@@ -1160,7 +1232,7 @@
                         <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ntm);opacity:0.8">${iconHtml}</div>
                         <div class="neo-switch ${eng.enabled ? 'on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
                         <div style="flex:1">
-                            <div style="font-size:13px;font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
+                            <div style="font-size:var(--nfs-md);font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
                             <div class="neo-engine-host">${SecurityUtils.escapeHtml(eng.host)}</div>
                         </div>
                         <div data-action="edit-engine" data-i="${i}" style="cursor:pointer">✎</div>
@@ -1174,156 +1246,175 @@
                 colors.map(c => `<div class="neo-swatch${currentVal===c?' selected':''}" data-action="swatch" data-color="${c}" data-target="${target}" style="background:${c}" title="${c}"></div>`).join('');
 
             panel.innerHTML = `
-                <div style="text-align:center;font-weight:900;letter-spacing:4px;margin-bottom:24px;color:var(--na);font-size:20px;text-shadow:0 0 10px var(--na),0 0 25px var(--na),0 0 50px var(--na)">
-                    ${t('panelTitle')}
-                </div>
-                <div class="neo-scroll">
+                <div class="neo-panel-title">${t('panelTitle')}</div>
+                <div class="neo-scroll" style="padding-top:20px">
 
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardLanguage')}</span>
-                        <div style="display:flex;gap:8px">
-                            <button class="neo-theme-btn ${s.lang==='en'?'active':''}" data-action="lang" data-lang="en">English</button>
-                            <button class="neo-theme-btn ${s.lang==='zh'?'active':''}" data-action="lang" data-lang="zh">中文</button>
+                    <div class="neo-tab-content${_activeTab==='general'?' active':''}" data-tab="general">
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardLanguage')}</span>
+                            <div style="display:flex;gap:8px">
+                                <button class="neo-theme-btn ${s.lang==='en'?'active':''}" data-action="lang" data-lang="en">English</button>
+                                <button class="neo-theme-btn ${s.lang==='zh'?'active':''}" data-action="lang" data-lang="zh">中文</button>
+                            </div>
                         </div>
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardInteraction')}</span>
+                            <div class="neo-label">
+                                <span>${t('labelMiniMode')}</span>
+                                <div class="neo-switch ${s.mm?'on':''}" data-action="toggle-mm"></div>
+                            </div>
+                            <div class="neo-field-hint">${t('hintMiniMode')}</div>
+                            <div class="neo-label" style="margin-top:16px">
+                                ${t('labelOffset')} <b>${s.bt}px</b>
+                            </div>
+                            <input type="range" id="s-bt" min="0" max="300" value="${s.bt}">
+                        </div>
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardSearch')}</span>
+                            <div class="neo-label">
+                                <span>${t('labelNewTab')}</span>
+                                <div class="neo-switch ${s.searchBehavior.openInNewTab?'on':''}" data-action="toggle-newtab"></div>
+                            </div>
+                            <div class="neo-field-hint">${t('hintNewTab')}</div>
+                        </div>
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardData')}</span>
+                            <div style="display:flex;gap:10px">
+                                <button data-action="export" class="neo-btn-ghost" style="flex:1">
+                                    ${t('btnExport')}
+                                </button>
+                                <label style="flex:1;display:block">
+                                    <span class="neo-btn-ghost" style="display:block;text-align:center">
+                                        ${t('btnImport')}
+                                    </span>
+                                    <input type="file" id="s-import" accept=".json" style="display:none">
+                                </label>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardTheme')}</span>
-                        <div style="display:flex;gap:8px">${themeButtons}</div>
-                    </div>
+                    <div class="neo-tab-content${_activeTab==='appearance'?' active':''}" data-tab="appearance">
 
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardVisual')}</span>
-                        <div style="display:flex;gap:20px">
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelOffset')} <b>${s.bt}px</b></div>
-                                <input type="range" id="s-bt" min="0" max="300" value="${s.bt}">
-                            </div>
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelFontSize')} <b>${s.fs}px</b></div>
-                                <input type="range" id="s-fs" min="10" max="24" value="${s.fs}">
-                            </div>
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardTheme')}</span>
+                            <div style="display:flex;gap:8px">${themeButtons}</div>
                         </div>
-                        <div style="display:flex;gap:20px;margin-top:20px">
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelPanelRadius')} <b>${s.r}px</b></div>
-                                <input type="range" id="s-r" min="0" max="60" value="${s.r}">
-                            </div>
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelWidgetRadius')} <b>${s.ir}px</b></div>
-                                <input type="range" id="s-ir" min="0" max="40" value="${s.ir}">
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:20px;margin-top:20px">
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelToolbarAlpha')} <b>${s.ta}%</b></div>
-                                <input type="range" id="s-ta" min="5" max="100" value="${s.ta}">
-                            </div>
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelPanelAlpha')} <b>${s.pa}%</b></div>
-                                <input type="range" id="s-pa" min="5" max="100" value="${s.pa}">
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:20px;margin-top:20px">
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelToolbarBlur')} <b>${s.tb}px</b></div>
-                                <input type="range" id="s-tb" min="0" max="80" value="${s.tb}">
-                            </div>
-                            <div style="flex:1">
-                                <div class="neo-label">${t('labelPanelBlur')} <b>${s.pb}px</b></div>
-                                <input type="range" id="s-pb" min="0" max="80" value="${s.pb}">
-                            </div>
-                        </div>
-                        <div style="margin-top:20px">
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardColors')}</span>
                             <div class="neo-label">${t('labelBgColor')}</div>
                             <div class="neo-swatch-row">
                                 ${mkSwatches(bgColors, 'b', s.b)}
                                 <div class="neo-swatch-custom" title="${t('btnCustomColor')}"><input type="color" id="s-bc" value="${escAttr(s.b)}"></div>
                             </div>
-                        </div>
-                        <div style="margin-top:16px">
-                            <div class="neo-label">${t('labelAccentColor')}</div>
+                            <div class="neo-label" style="margin-top:16px">${t('labelAccentColor')}</div>
                             <div class="neo-swatch-row">
                                 ${mkSwatches(acColors, 'a', s.a)}
                                 <div class="neo-swatch-custom" title="${t('btnCustomColor')}"><input type="color" id="s-ac" value="${escAttr(s.a)}"></div>
                             </div>
+                            <div style="margin-top:20px">
+                                <div class="neo-label">${t('labelFont')}</div>
+                                <input type="text" id="s-font" class="neo-edit-input"
+                                    value="${escAttr(s.font)}"
+                                    placeholder="${escAttr(t('labelFontHint'))}"
+                                    style="margin-bottom:0">
+                            </div>
                         </div>
-                        <div style="margin-top:20px">
-                            <div class="neo-label">${t('labelFont')}</div>
-                            <input type="text" id="s-font" class="neo-edit-input"
-                                value="${escAttr(s.font)}"
-                                placeholder="${escAttr(t('labelFontHint'))}"
-                                style="margin-bottom:0">
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardLayout')}</span>
+                            <div style="display:flex;gap:20px">
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelFontSize')} <b>${s.fs}px</b></div>
+                                    <input type="range" id="s-fs" min="10" max="24" value="${s.fs}">
+                                </div>
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelPanelRadius')} <b>${s.r}px</b></div>
+                                    <input type="range" id="s-r" min="0" max="60" value="${s.r}">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:20px;margin-top:16px">
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelWidgetRadius')} <b>${s.ir}px</b></div>
+                                    <input type="range" id="s-ir" min="0" max="40" value="${s.ir}">
+                                </div>
+                                <div style="flex:1"></div>
+                            </div>
                         </div>
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardOpacity')}</span>
+                            <div style="display:flex;gap:20px">
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelToolbarAlpha')} <b>${s.ta}%</b></div>
+                                    <input type="range" id="s-ta" min="5" max="100" value="${s.ta}">
+                                </div>
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelPanelAlpha')} <b>${s.pa}%</b></div>
+                                    <input type="range" id="s-pa" min="5" max="100" value="${s.pa}">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:20px;margin-top:16px">
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelToolbarBlur')} <b>${s.tb}px</b></div>
+                                    <input type="range" id="s-tb" min="0" max="80" value="${s.tb}">
+                                </div>
+                                <div style="flex:1">
+                                    <div class="neo-label">${t('labelPanelBlur')} <b>${s.pb}px</b></div>
+                                    <input type="range" id="s-pb" min="0" max="80" value="${s.pb}">
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardInteraction')}</span>
-                        <div class="neo-label">
-                            <span>${t('labelMiniMode')}</span>
-                            <div class="neo-switch ${s.mm?'on':''}" data-action="toggle-mm"></div>
-                        </div>
-                        <div class="neo-field-hint">${t('hintMiniMode')}</div>
-                    </div>
+                    <div class="neo-tab-content${_activeTab==='engines'?' active':''}" data-tab="engines">
 
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardSearch')}</span>
-                        <div class="neo-label">
-                            <span>${t('labelNewTab')}</span>
-                            <div class="neo-switch ${s.searchBehavior.openInNewTab?'on':''}" data-action="toggle-newtab"></div>
-                        </div>
-                        <div class="neo-field-hint">${t('hintNewTab')}</div>
-                    </div>
-
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardEngines')}</span>
-                        <div class="n-list">${engineRows}</div>
-                        <button data-action="add-engine" class="neo-btn-ghost"
-                            style="width:100%;margin-top:15px">
-                            ${t('btnAddEngine')}
-                        </button>
-                    </div>
-
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardBlacklist')}</span>
-                        <div class="neo-field-hint" style="margin-top:0;margin-bottom:14px">${t('labelBlacklistHint')}</div>
-                        <div id="bl-list">
-                            ${(!s.bl || s.bl.length === 0)
-                                ? `<div style="opacity:0.4;font-size:12px;padding:6px 4px;font-style:italic">${t('blacklistEmpty')}</div>`
-                                : s.bl.map(d => `
-                                    <div class="neo-engine-row" style="padding:9px 12px;margin-bottom:8px;cursor:default">
-                                        <div style="flex:1;font-size:12px;font-family:monospace;letter-spacing:0.3px;color:var(--ntm)">${SecurityUtils.escapeHtml(d)}</div>
-                                        <div data-action="remove-blacklist" data-domain="${escAttr(d)}" title="Remove" style="color:#ff6b6b;cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;transition:0.2s;line-height:1">✕</div>
-                                    </div>`).join('')
-                            }
-                        </div>
-                        <div style="display:flex;gap:8px;margin-top:12px;align-items:stretch">
-                            <input type="text" id="bl-input" class="neo-edit-input"
-                                placeholder="${escAttr(t('labelBlacklistInput'))}"
-                                style="flex:1;margin-bottom:0">
-                            <button data-action="add-blacklist" class="neo-btn-ghost"
-                                style="flex-shrink:0;padding:10px 16px;white-space:nowrap">${t('btnAddDomain')}</button>
-                        </div>
-                        <div id="bl-feedback" style="font-size:11px;color:#ff6b6b;min-height:16px;margin-top:4px;padding-left:2px;display:none"></div>
-                        <button data-action="add-current-site" class="neo-btn-ghost"
-                            style="width:100%;margin-top:10px;opacity:0.7;font-size:11px">
-                            ${t('btnAddCurrent')} — ${SecurityUtils.escapeHtml(window.location.hostname)}
-                        </button>
-                    </div>
-
-                    <div class="neo-card">
-                        <span class="neo-card-title">${t('cardData')}</span>
-                        <div style="display:flex;gap:10px">
-                            <button data-action="export" class="neo-btn-ghost" style="flex:1">
-                                ${t('btnExport')}
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardEngines')}</span>
+                            <div class="n-list">${engineRows}</div>
+                            <button data-action="add-engine" class="neo-btn-ghost"
+                                style="width:100%;margin-top:15px">
+                                ${t('btnAddEngine')}
                             </button>
-                            <label style="flex:1;display:block">
-                                <span class="neo-btn-ghost" style="display:block;text-align:center">
-                                    ${t('btnImport')}
-                                </span>
-                                <input type="file" id="s-import" accept=".json" style="display:none">
-                            </label>
                         </div>
+
+                    </div>
+
+                    <div class="neo-tab-content${_activeTab==='blocklist'?' active':''}" data-tab="blocklist">
+
+                        <div class="neo-card">
+                            <span class="neo-card-title">${t('cardBlacklist')}</span>
+                            <div class="neo-field-hint" style="margin-top:0;margin-bottom:14px">${t('labelBlacklistHint')}</div>
+                            <div id="bl-list">
+                                ${(!s.bl || s.bl.length === 0)
+                                    ? `<div style="opacity:0.4;font-size:var(--nfs-sm);padding:6px 4px;font-style:italic">${t('blacklistEmpty')}</div>`
+                                    : s.bl.map(d => `
+                                        <div class="neo-engine-row" style="padding:9px 12px;margin-bottom:8px;cursor:default">
+                                            <div style="flex:1;font-size:var(--nfs-sm);font-family:monospace;letter-spacing:0.3px;color:var(--ntm)">${SecurityUtils.escapeHtml(d)}</div>
+                                            <div data-action="remove-blacklist" data-domain="${escAttr(d)}" title="Remove" style="color:#ff6b6b;cursor:pointer;font-size:var(--nfs-md);padding:2px 4px;border-radius:4px;transition:0.2s;line-height:1">✕</div>
+                                        </div>`).join('')
+                                }
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:12px;align-items:stretch">
+                                <input type="text" id="bl-input" class="neo-edit-input"
+                                    placeholder="${escAttr(t('labelBlacklistInput'))}"
+                                    style="flex:1;margin-bottom:0">
+                                <button data-action="add-blacklist" class="neo-btn-ghost"
+                                    style="flex-shrink:0;padding:10px 16px;white-space:nowrap">${t('btnAddDomain')}</button>
+                            </div>
+                            <div id="bl-feedback" style="font-size:var(--nfs-xs);color:#ff6b6b;min-height:16px;margin-top:4px;padding-left:2px;display:none"></div>
+                            <button data-action="add-current-site" class="neo-btn-ghost"
+                                style="width:100%;margin-top:10px;opacity:0.7;font-size:var(--nfs-xs)">
+                                ${t('btnAddCurrent')} — ${SecurityUtils.escapeHtml(window.location.hostname)}
+                            </button>
+                        </div>
+
                     </div>
 
                 </div>
@@ -1334,7 +1425,7 @@
 
                 <div class="neo-sub-panel" id="n-sub">
                     <div class="neo-sub-scroll">
-                        <h3 id="sub-title" style="color:var(--na);margin:0 0 20px;font-size:16px;font-weight:900;letter-spacing:2px"></h3>
+                        <h3 id="sub-title" style="color:var(--na);margin:0 0 20px;font-size:var(--nfs-md);font-weight:900;letter-spacing:2px"></h3>
                         <div class="neo-label">${t('labelName')}</div>
                         <input type="text" id="e-n" class="neo-edit-input">
                         <div class="neo-field-hint">
@@ -1350,7 +1441,7 @@
                         </div>
                         <div class="neo-field-hint" style="margin-top:6px">
                             ${t('hintIconDesc')}<br><br>
-                            <span style="font-size:10px;font-weight:700;color:var(--ntd)">${t('hintIconFmt1')}</span><br>
+                            <span style="font-size:var(--nfs-xs);font-weight:700;color:var(--ntd)">${t('hintIconFmt1')}</span><br>
                             <span class="neo-field-ex" data-field-copy="${escAttr(t('hintIconEx1'))}"><span class="ex-icon">⎘</span>${t('hintIconEx1')}</span>
                         </div>
                         <div class="neo-icon-error" id="e-icon-error">${t('hintIconErr')}</div>
@@ -1373,6 +1464,11 @@
                         <button data-action="cancel-engine"  class="neo-btn-ghost" style="flex:1">${t('btnCancel')}</button>
                     </div>
                 </div>`;
+
+            // 同步侧边 tab 按钮的 active 状态（renderPanel 每次重建 panel 内容，tabNav 不重建）
+            tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === _activeTab);
+            });
 
             bindPanelInputs();
         }
@@ -1514,6 +1610,14 @@
                 case 'lang': {
                     SettingsManager.update({ lang: el.dataset.lang });
                     renderPanel();
+                    // 语言切换后同步 tab 按钮 title
+                    tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
+                        const key = btn.dataset.tab;
+                        const _lt = t('tab' + key.charAt(0).toUpperCase() + key.slice(1));
+                        btn.title = _lt;
+                        const _ls = btn.querySelector('.neo-tab-btn-label');
+                        if (_ls) _ls.textContent = _lt;
+                    });
                     break;
                 }
 
@@ -1757,7 +1861,7 @@
             const miniHitArea = document.getElementById('ffa-mini-hitarea');
             if (!miniIcon && s.mm) { requestAnimationFrame(updateMiniMode); return; }
 
-            const anyVisible = panel.classList.contains('show') || suggestBox.classList.contains('show');
+            const anyVisible = shell.classList.contains('show') || suggestBox.classList.contains('show');
             if (!s.mm) {
                 wrapper.classList.remove('mini-mode', 'toolbar-visible');
                 miniIcon?.classList.remove('visible', 'hidden', 'hovered');
@@ -1780,11 +1884,11 @@
 
         function observePanelChanges() {
             const obs = new MutationObserver(updateMiniMode);
-            obs.observe(panel, { attributes: true, attributeFilter: ['class'] });
+            obs.observe(shell, { attributes: true, attributeFilter: ['class'] });
             obs.observe(suggestBox, { attributes: true, attributeFilter: ['class'] });
             mask.onclick = () => {
                 mask.classList.remove('show');
-                panel.classList.remove('show');
+                shell.classList.remove('show');
                 suggestBox.classList.remove('show');
                 suggestBox.innerHTML = '';
                 SuggestModule.clearNav();
