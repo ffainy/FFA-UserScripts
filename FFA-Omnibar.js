@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.2.0
+// @version      3.2.1
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -106,6 +106,10 @@
         hintIconFmt1:        { en: 'Format — Base64 data URI:',      zh: '格式 — Base64 data URI：' },
         hintIconEx1:         { en: 'data:image/svg+xml;base64,PHN2Zy4uLg==', zh: 'data:image/svg+xml;base64,PHN2Zy4uLg==' },
         hintIconErr:         { en: 'Invalid format. Must start with data:image/', zh: '格式错误，必须以 data:image/ 开头。' },
+        labelSuggestionsToggle:  { en: 'Search Suggestions',                      zh: '关键字预测'                       },
+        hintSuggestionsToggle:   { en: 'Fetch real-time suggestions while typing', zh: '输入时从搜索引擎拉取实时补全建议' },
+        labelHistoryToggle:      { en: 'Search History',                           zh: '历史关键字记录'                   },
+        hintHistoryToggle:       { en: 'Save recent searches for quick access',    zh: '保存搜索词并在下次输入时快速回调' },
         cardBlacklist:       { en: 'Blocklist',                                   zh: '黑名单'                           },
         labelBlacklistHint:  { en: 'Omnibar is hidden on exact matching domains. Add each domain separately — <code>example.com</code> and <code>www.example.com</code> are treated as different entries.', zh: '以下域名上不显示搜索栏，精确匹配。<code>example.com</code> 和 <code>www.example.com</code> 视为不同条目，需分别添加。' },
         labelBlacklistInput: { en: 'e.g. google.com',                             zh: '例如 google.com'                  },
@@ -134,6 +138,8 @@
         font: '',         // 自定义字体族（CSS font-family 字符串）
         searchBehavior: {
             openInNewTab: true,  // 搜索结果是否在新标签页打开
+            suggestions: true,   // 是否启用关键字预测
+            history: true,       // 是否启用历史关键字记录
         },
         bl: [],           // 黑名单：在这些精确域名上隐藏搜索栏
         en: DEFAULT_ENGINES,   // 搜索引擎列表
@@ -236,7 +242,9 @@
         const term = query?.trim();
         if (!engineUrl || !term) return;
         const url = engineUrl.replace('%s', encodeURIComponent(term));
-        HistoryModule.push(term);
+        if (SettingsManager.current?.searchBehavior?.history) {
+            HistoryModule.push(term);
+        }
         SettingsManager.current?.searchBehavior?.openInNewTab
             ? window.open(url, '_blank') : (location.href = url);
     }
@@ -727,15 +735,16 @@
 
             const token = ++this._requestToken;
             const q = query.trim();
+            const showHistory = SettingsManager.current?.searchBehavior?.history !== false;
 
             if (!q) {
-                this._render(box, mask, engineUrl, HistoryModule.get(), []);
+                this._render(box, mask, engineUrl, showHistory ? HistoryModule.get() : [], []);
                 return;
             }
 
-            const matchedHistory = HistoryModule.get()
-                .filter(h => h.toLowerCase().startsWith(q.toLowerCase()))
-                .slice(0, 5);
+            const matchedHistory = showHistory
+                ? HistoryModule.get().filter(h => h.toLowerCase().startsWith(q.toLowerCase())).slice(0, 5)
+                : [];
 
             this._render(box, mask, engineUrl, matchedHistory, [], true);
 
@@ -868,7 +877,10 @@
     };
 
     const fetchSuggestions = debounce(
-        (query, box, mask, engineUrl) => SuggestModule.fetch(query, box, mask, engineUrl),
+        (query, box, mask, engineUrl) => {
+            if (!SettingsManager.current?.searchBehavior?.suggestions) return;
+            SuggestModule.fetch(query, box, mask, engineUrl);
+        },
         300
     );
 
@@ -1228,6 +1240,16 @@
                                 <div class="neo-switch ${s.searchBehavior.openInNewTab?'on':''}" data-action="toggle-newtab"></div>
                             </div>
                             <div class="neo-field-hint">${t('hintNewTab')}</div>
+                            <div class="neo-label" style="margin-top:16px">
+                                <span>${t('labelSuggestionsToggle')}</span>
+                                <div class="neo-switch ${s.searchBehavior.suggestions?'on':''}" data-action="toggle-suggestions"></div>
+                            </div>
+                            <div class="neo-field-hint">${t('hintSuggestionsToggle')}</div>
+                            <div class="neo-label" style="margin-top:16px">
+                                <span>${t('labelHistoryToggle')}</span>
+                                <div class="neo-switch ${s.searchBehavior.history?'on':''}" data-action="toggle-history"></div>
+                            </div>
+                            <div class="neo-field-hint">${t('hintHistoryToggle')}</div>
                         </div>
 
                         <div class="neo-card">
@@ -1451,6 +1473,20 @@
 
                 case 'toggle-newtab': {
                     s.searchBehavior.openInNewTab = !s.searchBehavior.openInNewTab;
+                    SettingsManager.save();
+                    renderPanel();
+                    break;
+                }
+
+                case 'toggle-suggestions': {
+                    s.searchBehavior.suggestions = !s.searchBehavior.suggestions;
+                    SettingsManager.save();
+                    renderPanel();
+                    break;
+                }
+
+                case 'toggle-history': {
+                    s.searchBehavior.history = !s.searchBehavior.history;
                     SettingsManager.save();
                     renderPanel();
                     break;
