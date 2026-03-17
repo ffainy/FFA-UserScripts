@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [FFA-Omnibar] 3.2.1 - 2026-03-17
+
+### Added
+- add search suggestions and history toggles
+
+### Changed
+- streamline utilities, trim comments, and refine CSS variable/style handling
+
 ## [FFA-Omnibar] 3.2.0 - 2026-03-16
 
 ### Added
