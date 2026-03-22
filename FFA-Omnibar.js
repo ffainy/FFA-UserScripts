@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.2.1
+// @version      3.3.0
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -23,6 +23,8 @@
 
 (function () {
     'use strict';
+
+    let _isInitialized = false;
 
     const STORAGE_KEY = 'ffa_omnibar_settings';
     const HISTORY_KEY = 'ffa_omnibar_history';
@@ -283,7 +285,7 @@
             ? s.font.split(',').map(f => `"${f.trim().replace(/^["']+|["']+$/g, '')}"`).filter(f => f !== '""').join(',') + ','
             : '';
 
-        // CSS 自定义属性，同时注入 :root（面板/普通 DOM）和 :host（搜索条 Shadow DOM）。
+        // CSS 自定义属性注入到 shadow root 内，统一供整套 UI 使用。
         // 命名规范：--n 前缀为 omnibar 命名空间，避免与页面 CSS 冲突。
         return `:host,:root{` +
             `--nb:${s.bt}px;`  +   // 搜索条距底部距离
@@ -417,30 +419,90 @@
         },
     };
 
-    const StyleEngine = {
-        _el: null,
+    const AppRoot = {
+        host: null,
+        root: null,
+        styleEl: null,
+        mount: null,
+
         init() {
-            this._el = document.getElementById('ffa-global-style');
-            if (!this._el) {
-                this._el = document.createElement('style');
-                this._el.id = 'ffa-global-style';
-                document.head.appendChild(this._el);
+            if (this.root) return this.root;
+
+            this.host = document.getElementById('ffa-omnibar-host');
+            if (!this.host) {
+                this.host = document.createElement('div');
+                this.host.id = 'ffa-omnibar-host';
+                document.documentElement.appendChild(this.host);
             }
-            this.update();
+
+            this.root = this.host.shadowRoot || this.host.attachShadow({ mode: 'open' });
+            this.styleEl = this.root.querySelector('#ffa-shadow-style');
+            if (!this.styleEl) {
+                this.styleEl = document.createElement('style');
+                this.styleEl.id = 'ffa-shadow-style';
+                this.root.appendChild(this.styleEl);
+            }
+
+            this.mount = this.root.querySelector('.ffa-app-root');
+            if (!this.mount) {
+                this.mount = document.createElement('div');
+                this.mount.className = 'ffa-app-root';
+                this.root.appendChild(this.mount);
+            }
+
+            return this.root;
         },
-        update() {
-            if (this._el) this._el.textContent = buildCSSVariables(SettingsManager.current) + PANEL_CSS;
+
+        isMounted() {
+            return this.host?.dataset.ffaMounted === 'true';
+        },
+
+        markMounted(flag) {
+            if (this.host) this.host.dataset.ffaMounted = flag ? 'true' : 'false';
+        },
+
+        resetMount() {
+            if (this.mount) this.mount.replaceChildren();
+            this.markMounted(false);
+        },
+
+        destroy() {
+            this.resetMount();
+            if (this.host?.isConnected) this.host.remove();
+            this.host = null;
+            this.root = null;
+            this.styleEl = null;
+            this.mount = null;
+        },
+
+        updateStyles(extraCss = '') {
+            if (this.styleEl) this.styleEl.textContent = buildCSSVariables(SettingsManager.current) + APP_CSS + extraCss;
         },
     };
 
-    // 通过 <style id="ffa-global-style"> 注入 document.head，作用于直接挂载在 document.body 上的元素：
+    const StyleEngine = {
+        init() {
+            AppRoot.init();
+            this.update();
+        },
+        update(extraCss = TOOLBAR_CSS) {
+            AppRoot.updateStyles(extraCss);
+        },
+    };
+
+    // 通过单一 shadow root 内的 <style> 注入，作用于整套隔离 UI：
     //   .neo-mask          — 设置面板背后的全屏遮罩
     //   .neo-panel-shell   — 设置面板容器（定位面板主体与左侧切换按钮）
     //   .neo-panel         — 设置面板主体（含滚动内容区和底部按钮）
     //   .neo-tab-nav       — 面板左侧悬浮的 tab 切换抽屉
     //   .ffa-mini-icon     — 迷你模式下的收起图标
     //   .ffa-mini-hitarea  — 迷你图标上方的透明 hover 触发区域
-    const PANEL_CSS = [
+    const APP_CSS = [
+        `:host{all:initial}`,
+        `:host,:host *,:host *::before,:host *::after{box-sizing:border-box}`,
+        `.ffa-app-root{position:fixed;inset:0;z-index:2147483640;pointer-events:none;font-family:var(--nf);line-height:1.4;color:var(--ntm);text-size-adjust:none;-webkit-font-smoothing:antialiased}`,
+        `.ffa-app-root *{box-sizing:border-box}`,
+        `.neo-mask,.neo-panel-shell,.ffa-mini-icon,.ffa-mini-hitarea,.toolbar-host,.suggest-box,.wrapper,.toolbar,.input-container,.search-btn,.search-input,.engine-btn,.settings-btn{pointer-events:auto}`,
         `.neo-mask{position:fixed;inset:0;background:var(--nib2);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s}`,
         `.neo-mask.show{visibility:visible;opacity:1;pointer-events:auto}`,
         `.neo-panel *{font-family:var(--nf) !important;color:inherit;box-sizing:border-box;text-shadow:none}`,
@@ -540,9 +602,9 @@
         `.neo-panel-title{text-align:center;font-weight:900;letter-spacing:4px;padding:26px 28px 20px;color:var(--na);font-size:var(--nfs-lg);text-shadow:var(--ts-na-lg) !important;border-bottom:1px solid var(--nbd);flex-shrink:0}`,
     ].join('');
 
-    // 注入搜索条 Shadow DOM 内部的 <style> 标签，完全隔离于页面 CSS，不会相互污染。
+    // 搜索条样式同样注入到统一 shadow root 内，完全隔离于页面 CSS。
     // 作用于 shadow root 内的元素：
-    //   :host / .wrapper   — Shadow DOM 宿主及动画包装层
+    //   .toolbar-host / .wrapper — 搜索条定位容器及动画包装层
     //   .toolbar           — 悬浮搜索条主体
     //   .engine-btn        — 各搜索引擎切换按钮
     //   .input-container   — 可展开的搜索输入区域
@@ -551,7 +613,7 @@
     //   .suggest-item      — 补全建议条目
     //   .history-item      — 最近搜索历史条目
     const TOOLBAR_CSS = [
-        `:host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--nb);z-index:2147483642;font-family:var(--nf)}`,
+        `.toolbar-host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--nb);z-index:2147483642;font-family:var(--nf)}`,
         `.wrapper{transition:0.8s var(--sp)}`,
         `.wrapper.mini-mode .toolbar{opacity:0;transform:translateY(50px) scale(0.92);pointer-events:none;transition:opacity 0.5s var(--sp),transform 0.6s var(--sp)}`,
         `.wrapper.mini-mode.toolbar-visible .toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;transition-delay:0.1s}`,
@@ -891,9 +953,10 @@
     }
 
     function init() {
-        if (window.ffaOmnibarInitialized) return;
-        window.ffaOmnibarInitialized = true;
-        if (document.querySelector('.neo-mask') || document.querySelector('.neo-panel')) {
+        if (_isInitialized) return;
+        _isInitialized = true;
+        AppRoot.init();
+        if (AppRoot.isMounted()) {
             console.warn('[FFA Omnibar] 检测到残留的工具栏元素，跳过初始化');
             return;
         }
@@ -901,13 +964,18 @@
         SettingsManager.load();
 
         if (isBlacklisted(SettingsManager.current.bl)) {
-            window.ffaOmnibarInitialized = false; // 允许设置变更后重新初始化
+            AppRoot.destroy();
+            _isInitialized = false; // 允许设置变更后重新初始化
             return;
         }
 
         StyleEngine.init();
         SuggestModule.initAccessibility();
 
+        const appRoot = AppRoot.mount;
+        AppRoot.resetMount();
+        const lifecycle = new AbortController();
+        const { signal } = lifecycle;
         const mask  = document.createElement('div');
         mask.className = 'neo-mask';
 
@@ -952,161 +1020,392 @@
         panel.className = 'neo-panel';
 
         shell.append(tabNav, panel);
-        document.body.append(mask, shell);
 
-        const host        = document.createElement('div');
-        const shadowRoot  = host.attachShadow({ mode: 'open' });
-        const shadowStyle = document.createElement('style');
+        const toolbarHost = document.createElement('div');
+        toolbarHost.className = 'toolbar-host';
         const wrapper     = document.createElement('div');
         const toolbar     = document.createElement('div');
         const suggestBox  = document.createElement('div');
+        const miniIcon    = document.createElement('div');
+        const miniHitArea = document.createElement('div');
 
         wrapper.className    = 'wrapper';
         toolbar.className    = 'toolbar';
         suggestBox.className = 'suggest-box';
+        miniIcon.className   = 'ffa-mini-icon';
+        miniHitArea.className = 'ffa-mini-hitarea';
 
-        shadowRoot.append(shadowStyle, suggestBox, wrapper);
+        miniIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.253c1.044 0 1.956.569 2.44 1.412l4.589 7.932l4.45 7.691c.047.074.21.359.27.494a2.808 2.808 0 0 1-3.406 3.836l-7.901-2.606a1.4 1.4 0 0 0-.442-.07a1.4 1.4 0 0 0-.442.07l-7.9 2.606l-.162.046a2.8 2.8 0 0 1-.684.083a2.81 2.81 0 0 1-2.644-3.763c.03-.091.074-.176.111-.264c.072-.15.161-.288.242-.432l4.449-7.691l4.588-7.932A2.81 2.81 0 0 1 12 1.253"/></svg>`;
+
+        toolbarHost.append(suggestBox, wrapper);
         wrapper.append(toolbar);
-        document.body.append(host);
+        appRoot.append(mask, shell, miniIcon, miniHitArea, toolbarHost);
+        AppRoot.markMounted(true);
+
+        const qPanel = sel => panel.querySelector(sel);
+        const qToolbar = sel => toolbar.querySelector(sel);
+        const UIState = {
+            openMask() { mask.classList.add('show'); },
+            closeMask() { mask.classList.remove('show'); },
+            openShell() { shell.classList.add('show'); },
+            closeShell() { shell.classList.remove('show'); },
+            openSuggest() { suggestBox.classList.add('show'); },
+            closeSuggest() { suggestBox.classList.remove('show'); },
+            clearSuggest() {
+                this.closeSuggest();
+                suggestBox.innerHTML = '';
+                SuggestModule.clearNav();
+            },
+            isOverlayVisible() {
+                return shell.classList.contains('show') || suggestBox.classList.contains('show');
+            },
+            closePanelOverlay() {
+                this.closeMask();
+                this.closeShell();
+                this.clearSuggest();
+                qPanel('#n-sub')?.classList.remove('show');
+                wrapper.classList.remove('active', 'pinned');
+                toolbar.classList.remove('focused', 'pinned');
+                const ic = qToolbar('.input-container');
+                const inp = qToolbar('.search-input');
+                if (ic && !inp?.value?.trim()) ic.classList.remove('expanded');
+                updateMiniMode();
+            },
+        };
 
         suggestBox.addEventListener('mousedown', (e) => {
             const isItem = e.target.closest('.suggest-item, .history-item, .suggest-divider');
             if (!isItem) {
                 e.preventDefault(); // 阻止 input blur，由此处统一处理关闭逻辑
-                mask.classList.remove('show');
-                shell.classList.remove('show');
-                suggestBox.classList.remove('show');
-                suggestBox.innerHTML = '';
-                SuggestModule.clearNav();
-                wrapper.classList.remove('active', 'pinned');
-                toolbar.classList.remove('focused', 'pinned');
-                updateMiniMode();
+                UIState.closePanelOverlay();
             }
         });
 
-        EventBus.on('settings:changed', () => {
+        miniHitArea.addEventListener('mouseenter', () => {
+            wrapper.classList.add('toolbar-visible');
+            miniIcon.classList.add('hidden');
+            miniIcon.classList.remove('visible', 'hovered');
+        });
+
+        const inRect = (el, x, y) => {
+            const r = el.getBoundingClientRect();
+            return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        };
+        let _miniMoveTimer = null;
+        document.addEventListener('mousemove', (e) => {
+            if (!wrapper.classList.contains('toolbar-visible') || UIState.isOverlayVisible()) return;
+            if (inRect(miniHitArea, e.clientX, e.clientY) || inRect(toolbarHost, e.clientX, e.clientY)) {
+                clearTimeout(_miniMoveTimer);
+            } else {
+                clearTimeout(_miniMoveTimer);
+                _miniMoveTimer = setTimeout(() => {
+                    if (!wrapper.classList.contains('toolbar-visible') || UIState.isOverlayVisible()) return;
+                    wrapper.classList.remove('toolbar-visible');
+                    miniIcon.classList.remove('hidden', 'hovered');
+                    miniIcon.classList.add('visible');
+                }, 80);
+            }
+        }, { signal });
+
+        const cleanupTasks = [];
+
+        cleanupTasks.push(EventBus.on('settings:changed', () => {
             StyleEngine.update();
-            shadowStyle.textContent = buildCSSVariables(SettingsManager.current) + TOOLBAR_CSS;
-        });
-        EventBus.on('settings:engines:changed', () => {
-            renderToolbar();
-        });
+        }));
+        cleanupTasks.push(EventBus.on('settings:engines:changed', () => {
+            ToolbarController.render();
+        }));
 
-        function renderToolbar() {
-            const s = SettingsManager.current;
-            toolbar.innerHTML = '';
-
-            let miniIcon = document.getElementById('ffa-mini-icon');
-            let miniHitArea = document.getElementById('ffa-mini-hitarea');
-            if (!miniIcon) {
-                miniIcon = document.createElement('div');
-                miniIcon.id = 'ffa-mini-icon';
-                miniIcon.className = 'ffa-mini-icon';
-                miniIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.253c1.044 0 1.956.569 2.44 1.412l4.589 7.932l4.45 7.691c.047.074.21.359.27.494a2.808 2.808 0 0 1-3.406 3.836l-7.901-2.606a1.4 1.4 0 0 0-.442-.07a1.4 1.4 0 0 0-.442.07l-7.9 2.606l-.162.046a2.8 2.8 0 0 1-.684.083a2.81 2.81 0 0 1-2.644-3.763c.03-.091.074-.176.111-.264c.072-.15.161-.288.242-.432l4.449-7.691l4.588-7.932A2.81 2.81 0 0 1 12 1.253"/></svg>`;
-                document.body.append(miniIcon);
-
-                miniHitArea = document.createElement('div');
-                miniHitArea.id = 'ffa-mini-hitarea';
-                miniHitArea.className = 'ffa-mini-hitarea';
-                document.body.append(miniHitArea);
-
-                miniHitArea.addEventListener('mouseenter', () => {
-                    wrapper.classList.add('toolbar-visible');
-                    miniIcon.classList.add('hidden');
-                    miniIcon.classList.remove('visible', 'hovered');
-                });
-
-                const inRect = (el, x, y) => { const r = el.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
-                const anyVisible = () => shell.classList.contains('show') || suggestBox.classList.contains('show');
-                let _miniMoveTimer = null;
-                document.addEventListener('mousemove', (e) => {
-                    if (!wrapper.classList.contains('toolbar-visible') || anyVisible()) return;
-                    if (inRect(miniHitArea, e.clientX, e.clientY) || inRect(host, e.clientX, e.clientY)) {
-                        clearTimeout(_miniMoveTimer);
-                    } else {
-                        clearTimeout(_miniMoveTimer);
-                        _miniMoveTimer = setTimeout(() => {
-                            if (!wrapper.classList.contains('toolbar-visible') || anyVisible()) return;
-                            wrapper.classList.remove('toolbar-visible');
-                            miniIcon.classList.remove('hidden', 'hovered');
-                            miniIcon.classList.add('visible');
-                        }, 80);
-                    }
-                });
-            }
-
-            const settingsBtn = document.createElement('div');
-            settingsBtn.className = 'settings-btn';
-            settingsBtn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54A.484.484 0 0 0 14 3h-4c-.24 0-.43.17-.47.41l-.36 2.54a7.4 7.4 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.65 9.47a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a7.4 7.4 0 0 0 1.62-.94l2.39.96a.48.48 0 0 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>`;
-            settingsBtn.onclick = () => {
-                const fresh = GM_getValue(STORAGE_KEY, null);
-                if (fresh) Object.assign(SettingsManager.current, fresh);
-                mask.classList.add('show');
-                shell.classList.add('show');
-                wrapper.classList.add('pinned');
-                toolbar.classList.add('pinned');
+        const Refresh = {
+            panel() {
                 renderPanel();
-            };
-            toolbar.append(settingsBtn);
+            },
+            styles() {
+                applyStyles();
+            },
+            toolbar() {
+                ToolbarController.render();
+            },
+            miniMode() {
+                updateMiniMode();
+            },
+            save() {
+                SettingsManager.save();
+            },
+            saveAndPanel() {
+                this.save();
+                this.panel();
+            },
+            saveAndStyles() {
+                this.save();
+                this.styles();
+            },
+            saveStylesAndToolbar() {
+                this.save();
+                this.styles();
+                this.toolbar();
+            },
+            saveStylesAndPanel() {
+                this.save();
+                this.styles();
+                this.panel();
+            },
+            saveStylesMiniAndPanel() {
+                this.save();
+                this.styles();
+                this.miniMode();
+                this.panel();
+            },
+        };
 
-            const currentQuery = extractPageQuery();
-            const enabled = s.en.filter(e => e.enabled);
+        const EngineEditor = {
+            openForEdit(engine) {
+                editingEngine = engine;
+                const subPanel = qPanel('#n-sub');
+                qPanel('#sub-title').textContent = t('subPanelTitle');
+                qPanel('#e-n').value = engine.name;
+                qPanel('#e-u').value = engine.url;
+                qPanel('#e-h').value = engine.host;
+                const iconVal = engine.icon && !BUILTIN_HOSTS.has(engine.host) ? engine.icon : '';
+                qPanel('#e-icon').value = iconVal;
+                updateIconPreview(iconVal, qPanel('#e-icon-preview'));
+                subPanel.classList.add('show');
+            },
 
-            const activeEngineUrl = matchCurrentPageToEngine()?.url ?? null;
+            openForCreate() {
+                editingEngine = null;
+                const subPanel = qPanel('#n-sub');
+                qPanel('#sub-title').textContent = t('subPanelTitleAdd');
+                ['#e-n', '#e-u', '#e-h', '#e-icon'].forEach(sel => {
+                    const node = qPanel(sel);
+                    if (node) node.value = '';
+                });
+                updateIconPreview('', qPanel('#e-icon-preview'));
+                subPanel.classList.add('show');
+            },
 
-            enabled.forEach(eng => {
-                const btn = document.createElement('div');
-                btn.className = 'engine-btn';
-                btn.dataset.engineUrl = eng.url;
+            close() {
+                qPanel('#n-sub')?.classList.remove('show');
+                editingEngine = null;
+            },
 
-                    if (activeEngineUrl === eng.url) {
-                    btn.classList.add('active');
+            confirm() {
+                const name = qPanel('#e-n').value.trim();
+                const url = qPanel('#e-u').value.trim();
+                const host = qPanel('#e-h').value.trim();
+                const iconRaw = qPanel('#e-icon').value.trim();
+                const errorEl = qPanel('#e-icon-error');
+                if (!name || !url) return false;
+
+                const iconResult = SecurityUtils.validateIcon(iconRaw);
+                if (iconRaw && !iconResult.valid) {
+                    errorEl.classList.add('show');
+                    return false;
+                }
+                errorEl.classList.remove('show');
+                const icon = (iconResult.valid && iconResult.type !== 'default') ? iconResult.value : undefined;
+
+                if (!editingEngine) {
+                    SettingsManager.addEngine({ name, url, host, enabled: true, ...(icon ? { icon } : {}) });
+                } else {
+                    const patch = { name, url, host };
+                    if (icon) patch.icon = icon; else delete editingEngine.icon;
+                    SettingsManager.updateEngine(editingEngine, patch);
                 }
 
-                    const iconSpan = document.createElement('span');
-                iconSpan.className = 'btn-icon';
-                iconSpan.appendChild(renderIconElement(eng.icon, 16));
+                this.close();
+                Refresh.styles();
+                Refresh.panel();
+                return true;
+            },
+        };
 
-                const labelSpan = document.createElement('span');
-                labelSpan.className = 'btn-label';
-                labelSpan.textContent = eng.name;
+        const PanelActions = {
+            syncSwitch(el, on) {
+                el?.classList?.toggle('on', !!on);
+            },
 
-                btn.append(iconSpan, labelSpan);
+            handleVisual(action, el, settings) {
+                if (action === 'swatch') {
+                    const { color, target } = el.dataset;
+                    settings[target] = color;
+                    panel.querySelectorAll(`.neo-swatch[data-target="${target}"]`).forEach(sw => sw.classList.remove('selected'));
+                    el.classList.add('selected');
+                    const picker = qPanel(target === 'b' ? '#s-bc' : '#s-ac');
+                    if (picker) picker.value = color;
+                    Refresh.saveAndStyles();
+                    return true;
+                }
 
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    const query = input.value.trim();
-                    const engineUrl = btn.dataset.engineUrl;
-                    if (query && engineUrl) {
-                        performSearch(engineUrl, query);
-                        return;
+                if (action === 'theme') {
+                    const theme = THEMES[el.dataset.key];
+                    if (theme) {
+                        SettingsManager.update({ ...theme });
+                        Refresh.styles();
+                        Refresh.panel();
                     }
-                    toolbar.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    suggestBox.classList.remove('show');
-                    suggestBox.innerHTML = '';
-                    SuggestModule.clearNav();
-                    input.focus();
-                    if (engineUrl) fetchSuggestions('', suggestBox, mask, engineUrl);
-                };
+                    return true;
+                }
 
-                toolbar.append(btn);
-            });
+                if (action === 'lang') {
+                    SettingsManager.update({ lang: el.dataset.lang });
+                    Refresh.panel();
+                    tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
+                        const key = btn.dataset.tab;
+                        const label = t('tab' + key.charAt(0).toUpperCase() + key.slice(1));
+                        btn.title = label;
+                        const labelSpan = btn.querySelector('.neo-tab-btn-label');
+                        if (labelSpan) labelSpan.textContent = label;
+                    });
+                    return true;
+                }
 
-            const inputContainer = document.createElement('div');
-            inputContainer.className = 'input-container';
+                return false;
+            },
 
-            const searchBtn = document.createElement('div');
-            searchBtn.className = 'search-btn';
-            searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"/></svg>`;
+            handleEngine(action, el, settings) {
+                if (action === 'toggle-engine') {
+                    const idx = parseInt(el.dataset.i);
+                    if (idx >= 0 && idx < settings.en.length) {
+                        settings.en[idx].enabled = !settings.en[idx].enabled;
+                        this.syncSwitch(el, settings.en[idx].enabled);
+                        Refresh.saveStylesAndToolbar();
+                    }
+                    return true;
+                }
 
-            const input = document.createElement('input');
-            input.className = 'search-input';
-            input.value = currentQuery;
-            input.setAttribute('aria-label', 'Search');
+                if (action === 'delete-engine') {
+                    const idx = parseInt(el.dataset.i);
+                    if (idx >= 0 && idx < settings.en.length && confirm(t('confirmDeleteEngine'))) {
+                        SettingsManager.removeEngine(settings.en[idx]);
+                        Refresh.styles();
+                        Refresh.panel();
+                    }
+                    return true;
+                }
 
+                if (action === 'edit-engine') {
+                    const idx = parseInt(el.dataset.i);
+                    if (idx >= 0 && idx < settings.en.length) EngineEditor.openForEdit(settings.en[idx]);
+                    return true;
+                }
+
+                if (action === 'add-engine') {
+                    EngineEditor.openForCreate();
+                    return true;
+                }
+
+                if (action === 'confirm-engine') {
+                    EngineEditor.confirm();
+                    return true;
+                }
+
+                if (action === 'cancel-engine') {
+                    EngineEditor.close();
+                    return true;
+                }
+
+                return false;
+            },
+
+            handleData(action, el, settings) {
+                if (action === 'toggle-mm') {
+                    settings.mm = !settings.mm;
+                    this.syncSwitch(el, settings.mm);
+                    Refresh.save();
+                    Refresh.styles();
+                    Refresh.miniMode();
+                    return true;
+                }
+
+                if (action === 'toggle-newtab') {
+                    settings.searchBehavior.openInNewTab = !settings.searchBehavior.openInNewTab;
+                    this.syncSwitch(el, settings.searchBehavior.openInNewTab);
+                    Refresh.save();
+                    return true;
+                }
+
+                if (action === 'toggle-suggestions') {
+                    settings.searchBehavior.suggestions = !settings.searchBehavior.suggestions;
+                    this.syncSwitch(el, settings.searchBehavior.suggestions);
+                    if (!settings.searchBehavior.suggestions) UIState.clearSuggest();
+                    Refresh.save();
+                    return true;
+                }
+
+                if (action === 'toggle-history') {
+                    settings.searchBehavior.history = !settings.searchBehavior.history;
+                    this.syncSwitch(el, settings.searchBehavior.history);
+                    Refresh.save();
+                    return true;
+                }
+
+                if (action === 'remove-blacklist') {
+                    SettingsManager.removeFromBlacklist(el.dataset.domain);
+                    Refresh.panel();
+                    return true;
+                }
+
+                if (action === 'add-blacklist') {
+                    const blInput = qPanel('#bl-input');
+                    const blFeedback = qPanel('#bl-feedback');
+                    const val = blInput?.value?.trim();
+                    if (!val) return true;
+                    const result = SettingsManager.addToBlacklist(val);
+                    if (result === 'duplicate') {
+                        if (blFeedback) { blFeedback.textContent = t('blacklistDuplicate'); blFeedback.style.display = 'block'; }
+                        setTimeout(() => { if (blFeedback) blFeedback.style.display = 'none'; }, 2000);
+                    } else {
+                        if (blInput) blInput.value = '';
+                        if (blFeedback) blFeedback.style.display = 'none';
+                        Refresh.panel();
+                    }
+                    return true;
+                }
+
+                if (action === 'add-current-site') {
+                    const result = SettingsManager.addToBlacklist(window.location.hostname);
+                    if (result !== 'duplicate') Refresh.panel();
+                    return true;
+                }
+
+                if (action === 'export') {
+                    const blob = new Blob([SettingsManager.exportJSON()], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'ffa-omnibar-settings.json';
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    return true;
+                }
+
+                if (action === 'apply') {
+                    SettingsManager.save();
+                    location.reload();
+                    return true;
+                }
+
+                if (action === 'reset') {
+                    if (confirm(t('confirmReset'))) {
+                        SettingsManager.reset();
+                        location.reload();
+                    }
+                    return true;
+                }
+
+                return false;
+            },
+
+            dispatch(action, el, settings) {
+                if (this.handleVisual(action, el, settings)) return true;
+                if (this.handleEngine(action, el, settings)) return true;
+                return this.handleData(action, el, settings);
+            },
+        };
+
+        function bindToolbarSearch(input, inputContainer, enabled, activeEngineUrl) {
             const getEngineUrl = () => {
-                const btn = toolbar.querySelector('.engine-btn.active');
+                const btn = qToolbar('.engine-btn.active');
                 return btn ? btn.dataset.engineUrl : enabled[0]?.url;
             };
 
@@ -1122,94 +1421,60 @@
                 inputContainer.classList.add('expanded');
                 wrapper.classList.add('active', 'pinned');
                 toolbar.classList.add('focused', 'pinned');
-                mask.classList.add('show');
-                suggestBox.classList.add('show');
+                UIState.openMask();
+                UIState.openSuggest();
             };
 
-            if (currentQuery) inputContainer.classList.add('expanded');
+            if (extractPageQuery()) inputContainer.classList.add('expanded');
 
-            searchBtn.onclick = () => {
-                if (!inputContainer.classList.contains('expanded')) {
-                    expand();
-                    setTimeout(() => input.focus(), 50);
-                } else if (input.value.trim()) {
-                    performSearch(getEngineUrl(), input.value);
-                } else {
-                    input.focus();
-                }
-            };
+            return {
+                getEngineUrl,
+                bind(searchBtn) {
+                    searchBtn.onclick = () => {
+                        if (!inputContainer.classList.contains('expanded')) {
+                            expand();
+                            setTimeout(() => input.focus(), 50);
+                        } else if (input.value.trim()) {
+                            performSearch(getEngineUrl(), input.value);
+                        } else {
+                            input.focus();
+                        }
+                    };
 
-            input.onfocus = () => {
-                if (input.value) input.select();
-                expand();
-                const url = getEngineUrl();
-                if (url) fetchSuggestions(input.value, suggestBox, mask, url);
-            };
-            input.onblur = () => {
-                setTimeout(() => {
-                    if (!suggestBox.classList.contains('show') && !shell.classList.contains('show')) {
-                        collapseInput();
-                    }
-                }, 150);
-            };
-            input.oninput = () => {
-                mask.classList.add('show');
-                suggestBox.classList.add('show');
-                const url = getEngineUrl();
-                if (url) fetchSuggestions(input.value, suggestBox, mask, url);
-            };
-            input.onkeydown = (e) => {
-                const url = getEngineUrl();
-                if (url && SuggestModule.handleKeyNav(e, suggestBox, mask, url)) return;
-                if (e.key === 'Enter' && input.value.trim()) performSearch(url, input.value);
-                if (e.key === 'Escape') { input.blur(); }
-            };
+                    input.onfocus = () => {
+                        if (input.value) input.select();
+                        expand();
+                        const url = getEngineUrl();
+                        if (url) fetchSuggestions(input.value, suggestBox, mask, url);
+                    };
+                    input.onblur = () => {
+                        setTimeout(() => {
+                            if (!suggestBox.classList.contains('show') && !shell.classList.contains('show')) {
+                                collapseInput();
+                            }
+                        }, 150);
+                    };
+                    input.oninput = () => {
+                        UIState.openMask();
+                        UIState.openSuggest();
+                        const url = getEngineUrl();
+                        if (url) fetchSuggestions(input.value, suggestBox, mask, url);
+                    };
+                    input.onkeydown = (e) => {
+                        const url = getEngineUrl();
+                        if (url && SuggestModule.handleKeyNav(e, suggestBox, mask, url)) return;
+                        if (e.key === 'Enter' && input.value.trim()) performSearch(url, input.value);
+                        if (e.key === 'Escape') { input.blur(); }
+                    };
 
-            inputContainer.append(searchBtn, input);
-            toolbar.append(inputContainer);
-
-            if (!activeEngineUrl)
-                toolbar.querySelector('.engine-btn')?.classList.add('active');
-
-            updateMiniMode();
+                    if (!activeEngineUrl) qToolbar('.engine-btn')?.classList.add('active');
+                },
+            };
         }
 
-        let editingEngine = null;
-
-        function renderPanel() {
-            const s = SettingsManager.current;
-
-            const themeButtons = Object.keys(THEMES).map(key => {
-                const active = s.b.toUpperCase() === THEMES[key].b.toUpperCase();
-                return `<button class="neo-theme-btn${active ? ' active' : ''}" data-action="theme" data-key="${key}">${SecurityUtils.escapeHtml(THEMES[key].n[s.lang] ?? THEMES[key].n.en)}</button>`;
-            }).join('');
-
-            const engineRows = s.en.map((eng, i) => {
-                const _iconEl = renderIconElement(eng.icon, 18);
-                const iconHtml = _iconEl.outerHTML;
+        const PanelTemplates = {
+            renderGeneralTab(s) {
                 return `
-                    <div class="neo-engine-row" draggable="true" data-i="${i}">
-                        <div style="cursor:grab;opacity:0.3">☰</div>
-                        <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ntm);opacity:0.8">${iconHtml}</div>
-                        <div class="neo-switch ${eng.enabled ? 'on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
-                        <div style="flex:1">
-                            <div style="font-size:var(--nfs-md);font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
-                            <div class="neo-engine-host">${SecurityUtils.escapeHtml(eng.host)}</div>
-                        </div>
-                        <div data-action="edit-engine" data-i="${i}" style="cursor:pointer">✎</div>
-                        <div data-action="delete-engine" data-i="${i}" style="color:#ff6b6b;cursor:pointer">✕</div>
-                    </div>`;
-            }).join('');
-
-            const bgColors = ['#FFFFFF','#F5F5F7','#F9F3E9','#F0EEF8','#E8F0FE','#E8F5E9','#FFF8E1','#1A1A2E','#0D0D1A','#0F1A12','#1A0A0A','#12121F'];
-            const acColors = ['#1D1D1F','#2C2C3E','#6B4C3B','#8E6D5A','#007AFF','#5856D6','#FF2D55','#FF9500','#34C759','#00D4FF','#89D4A0','#FFD60A'];
-            const mkSwatches = (colors, target, currentVal) =>
-                colors.map(c => `<div class="neo-swatch${currentVal===c?' selected':''}" data-action="swatch" data-color="${c}" data-target="${target}" style="background:${c}" title="${c}"></div>`).join('');
-
-            panel.innerHTML = `
-                <div class="neo-panel-title">${t('panelTitle')}</div>
-                <div class="neo-scroll" style="padding-top:20px">
-
                     <div class="neo-tab-content${_activeTab==='general'?' active':''}" data-tab="general">
 
                         <div class="neo-card">
@@ -1266,9 +1531,11 @@
                                 </label>
                             </div>
                         </div>
+                    </div>`;
+            },
 
-                    </div>
-
+            renderAppearanceTab(s, themeButtons, mkSwatches, bgColors, acColors) {
+                return `
                     <div class="neo-tab-content${_activeTab==='appearance'?' active':''}" data-tab="appearance">
 
                         <div class="neo-card">
@@ -1341,9 +1608,11 @@
                                 </div>
                             </div>
                         </div>
+                    </div>`;
+            },
 
-                    </div>
-
+            renderEnginesTab(engineRows) {
+                return `
                     <div class="neo-tab-content${_activeTab==='engines'?' active':''}" data-tab="engines">
 
                         <div class="neo-card">
@@ -1354,9 +1623,11 @@
                                 ${t('btnAddEngine')}
                             </button>
                         </div>
+                    </div>`;
+            },
 
-                    </div>
-
+            renderBlocklistTab(s) {
+                return `
                     <div class="neo-tab-content${_activeTab==='blocklist'?' active':''}" data-tab="blocklist">
 
                         <div class="neo-card">
@@ -1385,15 +1656,11 @@
                                 ${t('btnAddCurrent')} — ${SecurityUtils.escapeHtml(window.location.hostname)}
                             </button>
                         </div>
+                    </div>`;
+            },
 
-                    </div>
-
-                </div>
-                <div class="neo-footer">
-                    <button data-action="apply" class="neo-btn-main" style="flex:2">${t('btnApply')}</button>
-                    <button data-action="reset"  class="neo-btn-danger" style="flex:1">${t('btnReset')}</button>
-                </div>
-
+            renderEngineSubPanel() {
+                return `
                 <div class="neo-sub-panel" id="n-sub">
                     <div class="neo-sub-scroll">
                         <h3 id="sub-title" style="color:var(--na);margin:0 0 20px;font-size:var(--nfs-md);font-weight:900;letter-spacing:2px"></h3>
@@ -1435,6 +1702,135 @@
                         <button data-action="cancel-engine"  class="neo-btn-ghost" style="flex:1">${t('btnCancel')}</button>
                     </div>
                 </div>`;
+            },
+        };
+
+        const ToolbarController = {
+            openSettings() {
+                const fresh = GM_getValue(STORAGE_KEY, null);
+                if (fresh) Object.assign(SettingsManager.current, fresh);
+                UIState.openMask();
+                UIState.openShell();
+                wrapper.classList.add('pinned');
+                toolbar.classList.add('pinned');
+                renderPanel();
+            },
+
+            render() {
+                const settings = SettingsManager.current;
+                toolbar.innerHTML = '';
+
+                const settingsBtn = document.createElement('div');
+                settingsBtn.className = 'settings-btn';
+                settingsBtn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54A.484.484 0 0 0 14 3h-4c-.24 0-.43.17-.47.41l-.36 2.54a7.4 7.4 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.65 9.47a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a7.4 7.4 0 0 0 1.62-.94l2.39.96a.48.48 0 0 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>`;
+                settingsBtn.onclick = () => this.openSettings();
+                toolbar.append(settingsBtn);
+
+                const currentQuery = extractPageQuery();
+                const enabled = settings.en.filter(e => e.enabled);
+                const activeEngineUrl = matchCurrentPageToEngine()?.url ?? null;
+
+                enabled.forEach(eng => {
+                    const btn = document.createElement('div');
+                    btn.className = 'engine-btn';
+                    btn.dataset.engineUrl = eng.url;
+                    if (activeEngineUrl === eng.url) btn.classList.add('active');
+
+                    const iconSpan = document.createElement('span');
+                    iconSpan.className = 'btn-icon';
+                    iconSpan.appendChild(renderIconElement(eng.icon, 16));
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.className = 'btn-label';
+                    labelSpan.textContent = eng.name;
+                    btn.append(iconSpan, labelSpan);
+
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        const query = input.value.trim();
+                        const engineUrl = btn.dataset.engineUrl;
+                        if (query && engineUrl) {
+                            performSearch(engineUrl, query);
+                            return;
+                        }
+                        toolbar.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        UIState.clearSuggest();
+                        input.focus();
+                        if (engineUrl) fetchSuggestions('', suggestBox, mask, engineUrl);
+                    };
+
+                    toolbar.append(btn);
+                });
+
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'input-container';
+
+                const searchBtn = document.createElement('div');
+                searchBtn.className = 'search-btn';
+                searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"/></svg>`;
+
+                const input = document.createElement('input');
+                input.className = 'search-input';
+                input.value = currentQuery;
+                input.setAttribute('aria-label', 'Search');
+
+                const searchBinding = bindToolbarSearch(input, inputContainer, enabled, activeEngineUrl);
+                searchBinding.bind(searchBtn);
+
+                inputContainer.append(searchBtn, input);
+                toolbar.append(inputContainer);
+
+                updateMiniMode();
+            },
+        };
+
+        let editingEngine = null;
+
+        function renderPanel() {
+            const s = SettingsManager.current;
+
+            const themeButtons = Object.keys(THEMES).map(key => {
+                const active = s.b.toUpperCase() === THEMES[key].b.toUpperCase();
+                return `<button class="neo-theme-btn${active ? ' active' : ''}" data-action="theme" data-key="${key}">${SecurityUtils.escapeHtml(THEMES[key].n[s.lang] ?? THEMES[key].n.en)}</button>`;
+            }).join('');
+
+            const engineRows = s.en.map((eng, i) => {
+                const _iconEl = renderIconElement(eng.icon, 18);
+                const iconHtml = _iconEl.outerHTML;
+                return `
+                    <div class="neo-engine-row" draggable="true" data-i="${i}">
+                        <div style="cursor:grab;opacity:0.3">☰</div>
+                        <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ntm);opacity:0.8">${iconHtml}</div>
+                        <div class="neo-switch ${eng.enabled ? 'on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
+                        <div style="flex:1">
+                            <div style="font-size:var(--nfs-md);font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
+                            <div class="neo-engine-host">${SecurityUtils.escapeHtml(eng.host)}</div>
+                        </div>
+                        <div data-action="edit-engine" data-i="${i}" style="cursor:pointer">✎</div>
+                        <div data-action="delete-engine" data-i="${i}" style="color:#ff6b6b;cursor:pointer">✕</div>
+                    </div>`;
+            }).join('');
+
+            const bgColors = ['#FFFFFF','#F5F5F7','#F9F3E9','#F0EEF8','#E8F0FE','#E8F5E9','#FFF8E1','#1A1A2E','#0D0D1A','#0F1A12','#1A0A0A','#12121F'];
+            const acColors = ['#1D1D1F','#2C2C3E','#6B4C3B','#8E6D5A','#007AFF','#5856D6','#FF2D55','#FF9500','#34C759','#00D4FF','#89D4A0','#FFD60A'];
+            const mkSwatches = (colors, target, currentVal) =>
+                colors.map(c => `<div class="neo-swatch${currentVal===c?' selected':''}" data-action="swatch" data-color="${c}" data-target="${target}" style="background:${c}" title="${c}"></div>`).join('');
+
+            panel.innerHTML = `
+                <div class="neo-panel-title">${t('panelTitle')}</div>
+                <div class="neo-scroll" style="padding-top:20px">
+                    ${PanelTemplates.renderGeneralTab(s)}
+                    ${PanelTemplates.renderAppearanceTab(s, themeButtons, mkSwatches, bgColors, acColors)}
+                    ${PanelTemplates.renderEnginesTab(engineRows)}
+                    ${PanelTemplates.renderBlocklistTab(s)}
+
+                </div>
+                <div class="neo-footer">
+                    <button data-action="apply" class="neo-btn-main" style="flex:2">${t('btnApply')}</button>
+                    <button data-action="reset"  class="neo-btn-danger" style="flex:1">${t('btnReset')}</button>
+                </div>
+                ${PanelTemplates.renderEngineSubPanel()}`;
 
                 tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === _activeTab);
@@ -1447,287 +1843,86 @@
             const s = SettingsManager.current;
             const el = e.target.closest('[data-action]');
             if (!el) return;
-
-            switch (el.dataset.action) {
-
-                case 'swatch': {
-                    const { color, target } = el.dataset;
-                    s[target] = color;
-                    panel.querySelectorAll(`.neo-swatch[data-target="${target}"]`).forEach(sw => sw.classList.remove('selected'));
-                    el.classList.add('selected');
-                    const picker = panel.querySelector(target === 'b' ? '#s-bc' : '#s-ac');
-                    if (picker) picker.value = color;
-                    SettingsManager.save();
-                    applyStyles();
-                    break;
-                }
-
-                case 'toggle-mm': {
-                    s.mm = !s.mm;
-                    SettingsManager.save();
-                    applyStyles();
-                    updateMiniMode();
-                    renderPanel();
-                    break;
-                }
-
-                case 'toggle-newtab': {
-                    s.searchBehavior.openInNewTab = !s.searchBehavior.openInNewTab;
-                    SettingsManager.save();
-                    renderPanel();
-                    break;
-                }
-
-                case 'toggle-suggestions': {
-                    s.searchBehavior.suggestions = !s.searchBehavior.suggestions;
-                    SettingsManager.save();
-                    renderPanel();
-                    break;
-                }
-
-                case 'toggle-history': {
-                    s.searchBehavior.history = !s.searchBehavior.history;
-                    SettingsManager.save();
-                    renderPanel();
-                    break;
-                }
-
-                case 'toggle-engine': {
-                    const idx = parseInt(el.dataset.i);
-                    if (idx >= 0 && idx < s.en.length) {
-                        s.en[idx].enabled = !s.en[idx].enabled;
-                        SettingsManager.save();
-                        applyStyles();
-                        renderPanel();
-                    }
-                    break;
-                }
-
-                case 'delete-engine': {
-                    const idx = parseInt(el.dataset.i);
-                    if (idx >= 0 && idx < s.en.length && confirm(t('confirmDeleteEngine'))) {
-                        SettingsManager.removeEngine(s.en[idx]);
-                        applyStyles();
-                        renderPanel();
-                    }
-                    break;
-                }
-
-                case 'edit-engine': {
-                    const idx = parseInt(el.dataset.i);
-                    if (idx >= 0 && idx < s.en.length) {
-                        editingEngine = s.en[idx];
-                        const subPanel = panel.querySelector('#n-sub');
-                        panel.querySelector('#sub-title').textContent = t('subPanelTitle');
-                        panel.querySelector('#e-n').value    = editingEngine.name;
-                        panel.querySelector('#e-u').value    = editingEngine.url;
-                        panel.querySelector('#e-h').value    = editingEngine.host;
-                        const iconVal = editingEngine.icon && !BUILTIN_HOSTS.has(editingEngine.host) ? editingEngine.icon : '';
-                        panel.querySelector('#e-icon').value = iconVal;
-                        updateIconPreview(iconVal, panel.querySelector('#e-icon-preview'));
-                        subPanel.classList.add('show');
-                    }
-                    break;
-                }
-
-                case 'add-engine': {
-                    editingEngine = null;
-                    const subPanel = panel.querySelector('#n-sub');
-                    panel.querySelector('#sub-title').textContent = t('subPanelTitleAdd');
-                    ['#e-n','#e-u','#e-h','#e-icon'].forEach(sel => { if (panel.querySelector(sel)) panel.querySelector(sel).value = ''; });
-                    updateIconPreview('', panel.querySelector('#e-icon-preview'));
-                    subPanel.classList.add('show');
-                    break;
-                }
-
-                case 'confirm-engine': {
-                    const name    = panel.querySelector('#e-n').value.trim();
-                    const url     = panel.querySelector('#e-u').value.trim();
-                    const host    = panel.querySelector('#e-h').value.trim();
-                    const iconRaw = panel.querySelector('#e-icon').value.trim();
-                    const errorEl = panel.querySelector('#e-icon-error');
-                    if (!name || !url) return;
-
-                    const iconResult = SecurityUtils.validateIcon(iconRaw);
-                    if (iconRaw && !iconResult.valid) { errorEl.classList.add('show'); return; }
-                    errorEl.classList.remove('show');
-                    const icon = (iconResult.valid && iconResult.type !== 'default') ? iconResult.value : undefined;
-
-                    if (!editingEngine) {
-                        SettingsManager.addEngine({ name, url, host, enabled: true, ...(icon ? { icon } : {}) });
-                    } else {
-                        const patch = { name, url, host };
-                        if (icon) patch.icon = icon; else delete editingEngine.icon;
-                        SettingsManager.updateEngine(editingEngine, patch);
-                    }
-
-                    panel.querySelector('#n-sub').classList.remove('show');
-                    editingEngine = null;
-                    applyStyles();
-                    renderPanel();
-                    break;
-                }
-
-                case 'cancel-engine': {
-                    panel.querySelector('#n-sub').classList.remove('show');
-                    editingEngine = null;
-                    break;
-                }
-
-                case 'theme': {
-                    const theme = THEMES[el.dataset.key];
-                    if (theme) {
-                        SettingsManager.update({ ...theme });
-                        applyStyles();
-                        renderPanel();
-                    }
-                    break;
-                }
-
-                case 'lang': {
-                    SettingsManager.update({ lang: el.dataset.lang });
-                    renderPanel();
-                                tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
-                        const key = btn.dataset.tab;
-                        const _lt = t('tab' + key.charAt(0).toUpperCase() + key.slice(1));
-                        btn.title = _lt;
-                        const _ls = btn.querySelector('.neo-tab-btn-label');
-                        if (_ls) _ls.textContent = _lt;
-                    });
-                    break;
-                }
-
-                case 'apply': {
-                    SettingsManager.save();
-                    location.reload();
-                    break;
-                }
-
-                case 'reset': {
-                    if (confirm(t('confirmReset'))) {
-                        SettingsManager.reset();
-                        location.reload();
-                    }
-                    break;
-                }
-
-                case 'remove-blacklist': {
-                    SettingsManager.removeFromBlacklist(el.dataset.domain);
-                    renderPanel();
-                    break;
-                }
-
-                case 'add-blacklist': {
-                    const blInput = panel.querySelector('#bl-input');
-                    const blFeedback = panel.querySelector('#bl-feedback');
-                    const val = blInput?.value?.trim();
-                    if (!val) break;
-                    const result = SettingsManager.addToBlacklist(val);
-                    if (result === 'duplicate') {
-                        if (blFeedback) { blFeedback.textContent = t('blacklistDuplicate'); blFeedback.style.display = 'block'; }
-                        setTimeout(() => { if (blFeedback) blFeedback.style.display = 'none'; }, 2000);
-                    } else {
-                        if (blInput) blInput.value = '';
-                        if (blFeedback) blFeedback.style.display = 'none';
-                        renderPanel();
-                    }
-                    break;
-                }
-
-                case 'add-current-site': {
-                    const result = SettingsManager.addToBlacklist(window.location.hostname);
-                    if (result !== 'duplicate') renderPanel();
-                    break;
-                }
-
-                case 'export': {
-                    const blob = new Blob([SettingsManager.exportJSON()], { type: 'application/json' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'ffa-omnibar-settings.json';
-                    a.click();
-                    URL.revokeObjectURL(a.href);
-                    break;
-                }
-            }
+            const action = el.dataset.action;
+            PanelActions.dispatch(action, el, s);
         });
 
-        function bindPanelInputs() {
-            const s = SettingsManager.current;
-
-            const bindRange = (id, key, suffix = 'px') => {
-                const el = panel.querySelector(`#${id}`);
-                if (!el) return;
-                const labelEl = el.previousElementSibling?.querySelector('b');
-                el.oninput = e => {
-                    s[key] = +e.target.value;
-                    if (labelEl) labelEl.textContent = s[key] + suffix;
-                    SettingsManager.save();
-                    applyStyles();
+        const PanelBindings = {
+            bindRanges(settings) {
+                const bindRange = (id, key, suffix = 'px') => {
+                    const el = qPanel(`#${id}`);
+                    if (!el) return;
+                    const labelEl = el.previousElementSibling?.querySelector('b');
+                    el.oninput = e => {
+                        settings[key] = +e.target.value;
+                        if (labelEl) labelEl.textContent = settings[key] + suffix;
+                        Refresh.saveAndStyles();
+                    };
                 };
-            };
-            bindRange('s-bt', 'bt');
-            bindRange('s-fs', 'fs');
-            bindRange('s-ta', 'ta', '%');
-            bindRange('s-pa', 'pa', '%');
-            bindRange('s-tb', 'tb', 'px');
-            bindRange('s-pb', 'pb', 'px');
-            bindRange('s-r',  'r');
-            bindRange('s-ir', 'ir');
+                bindRange('s-bt', 'bt');
+                bindRange('s-fs', 'fs');
+                bindRange('s-ta', 'ta', '%');
+                bindRange('s-pa', 'pa', '%');
+                bindRange('s-tb', 'tb', 'px');
+                bindRange('s-pb', 'pb', 'px');
+                bindRange('s-r', 'r');
+                bindRange('s-ir', 'ir');
+            },
 
-            panel.querySelector('#s-bc').oninput = e => {
-                s.b = e.target.value;
-                panel.querySelectorAll('.neo-swatch[data-target="b"]').forEach(sw => sw.classList.remove('selected'));
-                SettingsManager.save();
-                applyStyles();
-            };
-            panel.querySelector('#s-ac').oninput = e => {
-                s.a = e.target.value;
-                panel.querySelectorAll('.neo-swatch[data-target="a"]').forEach(sw => sw.classList.remove('selected'));
-                SettingsManager.save();
-                applyStyles();
-            };
-
-            panel.querySelector('#s-font').oninput = e => {
-                s.font = e.target.value;
-                SettingsManager.save();
-                applyStyles();
-            };
-
-            const iconInput = panel.querySelector('#e-icon');
-            if (iconInput) {
-                iconInput.oninput = () => {
-                    panel.querySelector('#e-icon-error')?.classList.remove('show');
-                    updateIconPreview(iconInput.value.trim(), panel.querySelector('#e-icon-preview'));
+            bindAppearance(settings) {
+                qPanel('#s-bc').oninput = e => {
+                    settings.b = e.target.value;
+                    panel.querySelectorAll('.neo-swatch[data-target="b"]').forEach(sw => sw.classList.remove('selected'));
+                    Refresh.saveAndStyles();
                 };
-            }
-
-            panel.querySelectorAll('[data-field-copy]').forEach(chip => {
-                chip.onclick = e => {
-                    e.stopPropagation();
-                    const hint  = chip.closest('.neo-field-hint');
-                    const label = hint?.previousElementSibling;
-                    const input = label?.previousElementSibling;
-                    if (input?.tagName === 'INPUT' && !input.value.trim()) {
-                        input.value = chip.dataset.fieldCopy;
-                        input.focus();
-                        const origHTML = chip.innerHTML;
-                        chip.textContent = t('btnCopied');
-                        setTimeout(() => chip.innerHTML = origHTML, 1200);
-                    }
+                qPanel('#s-ac').oninput = e => {
+                    settings.a = e.target.value;
+                    panel.querySelectorAll('.neo-swatch[data-target="a"]').forEach(sw => sw.classList.remove('selected'));
+                    Refresh.saveAndStyles();
                 };
-            });
+                qPanel('#s-font').oninput = e => {
+                    settings.font = e.target.value;
+                    Refresh.saveAndStyles();
+                };
+            },
 
-            const importInput = panel.querySelector('#s-import');
-            if (importInput) {
+            bindEngineEditor() {
+                const iconInput = qPanel('#e-icon');
+                if (iconInput) {
+                    iconInput.oninput = () => {
+                        qPanel('#e-icon-error')?.classList.remove('show');
+                        updateIconPreview(iconInput.value.trim(), qPanel('#e-icon-preview'));
+                    };
+                }
+
+                panel.querySelectorAll('[data-field-copy]').forEach(chip => {
+                    chip.onclick = e => {
+                        e.stopPropagation();
+                        const hint = chip.closest('.neo-field-hint');
+                        const label = hint?.previousElementSibling;
+                        const input = label?.previousElementSibling;
+                        if (input?.tagName === 'INPUT' && !input.value.trim()) {
+                            input.value = chip.dataset.fieldCopy;
+                            input.focus();
+                            const origHTML = chip.innerHTML;
+                            chip.textContent = t('btnCopied');
+                            setTimeout(() => chip.innerHTML = origHTML, 1200);
+                        }
+                    };
+                });
+            },
+
+            bindImport() {
+                const importInput = qPanel('#s-import');
+                if (!importInput) return;
                 importInput.onchange = e => {
                     const file = e.target.files[0];
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = ev => {
                         if (SettingsManager.importJSON(ev.target.result)) {
-                            applyStyles();
-                            renderPanel();
+                            Refresh.styles();
+                            Refresh.panel();
                         } else {
                             alert(t('importFail'));
                         }
@@ -1735,15 +1930,16 @@
                     reader.readAsText(file);
                     importInput.value = '';
                 };
-            }
+            },
 
-                const blInput = panel.querySelector('#bl-input');
-            if (blInput) {
+            bindBlocklist() {
+                const blInput = qPanel('#bl-input');
+                if (!blInput) return;
                 blInput.onkeydown = e => {
                     if (e.key !== 'Enter') return;
                     const val = blInput.value.trim();
                     if (!val) return;
-                    const blFeedback = panel.querySelector('#bl-feedback');
+                    const blFeedback = qPanel('#bl-feedback');
                     const result = SettingsManager.addToBlacklist(val);
                     if (result === 'duplicate') {
                         if (blFeedback) { blFeedback.textContent = t('blacklistDuplicate'); blFeedback.style.display = 'block'; }
@@ -1751,87 +1947,99 @@
                     } else {
                         blInput.value = '';
                         if (blFeedback) blFeedback.style.display = 'none';
-                        renderPanel();
+                        Refresh.panel();
                     }
                 };
-            }
+            },
 
-                const list = panel.querySelector('.n-list');
-            if (!list) return;
-            let draggingEngine = null;
+            bindEngineSort(settings) {
+                const list = qPanel('.n-list');
+                if (!list) return;
+                let draggingEngine = null;
 
-            list.ondragstart = e => {
-                const row = e.target.closest('.neo-engine-row');
-                if (!row) return;
-                const idx = parseInt(row.dataset.i);
-                if (isNaN(idx) || idx < 0 || idx >= s.en.length) return;
-                draggingEngine = s.en[idx];
-                row.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            };
-
-            list.ondragenter = e => {
-                if (!draggingEngine) return;
-                e.preventDefault();
-                list.classList.add('drag-active');
-            };
-
-            list.ondragover = e => {
-                if (!draggingEngine) return;
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                const dragging = list.querySelector('.dragging');
-                if (!dragging) return;
-                const sibling = [...list.querySelectorAll('.neo-engine-row:not(.dragging)')]
-                    .reduce((best, row) => {
-                        const rect   = row.getBoundingClientRect();
-                        const offset = e.clientY - rect.top - rect.height / 2;
-                        return (offset < 0 && offset > best.offset) ? { offset, element: row } : best;
-                    }, { offset: -Infinity }).element;
-                sibling ? list.insertBefore(dragging, sibling) : list.appendChild(dragging);
-            };
-
-            list.ondragleave = e => {
-                if (e.target === list || !list.contains(e.relatedTarget)) list.classList.remove('drag-active');
-            };
-
-            list.ondrop = e => { e.preventDefault(); e.stopPropagation(); };
-
-            list.ondragend = e => {
-                e.target.closest('.neo-engine-row')?.classList.remove('dragging');
-                list.classList.remove('drag-active');
-                if (!draggingEngine) return;
-
-                const reordered = [...list.querySelectorAll('.neo-engine-row')].reduce((acc, row) => {
+                list.ondragstart = e => {
+                    const row = e.target.closest('.neo-engine-row');
+                    if (!row) return;
                     const idx = parseInt(row.dataset.i);
-                    if (!isNaN(idx) && idx >= 0 && idx < s.en.length) {
-                        const eng = s.en[idx];
-                        if (!acc.includes(eng)) acc.push(eng);
-                    }
-                    return acc;
-                }, []);
+                    if (isNaN(idx) || idx < 0 || idx >= settings.en.length) return;
+                    draggingEngine = settings.en[idx];
+                    row.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                };
 
-                if (!SettingsManager.reorderEngines(reordered)) {
-                    console.warn('[FFA] Drag sort count mismatch, re-rendering');
-                    renderPanel();
-                }
-                draggingEngine = null;
-            };
+                list.ondragenter = e => {
+                    if (!draggingEngine) return;
+                    e.preventDefault();
+                    list.classList.add('drag-active');
+                };
+
+                list.ondragover = e => {
+                    if (!draggingEngine) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    const dragging = list.querySelector('.dragging');
+                    if (!dragging) return;
+                    const sibling = [...list.querySelectorAll('.neo-engine-row:not(.dragging)')]
+                        .reduce((best, row) => {
+                            const rect = row.getBoundingClientRect();
+                            const offset = e.clientY - rect.top - rect.height / 2;
+                            return (offset < 0 && offset > best.offset) ? { offset, element: row } : best;
+                        }, { offset: -Infinity }).element;
+                    sibling ? list.insertBefore(dragging, sibling) : list.appendChild(dragging);
+                };
+
+                list.ondragleave = e => {
+                    if (e.target === list || !list.contains(e.relatedTarget)) list.classList.remove('drag-active');
+                };
+
+                list.ondrop = e => { e.preventDefault(); e.stopPropagation(); };
+
+                list.ondragend = e => {
+                    e.target.closest('.neo-engine-row')?.classList.remove('dragging');
+                    list.classList.remove('drag-active');
+                    if (!draggingEngine) return;
+
+                    const reordered = [...list.querySelectorAll('.neo-engine-row')].reduce((acc, row) => {
+                        const idx = parseInt(row.dataset.i);
+                        if (!isNaN(idx) && idx >= 0 && idx < settings.en.length) {
+                            const eng = settings.en[idx];
+                            if (!acc.includes(eng)) acc.push(eng);
+                        }
+                        return acc;
+                    }, []);
+
+                    if (!SettingsManager.reorderEngines(reordered)) {
+                        console.warn('[FFA] Drag sort count mismatch, re-rendering');
+                        renderPanel();
+                    }
+                    draggingEngine = null;
+                };
+            },
+
+            bindAll(settings) {
+                this.bindRanges(settings);
+                this.bindAppearance(settings);
+                this.bindEngineEditor();
+                this.bindImport();
+                this.bindBlocklist();
+                this.bindEngineSort(settings);
+            },
+        };
+
+        function bindPanelInputs() {
+            PanelBindings.bindAll(SettingsManager.current);
         }
 
         const applyStyles = debounce(() => {
             StyleEngine.update();
-            shadowStyle.textContent = buildCSSVariables(SettingsManager.current) + TOOLBAR_CSS;
-            renderToolbar();
+            ToolbarController.render();
         }, 16);
 
         function updateMiniMode() {
             const s = SettingsManager.current;
-            const miniIcon = document.getElementById('ffa-mini-icon');
-            const miniHitArea = document.getElementById('ffa-mini-hitarea');
             if (!miniIcon && s.mm) { requestAnimationFrame(updateMiniMode); return; }
 
-            const anyVisible = shell.classList.contains('show') || suggestBox.classList.contains('show');
+            const anyVisible = UIState.isOverlayVisible();
             if (!s.mm) {
                 wrapper.classList.remove('mini-mode', 'toolbar-visible');
                 miniIcon?.classList.remove('visible', 'hidden', 'hovered');
@@ -1849,32 +2057,31 @@
             }
         }
 
-        EventBus.on('settings:changed', updateMiniMode);
+        cleanupTasks.push(EventBus.on('settings:changed', updateMiniMode));
 
         function observePanelChanges() {
             const obs = new MutationObserver(updateMiniMode);
             obs.observe(shell, { attributes: true, attributeFilter: ['class'] });
             obs.observe(suggestBox, { attributes: true, attributeFilter: ['class'] });
-            mask.onclick = () => {
-                mask.classList.remove('show');
-                shell.classList.remove('show');
-                suggestBox.classList.remove('show');
-                suggestBox.innerHTML = '';
-                SuggestModule.clearNav();
-                panel.querySelector('#n-sub')?.classList.remove('show');
-                wrapper.classList.remove('active', 'pinned');
-                toolbar.classList.remove('focused', 'pinned');
-                        const ic = toolbar.querySelector('.input-container');
-                const inp = toolbar.querySelector('.search-input');
-                if (ic && !inp?.value?.trim()) ic.classList.remove('expanded');
-                updateMiniMode();
-            };
+            mask.onclick = () => UIState.closePanelOverlay();
+            return () => obs.disconnect();
         }
 
         applyStyles();
         updateMiniMode();
-        observePanelChanges(); // 开始监听面板变化
+        cleanupTasks.push(observePanelChanges()); // 开始监听面板变化
         renderPanel();
+
+        const cleanup = () => {
+            lifecycle.abort();
+            cleanupTasks.forEach(fn => {
+                try { fn?.(); } catch (err) { console.warn('[FFA] cleanup', err); }
+            });
+            cleanupTasks.length = 0;
+            AppRoot.markMounted(false);
+            _isInitialized = false;
+        };
+        window.addEventListener('pagehide', cleanup, { once: true, signal });
     }
 
     init();
