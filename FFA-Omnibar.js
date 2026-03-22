@@ -4,10 +4,10 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.4.3
+// @version      3.4.4
 // @author       Farfaraway
-// @homepage     https://github.com/ffainy/FFA-UserScripts
-// @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
+// @homepage     https://github.com/ffainy
+// @supportURL   https://github.com/ffainy/FFA-UserScripts
 // @updateURL    https://raw.githubusercontent.com/ffainy/FFA-UserScripts/refs/heads/master/FFA-Omnibar.js
 // @tag          productivity
 // @match        *://*/*
@@ -108,9 +108,9 @@
         hintIconFmt1:        { en: 'Format — Base64 data URI:',      zh: '格式 — Base64 data URI：' },
         hintIconEx1:         { en: 'data:image/svg+xml;base64,PHN2Zy4uLg==', zh: 'data:image/svg+xml;base64,PHN2Zy4uLg==' },
         hintIconErr:         { en: 'Invalid format. Must start with data:image/', zh: '格式错误，必须以 data:image/ 开头。' },
-        labelSuggestionsToggle:  { en: 'Search Suggestions',                      zh: '关键字预测'                       },
+        labelSuggestionsToggle:  { en: 'Search Suggestions',                      zh: '搜索建议'                       },
         hintSuggestionsToggle:   { en: 'Fetch real-time suggestions while typing', zh: '输入时从搜索引擎拉取实时补全建议' },
-        labelHistoryToggle:      { en: 'Search History',                           zh: '历史关键字记录'                   },
+        labelHistoryToggle:      { en: 'Search History',                           zh: '搜索历史记录'                   },
         hintHistoryToggle:       { en: 'Save recent searches for quick access',    zh: '保存搜索词并在下次输入时快速回调' },
         cardBlacklist:       { en: 'Blocklist',                                   zh: '黑名单'                           },
         labelBlacklistHint:  { en: 'Omnibar is hidden on exact matching domains. Add each domain separately — <code>example.com</code> and <code>www.example.com</code> are treated as different entries.', zh: '以下域名上不显示搜索栏，精确匹配。<code>example.com</code> 和 <code>www.example.com</code> 视为不同条目，需分别添加。' },
@@ -308,6 +308,9 @@
             `--ffa-font-size-sm:${Math.max(s.fs - 2, 9)}px;` + // 次要文字：标签、幽灵按钮
             `--ffa-font-size-md:${s.fs + 2}px;` +              // 强调文字：卡片标题、列表项
             `--ffa-font-size-lg:${s.fs + 6}px;` +              // 大标题：设置面板顶部标题
+            `--ffa-font-weight-normal:400;` +
+            `--ffa-font-weight-semibold:600;` +
+            `--ffa-font-weight-bold:800;` +
             // ── 背景色 ──
             `--ffa-bg-panel:${hexToRgba(s.b, s.pa / 100)};` +                              // 面板背景（面板透明度）
             `--ffa-bg-panel-deep:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` +         // 子面板/加深背景（最低 85%）
@@ -335,7 +338,7 @@
             `--ffa-backdrop-toolbar:blur(${s.tb}px) saturate(${saturation});` +  // 搜索条 backdrop-filter
             `--ffa-backdrop-panel:blur(${s.pb}px) saturate(${saturation});` +    // 面板 backdrop-filter
             `}` +
-            `:host *{font-family:${fontStack}system-ui,sans-serif !important}`;
+            `:host *{font-family:${fontStack}system-ui,sans-serif}`;
     }
 
     const SettingsManager = {
@@ -534,7 +537,7 @@
         `.ffa-overlay--visible{visibility:visible;opacity:1;pointer-events:auto}`,
 
         // ── 面板全局字体继承 ──
-        `.ffa-panel *{font-family:var(--ffa-font-stack) !important;color:inherit;box-sizing:border-box;text-shadow:none}`,
+        `.ffa-panel *{font-family:var(--ffa-font-stack);color:inherit;box-sizing:border-box;text-shadow:none}`,
         `.ffa-panel a,.ffa-panel a:visited,.ffa-panel a:hover{color:inherit;text-decoration:none}`,
 
         // ── 面板滚动区 ──
@@ -546,7 +549,7 @@
         `.ffa-panel__scroll{scrollbar-width:thin;scrollbar-color:var(--ffa-accent-glow) transparent}`,
 
         // ── 引擎行 ──
-        `.ffa-engine-row__host{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary) !important}`,
+        `.ffa-engine-row__host{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary)}`,
         `.ffa-engine-row{display:flex;align-items:center;gap:15px;padding:12px 15px;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);border:1px solid var(--ffa-border);margin-bottom:12px;cursor:grab;transition:0.25s var(--ffa-easing);position:relative}`,
         `.ffa-engine-row:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-3px);box-shadow:0 6px 20px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow)}`,
         `.ffa-engine-row--dragging{opacity:0.5;border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);cursor:grabbing;box-shadow:0 10px 40px var(--ffa-accent-glow),0 0 20px var(--ffa-accent-glow);transform:scale(1.02) rotate(2deg);transition:0.15s var(--ffa-easing)}`,
@@ -560,11 +563,11 @@
 
         // ── 卡片 ──
         `.ffa-card{background:var(--ffa-bg-panel);backdrop-filter:blur(15px);border-radius:min(calc(var(--ffa-radius-panel) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--ffa-border);box-shadow:0 10px 30px rgba(0,0,0,0.05);box-sizing:border-box}`,
-        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:900;letter-spacing:1px;color:var(--ffa-accent);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-md) !important}`,
+        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:1px;color:var(--ffa-accent);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-md)}`,
 
         // ── 字段标签 & 提示 ──
-        `.ffa-field__label{display:flex;justify-content:space-between;align-items:center;font-size:var(--ffa-font-size-sm);color:var(--ffa-text-primary);margin-bottom:8px;font-weight:600;transform:translateZ(0)}`,
-        `.ffa-field__label b{font-weight:400;color:var(--ffa-text-secondary);font-size:var(--ffa-font-size-xs);background:var(--ffa-bg-inner);padding:2px 8px;border-radius:10px}`,
+        `.ffa-field__label{display:flex;justify-content:space-between;align-items:center;font-size:var(--ffa-font-size-sm);color:var(--ffa-text-primary);margin-bottom:8px;font-weight:var(--ffa-font-weight-semibold);transform:translateZ(0)}`,
+        `.ffa-field__label b{font-weight:var(--ffa-font-weight-normal);color:var(--ffa-text-secondary);font-size:var(--ffa-font-size-xs);background:var(--ffa-bg-inner);padding:2px 8px;border-radius:10px}`,
         `.ffa-field__hint{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary);margin:4px 0 12px;line-height:1.6}`,
         `.ffa-field__hint code{font-family:monospace;font-size:var(--ffa-font-size-xs);color:var(--ffa-accent);background:var(--ffa-bg-inner);padding:1px 5px;border-radius:4px;border:1px solid var(--ffa-border)}`,
         `.ffa-field__example{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:8px;font-size:var(--ffa-font-size-xs);font-family:monospace;color:var(--ffa-accent);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--ffa-easing);user-select:none}`,
@@ -585,12 +588,12 @@
         `.ffa-panel__footer{padding:20px 28px;display:flex;gap:15px;border-top:1px solid var(--ffa-border)}`,
 
         // ── 按钮变体 ──
-        `.ffa-btn--primary{padding:14px;background:var(--ffa-accent);color:var(--ffa-text-on-accent);border:none;border-radius:var(--ffa-radius-widget);font-weight:800;cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;box-shadow:0 4px 15px var(--ffa-accent-glow);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.ffa-btn--primary:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-on-accent) !important}`,
-        `.ffa-btn--ghost{padding:14px;background:var(--ffa-bg-inner);color:var(--ffa-text-primary);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);font-size:var(--ffa-font-size-sm);font-weight:600;cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.ffa-btn--ghost:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);transform:translateY(-3px);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);color:var(--ffa-text-primary);text-shadow:var(--ffa-glow-accent-sm) !important}`,
-        `.ffa-btn--danger{padding:14px;background:var(--ffa-bg-inner);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ffa-radius-widget);font-weight:800;cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.ffa-btn--danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5) !important}`,
+        `.ffa-btn--primary{padding:14px;background:var(--ffa-accent);color:var(--ffa-text-on-accent);border:none;border-radius:var(--ffa-radius-widget);font-weight:var(--ffa-font-weight-bold);cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;box-shadow:0 4px 15px var(--ffa-accent-glow);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
+        `.ffa-btn--primary:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-on-accent)}`,
+        `.ffa-btn--ghost{padding:14px;background:var(--ffa-bg-inner);color:var(--ffa-text-primary);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);font-size:var(--ffa-font-size-sm);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
+        `.ffa-btn--ghost:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);transform:translateY(-3px);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);color:var(--ffa-text-primary);text-shadow:var(--ffa-glow-accent-sm)}`,
+        `.ffa-btn--danger{padding:14px;background:var(--ffa-bg-inner);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ffa-radius-widget);font-weight:var(--ffa-font-weight-bold);cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
+        `.ffa-btn--danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5)}`,
 
         // ── 子面板（引擎编辑） ──
         `.ffa-subpanel{position:absolute;inset:0;background:var(--ffa-bg-panel-deep);backdrop-filter:var(--ffa-backdrop-panel);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--ffa-easing);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--ffa-border)}`,
@@ -607,9 +610,9 @@
         `.ffa-input:focus{border-color:var(--ffa-accent);background:var(--ffa-bg-panel);box-shadow:0 0 12px var(--ffa-accent-glow)}`,
 
         // ── 主题按钮 ──
-        `.ffa-theme-btn{flex:1;padding:12px 5px;font-size:var(--ffa-font-size-sm);border-radius:var(--ffa-radius-widget);cursor:pointer;border:1px solid var(--ffa-border);background:var(--ffa-bg-inner);color:var(--ffa-text-primary);font-weight:bold;transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.ffa-theme-btn:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm) !important}`,
-        `.ffa-theme-btn--active{border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-theme-btn{flex:1;padding:12px 5px;font-size:var(--ffa-font-size-sm);border-radius:var(--ffa-radius-widget);cursor:pointer;border:1px solid var(--ffa-border);background:var(--ffa-bg-inner);color:var(--ffa-text-primary);font-weight:var(--ffa-font-weight-bold);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
+        `.ffa-theme-btn:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm)}`,
+        `.ffa-theme-btn--active{border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent)}`,
 
         // ── 图标编辑器 ──
         `.ffa-icon-editor{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
@@ -641,17 +644,17 @@
         // ── 面板外壳 & tab 导航 ──
         `.ffa-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s var(--ffa-easing);display:inline-block}`,
         `.ffa-panel-shell--visible{visibility:visible;opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}`,
-        `.ffa-panel__tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:48px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--ffa-bg-panel-deep);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:width 0.35s var(--ffa-easing);z-index:1;overflow:hidden}`,
+        `.ffa-panel__tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:56px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--ffa-bg-panel-deep);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:width 0.35s var(--ffa-easing);z-index:1;overflow:hidden}`,
         `.ffa-panel__tab-nav:hover{width:160px}`,
         `.ffa-panel__tab-nav .ffa-panel__tab-btn{justify-content:center;width:100%;box-sizing:border-box;padding:0;min-width:0;overflow:hidden;gap:0}`,
         `.ffa-panel__tab-nav:hover .ffa-panel__tab-btn{justify-content:flex-start;padding-left:10px;gap:6px}`,  
         `.ffa-panel__tab-btn{height:40px;display:flex;align-items:center;gap:10px;padding:0 11px;cursor:pointer;flex-shrink:0;color:var(--ffa-text-secondary);border-radius:var(--ffa-radius-panel);transition:background 0.2s var(--ffa-easing),color 0.2s var(--ffa-easing);position:relative;white-space:nowrap}`,
         `.ffa-panel__tab-btn svg{width:18px;height:18px;flex:0 0 18px;transition:color 0.2s var(--ffa-easing);align-self:center}`,
-        `.ffa-panel__tab-label{font-size:var(--ffa-font-size-base);font-weight:700;letter-spacing:0.5px;opacity:0;max-width:0;overflow:hidden;display:inline-block;vertical-align:middle;transition:opacity 0.08s linear,max-width 0.25s var(--ffa-easing)}`,
+        `.ffa-panel__tab-label{font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);letter-spacing:0.5px;opacity:0;max-width:0;overflow:hidden;display:inline-block;vertical-align:middle;transition:opacity 0.08s linear,max-width 0.25s var(--ffa-easing)}`,
         `.ffa-panel__tab-nav:hover .ffa-panel__tab-label{opacity:1;max-width:220px;margin-left:6px;transition:opacity 0.15s var(--ffa-easing) 0.15s,max-width 0.25s var(--ffa-easing) 0.15s}`,
         `.ffa-panel__tab-btn:not(.ffa-panel__tab-btn--active):hover{background:var(--ffa-accent-glow);color:var(--ffa-text-primary)}`,
         `.ffa-panel__tab-btn--active{background:var(--ffa-accent);color:var(--ffa-text-on-accent);box-shadow:0 4px 14px var(--ffa-accent-glow),0 0 8px var(--ffa-accent-glow)}`,
-        `.ffa-panel__tab-btn--active .ffa-panel__tab-label{color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-panel__tab-btn--active .ffa-panel__tab-label{color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent)}`,
         `.ffa-panel__tab-btn--active svg{color:var(--ffa-text-on-accent)}`,
 
         // ── 面板主体 ──
@@ -661,7 +664,7 @@
         `.ffa-panel__tab-content{display:none}`,
         `@keyframes ffa-tab-fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`,
         `.ffa-panel__tab-content--active{display:block;animation:ffa-tab-fadein 0.2s var(--ffa-easing) both}`,
-        `.ffa-panel__title{text-align:center;font-weight:900;letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-lg) !important;border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
+        `.ffa-panel__title{text-align:center;font-weight:var(--ffa-font-weight-bold);letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-lg);border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
     ].join('');
 
     // ─── TOOLBAR_CSS ──────────────────────────────────────────────────────────────
@@ -690,14 +693,14 @@
         `.ffa-toolbar--focused{background:var(--ffa-bg-panel);border-color:var(--ffa-accent);box-shadow:var(--ffa-shadow),0 0 0 1px var(--ffa-accent),0 0 18px var(--ffa-accent-glow)}`,
 
         // ── 引擎按钮 ──
-        `.ffa-toolbar__engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--ffa-font-size-base);line-height:1.2;color:var(--ffa-text-primary);cursor:pointer;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:700;border:1px solid var(--ffa-border);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
+        `.ffa-toolbar__engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--ffa-font-size-base);line-height:1.2;color:var(--ffa-text-primary);cursor:pointer;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:var(--ffa-font-weight-semibold);border:1px solid var(--ffa-border);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
         `.ffa-toolbar__engine-btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:16px;height:16px;overflow:visible;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
         `.ffa-toolbar__engine-btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;padding-left:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
         `.ffa-toolbar:hover .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active),.ffa-toolbar--pinned .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active){opacity:1}`,
-        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm) !important;max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
+        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
         `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-icon{transform:scale(1.1)}`,
         `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
-        `.ffa-toolbar__engine-btn--active{border-color:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow),0 0 16px var(--ffa-accent-glow);opacity:1 !important;max-width:160px;padding-right:10px}`,
+        `.ffa-toolbar__engine-btn--active{border-color:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow),0 0 16px var(--ffa-accent-glow);opacity:1;max-width:160px;padding-right:10px}`,
         `.ffa-toolbar__engine-btn--active .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0)}`,
         `.ffa-toolbar__engine-btn--active:hover{background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02)}`,
 
@@ -722,22 +725,22 @@
         `@keyframes ffa-suggest-in{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
         `@keyframes ffa-suggest-item-in{from{opacity:0;transform:translateY(16px) scale(0.92)}to{opacity:1;transform:translateY(0) scale(1)}}`,
         `.ffa-suggest__item:nth-child(1){animation-delay:0ms}.ffa-suggest__item:nth-child(2){animation-delay:40ms}.ffa-suggest__item:nth-child(3){animation-delay:80ms}.ffa-suggest__item:nth-child(4){animation-delay:120ms}.ffa-suggest__item:nth-child(5){animation-delay:160ms}.ffa-suggest__item:nth-child(6){animation-delay:200ms}.ffa-suggest__item:nth-child(7){animation-delay:240ms}.ffa-suggest__item:nth-child(8){animation-delay:280ms}.ffa-suggest__item:nth-child(9){animation-delay:320ms}.ffa-suggest__item:nth-child(10){animation-delay:360ms}`,
-        `.ffa-suggest__item{padding:10px 24px;font-size:var(--ffa-font-size-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-primary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
-        `.ffa-suggest__item:hover,.ffa-suggest__item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-suggest__item{padding:10px 24px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-primary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
+        `.ffa-suggest__item:hover,.ffa-suggest__item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent)}`,
 
         // ── 建议分隔线 ──
         `.ffa-suggest__divider{width:100%;display:flex;align-items:center;gap:8px;padding:0 4px;opacity:0;animation:ffa-suggest-item-in 0.3s var(--ffa-easing) forwards}`,
         `.ffa-suggest__divider-line{flex:1;height:1px;background:rgba(255,255,255,0.25)}`,
-        `.ffa-suggest__divider-label{font-size:var(--ffa-font-size-xs);font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
+        `.ffa-suggest__divider-label{font-size:var(--ffa-font-size-xs);font-weight:var(--ffa-font-weight-semibold);letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
 
         // ── 历史条目 ──
-        `.ffa-suggest__history-item{padding:10px 20px 10px 16px;font-size:var(--ffa-font-size-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
-        `.ffa-suggest__history-item:hover,.ffa-suggest__history-item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-suggest__history-item{padding:10px 20px 10px 16px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
+        `.ffa-suggest__history-item:hover,.ffa-suggest__history-item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent)}`,
         `.ffa-suggest__history-icon{font-size:var(--ffa-font-size-sm);opacity:0.5;flex-shrink:0;transition:0.25s}`,
         `.ffa-suggest__history-item:hover .ffa-suggest__history-icon{opacity:1}`,
         `.ffa-suggest__history-del{margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:var(--ffa-font-size-xs);opacity:0;transition:0.2s var(--ffa-easing);flex-shrink:0;color:inherit}`,
         `.ffa-suggest__history-item:hover .ffa-suggest__history-del{opacity:0.6}`,
-        `.ffa-suggest__history-del:hover{opacity:1 !important;background:rgba(255,71,87,0.25);color:#ff4757}`,
+        `.ffa-suggest__history-del:hover{opacity:1;background:rgba(255,71,87,0.25);color:#ff4757}`,
 
         // ── 设置按钮 ──
         `.ffa-toolbar__settings-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ffa-text-primary);transition:0.5s var(--ffa-easing);border-radius:50%;opacity:0.5}`,
@@ -1721,21 +1724,18 @@
                         <div class="ffa-card">
                             <span class="ffa-card__title">${t('cardAbout')}</span>
                             <div style="margin-bottom:20px">
-                                <div style="font-size:var(--ffa-font-size-lg);font-weight:700;color:var(--ffa-accent);margin-bottom:8px">${SecurityUtils.escapeHtml(scriptInfo.name)}</div>
+                                <div style="font-size:var(--ffa-font-size-lg);font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-accent);margin-bottom:8px">${SecurityUtils.escapeHtml(scriptInfo.name)}</div>
                                 <div style="font-size:var(--ffa-font-size-sm);color:var(--ffa-text-secondary);line-height:1.5">${SecurityUtils.escapeHtml(scriptInfo.description)}</div>
                             </div>
-                            <div style="display:flex;flex-direction:column;gap:12px">
-                                <div style="display:flex;justify-content:space-between;align-items:center">
-                                    <span style="font-weight:600;color:var(--ffa-text-primary)">${t('labelAuthor')}</span>
-                                    <a href="https://github.com/ffainy" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.author)}</a>
+                            <div style="display:flex;flex-direction:column;gap:10px">
+                                <div style="font-size:var(--ffa-font-size-sm)">
+                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelAuthor')}: </span><a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.author)}</a>
                                 </div>
-                                <div style="display:flex;justify-content:space-between;align-items:center">
-                                    <span style="font-weight:600;color:var(--ffa-text-primary)">${t('labelVersion')}</span>
-                                    <span style="color:var(--ffa-text-secondary)">${SecurityUtils.escapeHtml(scriptInfo.version)}</span>
+                                <div style="font-size:var(--ffa-font-size-sm)">
+                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelVersion')}: </span><span style="color:var(--ffa-accent)">${SecurityUtils.escapeHtml(scriptInfo.version)}</span>
                                 </div>
-                                <div style="display:flex;justify-content:space-between;align-items:center">
-                                    <span style="font-weight:600;color:var(--ffa-text-primary)">${t('labelWebsite')}</span>
-                                    <a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.website)}</a>
+                                <div style="font-size:var(--ffa-font-size-sm)">
+                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelWebsite')}: </span><a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.website)}</a>
                                 </div>
                             </div>
                         </div>
@@ -1746,7 +1746,7 @@
                 return `
                 <div class="ffa-subpanel" id="n-sub">
                     <div class="ffa-subpanel__scroll">
-                        <h3 id="sub-title" style="color:var(--ffa-accent);margin:0 0 20px;font-size:var(--ffa-font-size-md);font-weight:900;letter-spacing:2px"></h3>
+                        <h3 id="sub-title" style="color:var(--ffa-accent);margin:0 0 20px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:2px"></h3>
                         <div class="ffa-field__label">${t('labelName')}</div>
                         <input type="text" id="e-n" class="ffa-input">
                         <div class="ffa-field__hint">
@@ -1762,7 +1762,7 @@
                         </div>
                         <div class="ffa-field__hint" style="margin-top:6px">
                             ${t('hintIconDesc')}<br><br>
-                            <span style="font-size:var(--ffa-font-size-xs);font-weight:700;color:var(--ffa-text-secondary)">${t('hintIconFmt1')}</span><br>
+                            <span style="font-size:var(--ffa-font-size-xs);font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-secondary)">${t('hintIconFmt1')}</span><br>
                             <span class="ffa-field__example" data-field-copy="${escAttr(t('hintIconEx1'))}"><span class="ffa-field__example-icon">⎘</span>${t('hintIconEx1')}</span>
                         </div>
                         <div class="ffa-icon-editor__error" id="e-icon-error">${t('hintIconErr')}</div>
@@ -1887,7 +1887,7 @@
                         <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ffa-text-primary);opacity:0.8">${iconHtml}</div>
                         <div class="ffa-switch ${eng.enabled ? 'ffa-switch--on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
                         <div style="flex:1">
-                            <div style="font-size:var(--ffa-font-size-md);font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
+                            <div style="font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold)">${SecurityUtils.escapeHtml(eng.name)}</div>
                             <div class="ffa-engine-row__host">${SecurityUtils.escapeHtml(eng.host)}</div>
                         </div>
                         <div data-action="edit-engine" data-i="${i}" style="cursor:pointer">✎</div>
