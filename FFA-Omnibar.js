@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.3.0
+// @version      3.4.0
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -251,24 +251,31 @@
             ? window.open(url, '_blank') : (location.href = url);
     }
 
-    
     const BUILTIN_HOSTS = new Set(DEFAULT_ENGINES.map(e => e.host));
 
     function updateIconPreview(raw, el) {
         if (!el) return;
         if (!raw?.trim()) {
-            el.innerHTML = '<span style="font-size:var(--nfs-xs);opacity:0.4">—</span>';
+            el.innerHTML = '<span style="font-size:var(--ffa-font-size-xs);opacity:0.4">—</span>';
             return;
         }
         const result = SecurityUtils.validateIcon(raw);
         if (!result.valid) {
-            el.innerHTML = '<span style="font-size:var(--nfs-md)">✕</span>';
+            el.innerHTML = '<span style="font-size:var(--ffa-font-size-md)">✕</span>';
             return;
         }
         el.innerHTML = '';
         el.appendChild(decodeBase64Icon(result.value, 24));
     }
 
+    // ─── CSS 变量构建 ────────────────────────────────────────────────────────────
+    // 命名规范：--ffa-* 前缀，按功能分层：
+    //   间距/尺寸：--ffa-offset-bottom / --ffa-radius-panel / --ffa-radius-widget / --ffa-font-size-*
+    //   背景色：   --ffa-bg-panel / --ffa-bg-panel-deep / --ffa-bg-toolbar / --ffa-bg-inner / --ffa-bg-inner-strong
+    //   文字色：   --ffa-text-primary / --ffa-text-secondary / --ffa-text-on-accent
+    //   强调色：   --ffa-accent / --ffa-accent-glow / --ffa-border
+    //   文字光晕： --ffa-glow-accent-sm / -md / -lg / --ffa-glow-on-accent / --ffa-glow-text
+    //   效果：     --ffa-font-stack / --ffa-easing / --ffa-shadow / --ffa-backdrop-toolbar / --ffa-backdrop-panel
     function buildCSSVariables(s) {
         const textColor  = contrastColor(s.b);
         const isDark     = textColor === '#fff';
@@ -285,40 +292,42 @@
             ? s.font.split(',').map(f => `"${f.trim().replace(/^["']+|["']+$/g, '')}"`).filter(f => f !== '""').join(',') + ','
             : '';
 
-        // CSS 自定义属性注入到 shadow root 内，统一供整套 UI 使用。
-        // 命名规范：--n 前缀为 omnibar 命名空间，避免与页面 CSS 冲突。
         return `:host,:root{` +
-            `--nb:${s.bt}px;`  +   // 搜索条距底部距离
-            `--nr:${s.r}px;`   +   // 面板圆角半径
-            `--ni:${s.ir}px;`  +   // 元素（按钮/输入框）圆角半径
-            `--nfs:${s.fs}px;` +   // 基准字号
-            // 主题色文字光晕，三档强度（sm 弱 / md 中 / lg 强）
-            `--ts-na-sm:0 0 6px ${hexToRgba(s.a, 0.55)};` +
-            `--ts-na-md:0 0 8px ${hexToRgba(s.a, 0.7)},0 0 20px ${hexToRgba(s.a, 0.35)};` +
-            `--ts-na-lg:0 0 10px ${hexToRgba(s.a, 0.9)},0 0 25px ${hexToRgba(s.a, 0.55)},0 0 50px ${hexToRgba(s.a, 0.25)};` +
-            `--ts-noa:0 0 6px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.35)};` + // 主题色背景上的文字光晕
-            `--ts-ntm:0 0 5px ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'};` + // 正文色文字光晕
-            // 字号缩放层级，基于基准字号 --nfs 派生
-            `--nfs-xs:${Math.max(s.fs - 3, 9)}px;` + // 辅助文字：提示、徽章、标注
-            `--nfs-sm:${Math.max(s.fs - 2, 9)}px;` + // 次要文字：标签、幽灵按钮
-            `--nfs-md:${s.fs + 2}px;` +               // 强调文字：卡片标题、列表项
-            `--nfs-lg:${s.fs + 6}px;` +               // 大标题：设置面板顶部标题
-            // 背景色系列（基于主题背景色 + 不同透明度）
-            `--nbp:${hexToRgba(s.b, s.pa / 100)};`  +    // 面板背景（面板透明度）
-            `--nbs:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` + // 面板背景加深版（最低 85%，用于子面板）
-            `--nbt:${hexToRgba(s.b, s.ta / 100)};`  +    // 搜索条背景（搜索条透明度）
-            `--na:${s.a};`   +   // 强调色（原始十六进制）
-            `--ntm:${textColor};` + // 主文字色（根据背景亮暗自动取黑或白）
-            `--ntd:${dimText};`   + // 次文字色（灰化处理）
-            `--noa:${contrastColor(s.a)};` + // 强调色背景上的文字色（自动黑或白）
-            `--nbd:${borderColor};` +          // 边框色
-            `--nag:${hexToRgba(s.a, nagAlpha)};` + // 强调色光晕（半透明强调色，用于阴影/发光）
-            `--nib:${innerBg};--nib2:${innerBg2};` + // 内部元素背景（淡化的强调色底色）
-            `--nf:${fontStack}system-ui,sans-serif;` + // 字体栈
-            `--sp:cubic-bezier(0.23,1,0.32,1);` + // 弹性缓动曲线
-            `--sd:${shadowSpec};`  +   // 投影（发光效果）
-            `--ng:blur(${s.tb}px) saturate(${saturation});`  + // 搜索条 backdrop-filter
-            `--ngp:blur(${s.pb}px) saturate(${saturation});` + // 面板 backdrop-filter
+            // ── 间距 & 尺寸 ──
+            `--ffa-offset-bottom:${s.bt}px;` +      // 搜索条距底部距离
+            `--ffa-radius-panel:${s.r}px;` +         // 面板圆角半径
+            `--ffa-radius-widget:${s.ir}px;` +       // 元素（按钮/输入框）圆角半径
+            `--ffa-font-size-base:${s.fs}px;` +      // 基准字号
+            `--ffa-font-size-xs:${Math.max(s.fs - 3, 9)}px;` + // 辅助文字：提示、徽章、标注
+            `--ffa-font-size-sm:${Math.max(s.fs - 2, 9)}px;` + // 次要文字：标签、幽灵按钮
+            `--ffa-font-size-md:${s.fs + 2}px;` +              // 强调文字：卡片标题、列表项
+            `--ffa-font-size-lg:${s.fs + 6}px;` +              // 大标题：设置面板顶部标题
+            // ── 背景色 ──
+            `--ffa-bg-panel:${hexToRgba(s.b, s.pa / 100)};` +                              // 面板背景（面板透明度）
+            `--ffa-bg-panel-deep:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` +         // 子面板/加深背景（最低 85%）
+            `--ffa-bg-toolbar:${hexToRgba(s.b, s.ta / 100)};` +                             // 搜索条背景（搜索条透明度）
+            `--ffa-bg-inner:${innerBg};` +            // 内部元素底色（淡化强调色）
+            `--ffa-bg-inner-strong:${innerBg2};` +    // 内部元素底色（稍深版本）
+            // ── 颜色：强调 & 边框 ──
+            `--ffa-accent:${s.a};` +                  // 强调色（十六进制）
+            `--ffa-accent-glow:${hexToRgba(s.a, nagAlpha)};` + // 强调色半透明光晕，用于阴影/发光
+            `--ffa-border:${borderColor};` +           // 边框色
+            // ── 颜色：文字 ──
+            `--ffa-text-primary:${textColor};` +       // 主文字色（根据背景亮暗自动取黑或白）
+            `--ffa-text-secondary:${dimText};` +       // 次文字色（灰化处理）
+            `--ffa-text-on-accent:${contrastColor(s.a)};` + // 强调色背景上的文字色（自动黑或白）
+            // ── 文字光晕（三档强度：sm/md/lg） ──
+            `--ffa-glow-accent-sm:0 0 6px ${hexToRgba(s.a, 0.55)};` +
+            `--ffa-glow-accent-md:0 0 8px ${hexToRgba(s.a, 0.7)},0 0 20px ${hexToRgba(s.a, 0.35)};` +
+            `--ffa-glow-accent-lg:0 0 10px ${hexToRgba(s.a, 0.9)},0 0 25px ${hexToRgba(s.a, 0.55)},0 0 50px ${hexToRgba(s.a, 0.25)};` +
+            `--ffa-glow-on-accent:0 0 6px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.35)};` + // 强调色背景上的文字光晕
+            `--ffa-glow-text:0 0 5px ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'};` + // 正文色文字光晕
+            // ── 效果 ──
+            `--ffa-font-stack:${fontStack}system-ui,sans-serif;` + // 字体栈
+            `--ffa-easing:cubic-bezier(0.23,1,0.32,1);` +          // 弹性缓动曲线
+            `--ffa-shadow:${shadowSpec};` +                          // 投影（发光效果）
+            `--ffa-backdrop-toolbar:blur(${s.tb}px) saturate(${saturation});` +  // 搜索条 backdrop-filter
+            `--ffa-backdrop-panel:blur(${s.pb}px) saturate(${saturation});` +    // 面板 backdrop-filter
             `}` +
             `:host *{font-family:${fontStack}system-ui,sans-serif !important}`;
     }
@@ -490,174 +499,241 @@
         },
     };
 
-    // 通过单一 shadow root 内的 <style> 注入，作用于整套隔离 UI：
-    //   .neo-mask          — 设置面板背后的全屏遮罩
-    //   .neo-panel-shell   — 设置面板容器（定位面板主体与左侧切换按钮）
-    //   .neo-panel         — 设置面板主体（含滚动内容区和底部按钮）
-    //   .neo-tab-nav       — 面板左侧悬浮的 tab 切换抽屉
-    //   .ffa-mini-icon     — 迷你模式下的收起图标
-    //   .ffa-mini-hitarea  — 迷你图标上方的透明 hover 触发区域
+    // ─── APP_CSS ─────────────────────────────────────────────────────────────────
+    // 注入到统一 shadow root 内，作用于整套隔离 UI。
+    // 类名规范：ffa-[block] / ffa-[block]__[element] / ffa-[block]--[modifier]
+    //
+    // 主要块（block）：
+    //   .ffa-app-root          — 全局容器
+    //   .ffa-overlay           — 设置面板背后的全屏遮罩
+    //   .ffa-panel-shell       — 面板定位外壳（含 tab 导航和面板主体）
+    //   .ffa-panel             — 设置面板主体
+    //   .ffa-panel__tab-nav    — 左侧 tab 切换抽屉
+    //   .ffa-panel__tab-btn    — 单个 tab 按钮
+    //   .ffa-card              — 设置卡片
+    //   .ffa-subpanel          — 引擎编辑子面板
+    //   .ffa-switch            — 开关组件
+    //   .ffa-btn--primary/ghost/danger — 按钮变体
+    //   .ffa-mini-icon         — 迷你模式图标
+    //   .ffa-mini-hitarea      — 迷你模式触发区域
     const APP_CSS = [
         `:host{all:initial}`,
         `:host,:host *,:host *::before,:host *::after{box-sizing:border-box}`,
-        `.ffa-app-root{position:fixed;inset:0;z-index:2147483640;pointer-events:none;font-family:var(--nf);line-height:1.4;color:var(--ntm);text-size-adjust:none;-webkit-font-smoothing:antialiased}`,
+        `.ffa-app-root{position:fixed;inset:0;z-index:2147483640;pointer-events:none;font-family:var(--ffa-font-stack);line-height:1.4;color:var(--ffa-text-primary);text-size-adjust:none;-webkit-font-smoothing:antialiased}`,
         `.ffa-app-root *{box-sizing:border-box}`,
-        `.neo-mask,.neo-panel-shell,.ffa-mini-icon,.ffa-mini-hitarea,.toolbar-host,.suggest-box,.wrapper,.toolbar,.input-container,.search-btn,.search-input,.engine-btn,.settings-btn{pointer-events:auto}`,
-        `.neo-mask{position:fixed;inset:0;background:var(--nib2);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s}`,
-        `.neo-mask.show{visibility:visible;opacity:1;pointer-events:auto}`,
-        `.neo-panel *{font-family:var(--nf) !important;color:inherit;box-sizing:border-box;text-shadow:none}`,
-        `.neo-panel a,.neo-panel a:visited,.neo-panel a:hover{color:inherit;text-decoration:none}`,
-        `.neo-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 28px}`,
-        `.neo-scroll::-webkit-scrollbar{width:4px}`,
-        `.neo-scroll::-webkit-scrollbar-track{background:transparent}`,
-        `.neo-scroll::-webkit-scrollbar-thumb{background:var(--nag);border-radius:10px;transition:background 0.2s}`,
-        `.neo-scroll::-webkit-scrollbar-thumb:hover{background:var(--na)}`,
-        `.neo-scroll{scrollbar-width:thin;scrollbar-color:var(--nag) transparent}`,
-        `.neo-engine-host{font-size:var(--nfs-xs);color:var(--ntd) !important}`,
-        `.neo-engine-row{display:flex;align-items:center;gap:15px;padding:12px 15px;background:var(--nib);border-radius:var(--ni);border:1px solid var(--nbd);margin-bottom:12px;cursor:grab;transition:0.25s var(--sp);position:relative}`,
-        `.neo-engine-row:hover{border-color:var(--na);background:var(--nag);transform:translateY(-3px);box-shadow:0 6px 20px var(--nag),0 0 10px var(--nag)}`,
-        `.neo-engine-row.dragging{opacity:0.5;border-color:var(--na);background:var(--na);color:var(--noa);cursor:grabbing;box-shadow:0 10px 40px var(--nag),0 0 20px var(--nag);transform:scale(1.02) rotate(2deg);transition:0.15s var(--sp)}`,
-        `.n-list.drag-active{background:rgba(0,0,0,0.02);border-radius:var(--ni);padding:8px}`,
-        `.neo-switch{width:40px;height:20px;border-radius:20px;background:var(--nbd);position:relative;cursor:pointer;transition:0.25s var(--sp)}`,
-        `.neo-switch::after{content:'';position:absolute;left:4px;top:4px;width:12px;height:12px;background:var(--ntd);border-radius:50%;transition:0.25s var(--sp)}`,
-        `.neo-switch.on{background:var(--na)}`,
-        `.neo-switch.on::after{left:24px;background:var(--noa)}`,
-        `.neo-card{background:var(--nbp);backdrop-filter:blur(15px);border-radius:min(calc(var(--nr) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--nbd);box-shadow:0 10px 30px rgba(0,0,0,0.05);box-sizing:border-box}`,
-        `.neo-card-title{font-size:var(--nfs-md);font-weight:900;letter-spacing:1px;color:var(--na);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ts-na-md) !important}`,
-        `.neo-label{display:flex;justify-content:space-between;align-items:center;font-size:var(--nfs-sm);color:var(--ntm);margin-bottom:8px;font-weight:600;transform:translateZ(0)}`,
-        `.neo-label b{font-weight:400;color:var(--ntd);font-size:var(--nfs-xs);background:var(--nib);padding:2px 8px;border-radius:10px}`,
-        `input[type=range]{width:100%;cursor:pointer;margin:12px 0;height:18px;background:transparent;outline:none;border:none;padding:0;-webkit-appearance:none;appearance:none;font-family:var(--nf)}`,
-        `input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--nbd);border-radius:2px}`,
-        `input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--na);margin-top:-5px;box-shadow:0 0 6px var(--nag);transition:box-shadow 0.2s,transform 0.2s;border:none}`,
-        `input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 10px var(--na),0 0 20px var(--nag);transform:scale(1.15)}`,
-        `input[type=range]::-moz-range-track{height:4px;background:var(--nbd);border-radius:2px;border:none}`,
-        `input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--na);box-shadow:0 0 6px var(--nag);transition:box-shadow 0.2s,transform 0.2s;border:none;cursor:pointer}`,
-        `input[type=range]:hover::-moz-range-thumb{box-shadow:0 0 10px var(--na),0 0 20px var(--nag);transform:scale(1.15)}`,
-        `.neo-footer{padding:20px 28px;display:flex;gap:15px;border-top:1px solid var(--nbd)}`,
-        `.neo-btn-main{padding:14px;background:var(--na);color:var(--noa);border:none;border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;box-shadow:0 4px 15px var(--nag);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.neo-btn-main:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);text-shadow:var(--ts-noa) !important}`,
-        `.neo-btn-ghost{padding:14px;background:var(--nib);color:var(--ntm);border:1px solid var(--nbd);border-radius:var(--ni);font-size:var(--nfs-sm);font-weight:600;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.neo-btn-ghost:hover{background:var(--nag);border-color:var(--na);transform:translateY(-3px);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);color:var(--ntm);text-shadow:var(--ts-na-sm) !important}`,
-        `.neo-btn-danger{padding:14px;background:var(--nib);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ni);font-weight:800;cursor:pointer;transition:0.25s var(--sp);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.neo-btn-danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5) !important}`,
-        `.neo-sub-panel{position:absolute;inset:0;background:var(--nbs);backdrop-filter:var(--ngp);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--sp);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--nbd)}`,
-        `.neo-sub-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:30px;box-sizing:border-box}`,
-        `.neo-sub-scroll::-webkit-scrollbar{width:4px}`,
-        `.neo-sub-scroll::-webkit-scrollbar-track{background:transparent}`,
-        `.neo-sub-scroll::-webkit-scrollbar-thumb{background:var(--nag);border-radius:10px}`,
-        `.neo-sub-scroll::-webkit-scrollbar-thumb:hover{background:var(--na)}`,
-        `.neo-sub-scroll{scrollbar-width:thin;scrollbar-color:var(--nag) transparent}`,
-        `.neo-sub-panel.show{transform:translateY(0)}`,
-        `.neo-edit-input{width:100%;padding:14px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--nf)}`,
-        `.neo-edit-input:focus{border-color:var(--na);background:var(--nbp);box-shadow:0 0 12px var(--nag)}`,
-        `.neo-theme-btn{flex:1;padding:12px 5px;font-size:var(--nfs-sm);border-radius:var(--ni);cursor:pointer;border:1px solid var(--nbd);background:var(--nib);color:var(--ntm);font-weight:bold;transition:0.25s var(--sp);font-family:var(--nf);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.neo-theme-btn:hover{background:var(--nag);border-color:var(--na);box-shadow:0 4px 15px var(--nag),0 0 10px var(--nag);text-shadow:var(--ts-na-sm) !important}`,
-        `.neo-theme-btn.active{border-color:var(--na);background:var(--na);color:var(--noa);text-shadow:var(--ts-noa) !important}`,
-        `.neo-field-hint{font-size:var(--nfs-xs);color:var(--ntd);margin:4px 0 12px;line-height:1.6}`,
-        `.neo-field-hint code{font-family:monospace;font-size:var(--nfs-xs);color:var(--na);background:var(--nib);padding:1px 5px;border-radius:4px;border:1px solid var(--nbd)}`,
-        `.neo-field-ex{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--nib);border:1px solid var(--nbd);border-radius:8px;font-size:var(--nfs-xs);font-family:monospace;color:var(--na);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--sp);user-select:none}`,
-        `.neo-field-ex:hover{border-color:var(--na);background:var(--nag);box-shadow:0 0 8px var(--nag)}`,
-        `.neo-field-ex .ex-icon{font-size:var(--nfs-xs);opacity:0.6}`,
-        `.neo-field-tip{font-size:var(--nfs-xs);color:var(--ntd);margin-top:6px;padding-left:2px;opacity:0.8;font-style:italic}`,
-        `.neo-icon-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
-        `.neo-icon-textarea{flex:1;height:48px;padding:10px;background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);color:var(--ntm);outline:none;box-sizing:border-box;font-family:monospace;font-size:var(--nfs-xs);resize:none;line-height:1.5}`,
-        `.neo-icon-textarea:focus{border-color:var(--na);background:var(--nbp);box-shadow:0 0 12px var(--nag)}`,
-        `.neo-icon-preview{width:48px;height:48px;flex-shrink:0;border:1px solid var(--nbd);border-radius:var(--ni);display:flex;align-items:center;justify-content:center;background:var(--nib);color:var(--na);font-size:var(--nfs-xs);overflow:hidden}`,
-        `.neo-icon-preview svg,.neo-icon-preview img{width:24px;height:24px}`,
-        `.neo-icon-error{font-size:var(--nfs-xs);color:#ff4757;margin-top:5px;display:none}`,
-        `.neo-icon-error.show{display:block}`,
-        `.neo-swatch-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}`,
-        `.neo-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:0.2s var(--sp);flex-shrink:0;box-sizing:border-box}`,
-        `.neo-swatch:hover{transform:scale(1.2);box-shadow:0 0 8px rgba(0,0,0,0.3)}`,
-        `.neo-swatch.selected{border-color:var(--na);transform:scale(1.15);box-shadow:0 0 10px var(--nag)}`,
-        `.neo-swatch-custom{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px dashed var(--ntd);transition:0.2s var(--sp);flex-shrink:0;overflow:hidden;position:relative;box-sizing:border-box}`,
-        `.neo-swatch-custom:hover{border-color:var(--na);transform:scale(1.2)}`,
-        `.neo-swatch-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none}`,
+        `.ffa-overlay,.ffa-panel-shell,.ffa-mini-icon,.ffa-mini-hitarea,.ffa-toolbar-host,.ffa-suggest,.ffa-toolbar-wrapper,.ffa-toolbar,.ffa-toolbar__input,.ffa-toolbar__search-btn,.ffa-toolbar__search-input,.ffa-toolbar__engine-btn,.ffa-toolbar__settings-btn{pointer-events:auto}`,
+
+        // ── 遮罩层 ──
+        `.ffa-overlay{position:fixed;inset:0;background:var(--ffa-bg-inner-strong);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s}`,
+        `.ffa-overlay--visible{visibility:visible;opacity:1;pointer-events:auto}`,
+
+        // ── 面板全局字体继承 ──
+        `.ffa-panel *{font-family:var(--ffa-font-stack) !important;color:inherit;box-sizing:border-box;text-shadow:none}`,
+        `.ffa-panel a,.ffa-panel a:visited,.ffa-panel a:hover{color:inherit;text-decoration:none}`,
+
+        // ── 面板滚动区 ──
+        `.ffa-panel__scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 28px}`,
+        `.ffa-panel__scroll::-webkit-scrollbar{width:4px}`,
+        `.ffa-panel__scroll::-webkit-scrollbar-track{background:transparent}`,
+        `.ffa-panel__scroll::-webkit-scrollbar-thumb{background:var(--ffa-accent-glow);border-radius:10px;transition:background 0.2s}`,
+        `.ffa-panel__scroll::-webkit-scrollbar-thumb:hover{background:var(--ffa-accent)}`,
+        `.ffa-panel__scroll{scrollbar-width:thin;scrollbar-color:var(--ffa-accent-glow) transparent}`,
+
+        // ── 引擎行 ──
+        `.ffa-engine-row__host{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary) !important}`,
+        `.ffa-engine-row{display:flex;align-items:center;gap:15px;padding:12px 15px;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);border:1px solid var(--ffa-border);margin-bottom:12px;cursor:grab;transition:0.25s var(--ffa-easing);position:relative}`,
+        `.ffa-engine-row:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-3px);box-shadow:0 6px 20px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow)}`,
+        `.ffa-engine-row--dragging{opacity:0.5;border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);cursor:grabbing;box-shadow:0 10px 40px var(--ffa-accent-glow),0 0 20px var(--ffa-accent-glow);transform:scale(1.02) rotate(2deg);transition:0.15s var(--ffa-easing)}`,
+        `.ffa-engine-list.ffa-engine-list--drag-active{background:rgba(0,0,0,0.02);border-radius:var(--ffa-radius-widget);padding:8px}`,
+
+        // ── 开关 ──
+        `.ffa-switch{width:40px;height:20px;border-radius:20px;background:var(--ffa-border);position:relative;cursor:pointer;transition:0.25s var(--ffa-easing)}`,
+        `.ffa-switch::after{content:'';position:absolute;left:4px;top:4px;width:12px;height:12px;background:var(--ffa-text-secondary);border-radius:50%;transition:0.25s var(--ffa-easing)}`,
+        `.ffa-switch--on{background:var(--ffa-accent)}`,
+        `.ffa-switch--on::after{left:24px;background:var(--ffa-text-on-accent)}`,
+
+        // ── 卡片 ──
+        `.ffa-card{background:var(--ffa-bg-panel);backdrop-filter:blur(15px);border-radius:min(calc(var(--ffa-radius-panel) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--ffa-border);box-shadow:0 10px 30px rgba(0,0,0,0.05);box-sizing:border-box}`,
+        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:900;letter-spacing:1px;color:var(--ffa-accent);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-md) !important}`,
+
+        // ── 字段标签 & 提示 ──
+        `.ffa-field__label{display:flex;justify-content:space-between;align-items:center;font-size:var(--ffa-font-size-sm);color:var(--ffa-text-primary);margin-bottom:8px;font-weight:600;transform:translateZ(0)}`,
+        `.ffa-field__label b{font-weight:400;color:var(--ffa-text-secondary);font-size:var(--ffa-font-size-xs);background:var(--ffa-bg-inner);padding:2px 8px;border-radius:10px}`,
+        `.ffa-field__hint{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary);margin:4px 0 12px;line-height:1.6}`,
+        `.ffa-field__hint code{font-family:monospace;font-size:var(--ffa-font-size-xs);color:var(--ffa-accent);background:var(--ffa-bg-inner);padding:1px 5px;border-radius:4px;border:1px solid var(--ffa-border)}`,
+        `.ffa-field__example{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:8px;font-size:var(--ffa-font-size-xs);font-family:monospace;color:var(--ffa-accent);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--ffa-easing);user-select:none}`,
+        `.ffa-field__example:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);box-shadow:0 0 8px var(--ffa-accent-glow)}`,
+        `.ffa-field__example .ffa-field__example-icon{font-size:var(--ffa-font-size-xs);opacity:0.6}`,
+        `.ffa-field__tip{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary);margin-top:6px;padding-left:2px;opacity:0.8;font-style:italic}`,
+
+        // ── 输入框 & 范围滑块 ──
+        `input[type=range]{width:100%;cursor:pointer;margin:12px 0;height:18px;background:transparent;outline:none;border:none;padding:0;-webkit-appearance:none;appearance:none;font-family:var(--ffa-font-stack)}`,
+        `input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--ffa-border);border-radius:2px}`,
+        `input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ffa-accent);margin-top:-5px;box-shadow:0 0 6px var(--ffa-accent-glow);transition:box-shadow 0.2s,transform 0.2s;border:none}`,
+        `input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 10px var(--ffa-accent),0 0 20px var(--ffa-accent-glow);transform:scale(1.15)}`,
+        `input[type=range]::-moz-range-track{height:4px;background:var(--ffa-border);border-radius:2px;border:none}`,
+        `input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--ffa-accent);box-shadow:0 0 6px var(--ffa-accent-glow);transition:box-shadow 0.2s,transform 0.2s;border:none;cursor:pointer}`,
+        `input[type=range]:hover::-moz-range-thumb{box-shadow:0 0 10px var(--ffa-accent),0 0 20px var(--ffa-accent-glow);transform:scale(1.15)}`,
+
+        // ── 面板底部操作区 ──
+        `.ffa-panel__footer{padding:20px 28px;display:flex;gap:15px;border-top:1px solid var(--ffa-border)}`,
+
+        // ── 按钮变体 ──
+        `.ffa-btn--primary{padding:14px;background:var(--ffa-accent);color:var(--ffa-text-on-accent);border:none;border-radius:var(--ffa-radius-widget);font-weight:800;cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;box-shadow:0 4px 15px var(--ffa-accent-glow);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
+        `.ffa-btn--primary:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-btn--ghost{padding:14px;background:var(--ffa-bg-inner);color:var(--ffa-text-primary);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);font-size:var(--ffa-font-size-sm);font-weight:600;cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
+        `.ffa-btn--ghost:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);transform:translateY(-3px);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);color:var(--ffa-text-primary);text-shadow:var(--ffa-glow-accent-sm) !important}`,
+        `.ffa-btn--danger{padding:14px;background:var(--ffa-bg-inner);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ffa-radius-widget);font-weight:800;cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
+        `.ffa-btn--danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5) !important}`,
+
+        // ── 子面板（引擎编辑） ──
+        `.ffa-subpanel{position:absolute;inset:0;background:var(--ffa-bg-panel-deep);backdrop-filter:var(--ffa-backdrop-panel);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--ffa-easing);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--ffa-border)}`,
+        `.ffa-subpanel__scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:30px;box-sizing:border-box}`,
+        `.ffa-subpanel__scroll::-webkit-scrollbar{width:4px}`,
+        `.ffa-subpanel__scroll::-webkit-scrollbar-track{background:transparent}`,
+        `.ffa-subpanel__scroll::-webkit-scrollbar-thumb{background:var(--ffa-accent-glow);border-radius:10px}`,
+        `.ffa-subpanel__scroll::-webkit-scrollbar-thumb:hover{background:var(--ffa-accent)}`,
+        `.ffa-subpanel__scroll{scrollbar-width:thin;scrollbar-color:var(--ffa-accent-glow) transparent}`,
+        `.ffa-subpanel--visible{transform:translateY(0)}`,
+
+        // ── 通用输入框 ──
+        `.ffa-input{width:100%;padding:14px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);color:var(--ffa-text-primary);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--ffa-font-stack)}`,
+        `.ffa-input:focus{border-color:var(--ffa-accent);background:var(--ffa-bg-panel);box-shadow:0 0 12px var(--ffa-accent-glow)}`,
+
+        // ── 主题按钮 ──
+        `.ffa-theme-btn{flex:1;padding:12px 5px;font-size:var(--ffa-font-size-sm);border-radius:var(--ffa-radius-widget);cursor:pointer;border:1px solid var(--ffa-border);background:var(--ffa-bg-inner);color:var(--ffa-text-primary);font-weight:bold;transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
+        `.ffa-theme-btn:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm) !important}`,
+        `.ffa-theme-btn--active{border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent) !important}`,
+
+        // ── 图标编辑器 ──
+        `.ffa-icon-editor{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
+        `.ffa-icon-editor__textarea{flex:1;height:48px;padding:10px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);color:var(--ffa-text-primary);outline:none;box-sizing:border-box;font-family:monospace;font-size:var(--ffa-font-size-xs);resize:none;line-height:1.5}`,
+        `.ffa-icon-editor__textarea:focus{border-color:var(--ffa-accent);background:var(--ffa-bg-panel);box-shadow:0 0 12px var(--ffa-accent-glow)}`,
+        `.ffa-icon-editor__preview{width:48px;height:48px;flex-shrink:0;border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);display:flex;align-items:center;justify-content:center;background:var(--ffa-bg-inner);color:var(--ffa-accent);font-size:var(--ffa-font-size-xs);overflow:hidden}`,
+        `.ffa-icon-editor__preview svg,.ffa-icon-editor__preview img{width:24px;height:24px}`,
+        `.ffa-icon-editor__error{font-size:var(--ffa-font-size-xs);color:#ff4757;margin-top:5px;display:none}`,
+        `.ffa-icon-editor__error--visible{display:block}`,
+
+        // ── 颜色色板 ──
+        `.ffa-swatch-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}`,
+        `.ffa-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:0.2s var(--ffa-easing);flex-shrink:0;box-sizing:border-box}`,
+        `.ffa-swatch:hover{transform:scale(1.2);box-shadow:0 0 8px rgba(0,0,0,0.3)}`,
+        `.ffa-swatch--selected{border-color:var(--ffa-accent);transform:scale(1.15);box-shadow:0 0 10px var(--ffa-accent-glow)}`,
+        `.ffa-swatch-custom{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px dashed var(--ffa-text-secondary);transition:0.2s var(--ffa-easing);flex-shrink:0;overflow:hidden;position:relative;box-sizing:border-box}`,
+        `.ffa-swatch-custom:hover{border-color:var(--ffa-accent);transform:scale(1.2)}`,
+        `.ffa-swatch-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none}`,
+
+        // ── 迷你图标 & 触发区 ──
         `.ffa-mini-icon{position:fixed;bottom:calc(44px * -1 / 3);left:50%;transform:translateX(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 0.7s,transform 0.7s;opacity:0;pointer-events:none;z-index:2147483641;overflow:visible}`,
-        `.ffa-mini-icon svg{width:28px;height:28px;transition:all 0.6s;filter:drop-shadow(0 0 4px var(--na));color:var(--na)}`,
-        `.ffa-mini-icon.hovered svg{transform:scale(1.15) rotate(8deg);filter:drop-shadow(0 0 8px var(--na)) drop-shadow(0 0 16px var(--na))}`,
-        `.ffa-mini-icon.visible{opacity:1;pointer-events:auto}`,
-        `.ffa-mini-icon.hidden{opacity:0;transform:translateX(-50%) translateY(25px) scale(0.7);pointer-events:none}`,
+        `.ffa-mini-icon svg{width:28px;height:28px;transition:all 0.6s;filter:drop-shadow(0 0 4px var(--ffa-accent));color:var(--ffa-accent)}`,
+        `.ffa-mini-icon--hovered svg{transform:scale(1.15) rotate(8deg);filter:drop-shadow(0 0 8px var(--ffa-accent)) drop-shadow(0 0 16px var(--ffa-accent))}`,
+        `.ffa-mini-icon--visible{opacity:1;pointer-events:auto}`,
+        `.ffa-mini-icon--hidden{opacity:0;transform:translateX(-50%) translateY(25px) scale(0.7);pointer-events:none}`,
         `.ffa-mini-hitarea{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:64px;height:36px;z-index:2147483642;cursor:pointer;pointer-events:none}`,
-        `.ffa-mini-hitarea.active{pointer-events:auto}`,
-        `.neo-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s var(--sp);display:inline-block}`,
-        `.neo-panel-shell.show{visibility:visible;opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}`,
-        `.neo-tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:40px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--nbs);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:width 0.35s var(--sp);z-index:1}`,
-        `.neo-tab-nav:hover{width:160px}`,
-        
+        `.ffa-mini-hitarea--active{pointer-events:auto}`,
 
-        `.neo-tab-btn{height:40px;display:flex;align-items:center;gap:10px;padding:0 11px;cursor:pointer;flex-shrink:0;color:var(--ntd);border-radius:var(--nr);transition:background 0.2s var(--sp),color 0.2s var(--sp);position:relative;white-space:nowrap}`,
-        `.neo-tab-btn svg{width:18px;height:18px;flex-shrink:0;transition:color 0.2s var(--sp)}`,
-        `.neo-tab-btn-label{font-size:var(--nfs);font-weight:700;letter-spacing:0.5px;opacity:0;transition:opacity 0.08s linear}`,
-        `.neo-tab-nav:hover .neo-tab-btn-label{opacity:1;transition:opacity 0.15s var(--sp) 0.15s}`,
-        `.neo-tab-btn:not(.active):hover{background:var(--nag);color:var(--ntm)}`,
-        `.neo-tab-btn.active{background:var(--na);color:var(--noa);box-shadow:0 4px 14px var(--nag),0 0 8px var(--nag)}`,
-        `.neo-tab-btn.active .neo-tab-btn-label{color:var(--noa);text-shadow:var(--ts-noa) !important}`,
-        `.neo-tab-btn.active svg{color:var(--noa)}`,
+        // ── 面板外壳 & tab 导航 ──
+        `.ffa-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s var(--ffa-easing);display:inline-block}`,
+        `.ffa-panel-shell--visible{visibility:visible;opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}`,
+        `.ffa-panel__tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:40px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--ffa-bg-panel-deep);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:width 0.35s var(--ffa-easing);z-index:1}`,
+        `.ffa-panel__tab-nav:hover{width:160px}`,
+        `.ffa-panel__tab-btn{height:40px;display:flex;align-items:center;gap:10px;padding:0 11px;cursor:pointer;flex-shrink:0;color:var(--ffa-text-secondary);border-radius:var(--ffa-radius-panel);transition:background 0.2s var(--ffa-easing),color 0.2s var(--ffa-easing);position:relative;white-space:nowrap}`,
+        `.ffa-panel__tab-btn svg{width:18px;height:18px;flex-shrink:0;transition:color 0.2s var(--ffa-easing)}`,
+        `.ffa-panel__tab-label{font-size:var(--ffa-font-size-base);font-weight:700;letter-spacing:0.5px;opacity:0;transition:opacity 0.08s linear}`,
+        `.ffa-panel__tab-nav:hover .ffa-panel__tab-label{opacity:1;transition:opacity 0.15s var(--ffa-easing) 0.15s}`,
+        `.ffa-panel__tab-btn:not(.ffa-panel__tab-btn--active):hover{background:var(--ffa-accent-glow);color:var(--ffa-text-primary)}`,
+        `.ffa-panel__tab-btn--active{background:var(--ffa-accent);color:var(--ffa-text-on-accent);box-shadow:0 4px 14px var(--ffa-accent-glow),0 0 8px var(--ffa-accent-glow)}`,
+        `.ffa-panel__tab-btn--active .ffa-panel__tab-label{color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-panel__tab-btn--active svg{color:var(--ffa-text-on-accent)}`,
 
-        `.neo-panel{position:relative;top:auto;left:auto;transform:none;width:520px;height:70vh;max-height:70vh;border-radius:var(--nr);padding:0;z-index:0;visibility:visible;opacity:1;color:var(--ntm);font-family:var(--nf);box-shadow:var(--sd);transition:none;background:var(--nbs);border:1px solid var(--nbd);backdrop-filter:var(--ngp);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
-        `.neo-tab-content{display:none}`,
+        // ── 面板主体 ──
+        `.ffa-panel{position:relative;top:auto;left:auto;transform:none;width:520px;height:70vh;max-height:70vh;border-radius:var(--ffa-radius-panel);padding:0;z-index:0;visibility:visible;opacity:1;color:var(--ffa-text-primary);font-family:var(--ffa-font-stack);box-shadow:var(--ffa-shadow);transition:none;background:var(--ffa-bg-panel-deep);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-panel);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}`,
+
+        // ── Tab 内容区 ──
+        `.ffa-panel__tab-content{display:none}`,
         `@keyframes ffa-tab-fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`,
-        `.neo-tab-content.active{display:block;animation:ffa-tab-fadein 0.2s var(--sp) both}`,
-        `.neo-panel-title{text-align:center;font-weight:900;letter-spacing:4px;padding:26px 28px 20px;color:var(--na);font-size:var(--nfs-lg);text-shadow:var(--ts-na-lg) !important;border-bottom:1px solid var(--nbd);flex-shrink:0}`,
+        `.ffa-panel__tab-content--active{display:block;animation:ffa-tab-fadein 0.2s var(--ffa-easing) both}`,
+        `.ffa-panel__title{text-align:center;font-weight:900;letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-lg) !important;border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
     ].join('');
 
-    // 搜索条样式同样注入到统一 shadow root 内，完全隔离于页面 CSS。
-    // 作用于 shadow root 内的元素：
-    //   .toolbar-host / .wrapper — 搜索条定位容器及动画包装层
-    //   .toolbar           — 悬浮搜索条主体
-    //   .engine-btn        — 各搜索引擎切换按钮
-    //   .input-container   — 可展开的搜索输入区域
-    //   .search-input      — 文本输入框
-    //   .suggest-box       — 自动补全下拉框
-    //   .suggest-item      — 补全建议条目
-    //   .history-item      — 最近搜索历史条目
+    // ─── TOOLBAR_CSS ──────────────────────────────────────────────────────────────
+    // 搜索条样式，同样注入到统一 shadow root。
+    // 类名规范：ffa-toolbar（block）+ __element + --modifier
+    //
+    //   .ffa-toolbar-host          — 定位容器（fixed 居中）
+    //   .ffa-toolbar-wrapper       — 动画包装层（mini-mode 控制入口）
+    //   .ffa-toolbar               — 搜索条主体
+    //   .ffa-toolbar__engine-btn   — 引擎切换按钮
+    //   .ffa-toolbar__input        — 可展开的搜索输入区域
+    //   .ffa-toolbar__search-btn   — 搜索触发按钮
+    //   .ffa-toolbar__search-input — 文本输入框
+    //   .ffa-toolbar__settings-btn — 设置按钮
+    //   .ffa-suggest               — 自动补全下拉框
+    //   .ffa-suggest__item         — 补全建议条目
+    //   .ffa-suggest__history-item — 历史搜索条目
+    //   .ffa-suggest__divider      — 分隔线
     const TOOLBAR_CSS = [
-        `.toolbar-host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--nb);z-index:2147483642;font-family:var(--nf)}`,
-        `.wrapper{transition:0.8s var(--sp)}`,
-        `.wrapper.mini-mode .toolbar{opacity:0;transform:translateY(50px) scale(0.92);pointer-events:none;transition:opacity 0.5s var(--sp),transform 0.6s var(--sp)}`,
-        `.wrapper.mini-mode.toolbar-visible .toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;transition-delay:0.1s}`,
-        `.wrapper.mini-mode .toolbar{will-change:opacity,transform}`,
-        `.toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--nbt);backdrop-filter:var(--ng);border:1px solid var(--nbd);border-radius:var(--nr);box-shadow:var(--sd);transition:border-color 0.3s var(--sp),box-shadow 0.3s var(--sp),background 0.4s var(--sp)}`,
-        `.toolbar.focused{background:var(--nbp);border-color:var(--na);box-shadow:var(--sd),0 0 0 1px var(--na),0 0 18px var(--nag)}`,
-        `.engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--nfs);line-height:1.2;color:var(--ntm);cursor:pointer;background:var(--nib);border-radius:var(--ni);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:700;border:1px solid var(--nbd);box-sizing:border-box;font-family:var(--nf);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
-        `.engine-btn .btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:16px;height:16px;overflow:visible;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
-        `.engine-btn .btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;padding-left:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
-        `.toolbar:hover .engine-btn:not(.active),.toolbar.pinned .engine-btn:not(.active){opacity:1}`,
-        `.engine-btn:hover{border-color:var(--na);background:var(--nag);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--nag),0 0 10px var(--nag);text-shadow:var(--ts-na-sm) !important;max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
-        `.engine-btn:hover .btn-icon{transform:scale(1.1)}`,
-        `.engine-btn:hover .btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
-        `.engine-btn.active{border-color:var(--na);box-shadow:0 0 8px var(--nag),0 0 16px var(--nag);opacity:1 !important;max-width:160px;padding-right:10px}`,
-        `.engine-btn.active .btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0)}`,
-        `.engine-btn.active:hover{background:var(--nag);transform:translateY(-2px) scale(1.02)}`,
-        `.input-container{position:relative;display:flex;align-items:center;transition:width 0.45s var(--sp),background 0.3s var(--sp),box-shadow 0.3s var(--sp),border-color 0.3s var(--sp);width:34px;border-radius:var(--ni);border:1px solid transparent;box-sizing:border-box}`,
-        `.input-container.expanded{width:236px;background:var(--nib);border-color:transparent;box-shadow:none;border-radius:var(--ni)}`,
-        `.input-container.expanded .search-btn{background:var(--nib2);border-color:transparent;box-shadow:none;color:var(--na);opacity:1}`,
-        `.input-container.expanded .search-btn:hover{background:var(--nag);border-color:transparent;border-right-color:var(--nbd)}`,
-        `.search-btn{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;cursor:pointer;color:var(--ntm);background:var(--nib);border:1px solid var(--nbd);border-radius:var(--ni);transition:0.3s var(--sp);opacity:0.5;box-sizing:border-box}`,
-        `.search-btn:hover{opacity:1;border-color:var(--na);background:var(--nag);color:var(--na);box-shadow:0 0 8px var(--nag)}`,
-        `.search-input{-webkit-appearance:none;appearance:none;border:none;background:transparent;padding:0;outline:none;width:0;min-width:0;font-size:var(--nfs);line-height:1.2;color:var(--ntm);border-radius:0;transition:width 0.45s var(--sp),padding 0.45s var(--sp),opacity 0.3s var(--sp);box-sizing:border-box;font-family:var(--nf);opacity:0}`,
-        `.input-container.expanded .search-input{width:200px;padding:6px 10px 6px 6px;opacity:1}`,
-        `.search-input::placeholder{color:var(--ntd);opacity:0.55}`,
-        `.suggest-box{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);width:95vw;max-width:720px;display:none;flex-wrap:wrap;gap:12px;justify-content:center;padding-bottom:35px}`,
-        `.suggest-box.show{display:flex;animation:su 0.5s var(--sp)}`,
-        `@keyframes su{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
-        `@keyframes si{from{opacity:0;transform:translateY(16px) scale(0.92)}to{opacity:1;transform:translateY(0) scale(1)}}`,
-        `.suggest-item:nth-child(1){animation-delay:0ms}.suggest-item:nth-child(2){animation-delay:40ms}.suggest-item:nth-child(3){animation-delay:80ms}.suggest-item:nth-child(4){animation-delay:120ms}.suggest-item:nth-child(5){animation-delay:160ms}.suggest-item:nth-child(6){animation-delay:200ms}.suggest-item:nth-child(7){animation-delay:240ms}.suggest-item:nth-child(8){animation-delay:280ms}.suggest-item:nth-child(9){animation-delay:320ms}.suggest-item:nth-child(10){animation-delay:360ms}`,
-        `.suggest-item{padding:10px 24px;font-size:var(--nfs-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--nib),var(--nbt));color:var(--ntm);border:1px solid var(--nbd);backdrop-filter:var(--ng);transition:0.25s var(--sp);font-family:var(--nf);transform:translateZ(0);opacity:0;animation:si 0.4s var(--sp) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
-        `.suggest-item:hover,.suggest-item.kb-focus{background:linear-gradient(135deg,var(--na),var(--na));color:var(--noa);border-color:var(--na);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);transform:translateY(-4px) scale(1.02);text-shadow:var(--ts-noa) !important}`,
-        `.suggest-divider{width:100%;display:flex;align-items:center;gap:8px;padding:0 4px;opacity:0;animation:si 0.3s var(--sp) forwards}`,
-        `.suggest-divider-line{flex:1;height:1px;background:rgba(255,255,255,0.25)}`,
-        `.suggest-divider-label{font-size:var(--nfs-xs);font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
-        `.history-item{padding:10px 20px 10px 16px;font-size:var(--nfs-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--nib),var(--nbt));color:var(--ntd);border:1px solid var(--nbd);backdrop-filter:var(--ng);transition:0.25s var(--sp);font-family:var(--nf);transform:translateZ(0);opacity:0;animation:si 0.4s var(--sp) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
-        `.history-item:hover,.history-item.kb-focus{background:linear-gradient(135deg,var(--na),var(--na));color:var(--noa);border-color:var(--na);box-shadow:0 8px 25px var(--nag),0 0 15px var(--nag);transform:translateY(-4px) scale(1.02);text-shadow:var(--ts-noa) !important}`,
-        `.history-icon{font-size:var(--nfs-sm);opacity:0.5;flex-shrink:0;transition:0.25s}`,
-        `.history-item:hover .history-icon{opacity:1}`,
-        `.history-del{margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:var(--nfs-xs);opacity:0;transition:0.2s var(--sp);flex-shrink:0;color:inherit}`,
-        `.history-item:hover .history-del{opacity:0.6}`,
-        `.history-del:hover{opacity:1 !important;background:rgba(255,71,87,0.25);color:#ff4757}`,
-        `.settings-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ntm);transition:0.5s var(--sp);border-radius:50%;opacity:0.5}`,
-        `.settings-btn:hover{opacity:1;background:var(--nag);color:var(--na);transform:rotate(90deg);box-shadow:0 0 15px var(--nag),0 0 30px var(--nag)}`,
+        `.ffa-toolbar-host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--ffa-offset-bottom);z-index:2147483642;font-family:var(--ffa-font-stack)}`,
+        `.ffa-toolbar-wrapper{transition:0.8s var(--ffa-easing)}`,
+        `.ffa-toolbar-wrapper--mini .ffa-toolbar{opacity:0;transform:translateY(50px) scale(0.92);pointer-events:none;transition:opacity 0.5s var(--ffa-easing),transform 0.6s var(--ffa-easing)}`,
+        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed .ffa-toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;transition-delay:0.1s}`,
+        `.ffa-toolbar-wrapper--mini .ffa-toolbar{will-change:opacity,transform}`,
+        `.ffa-toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--ffa-bg-toolbar);backdrop-filter:var(--ffa-backdrop-toolbar);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:border-color 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),background 0.4s var(--ffa-easing)}`,
+        `.ffa-toolbar--focused{background:var(--ffa-bg-panel);border-color:var(--ffa-accent);box-shadow:var(--ffa-shadow),0 0 0 1px var(--ffa-accent),0 0 18px var(--ffa-accent-glow)}`,
+
+        // ── 引擎按钮 ──
+        `.ffa-toolbar__engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--ffa-font-size-base);line-height:1.2;color:var(--ffa-text-primary);cursor:pointer;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:700;border:1px solid var(--ffa-border);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
+        `.ffa-toolbar__engine-btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:16px;height:16px;overflow:visible;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
+        `.ffa-toolbar__engine-btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;padding-left:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
+        `.ffa-toolbar:hover .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active),.ffa-toolbar--pinned .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active){opacity:1}`,
+        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm) !important;max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
+        `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-icon{transform:scale(1.1)}`,
+        `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
+        `.ffa-toolbar__engine-btn--active{border-color:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow),0 0 16px var(--ffa-accent-glow);opacity:1 !important;max-width:160px;padding-right:10px}`,
+        `.ffa-toolbar__engine-btn--active .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0)}`,
+        `.ffa-toolbar__engine-btn--active:hover{background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02)}`,
+
+        // ── 搜索输入区 ──
+        `.ffa-toolbar__input{position:relative;display:flex;align-items:center;transition:width 0.45s var(--ffa-easing),background 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),border-color 0.3s var(--ffa-easing);width:34px;border-radius:var(--ffa-radius-widget);border:1px solid transparent;box-sizing:border-box}`,
+        `.ffa-toolbar__input--expanded{width:236px;background:var(--ffa-bg-inner);border-color:transparent;box-shadow:none;border-radius:var(--ffa-radius-widget)}`,
+        `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn{background:var(--ffa-bg-inner-strong);border-color:transparent;box-shadow:none;color:var(--ffa-accent);opacity:1}`,
+        `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn:hover{background:var(--ffa-accent-glow);border-color:transparent;border-right-color:var(--ffa-border)}`,
+
+        // ── 搜索按钮 ──
+        `.ffa-toolbar__search-btn{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;cursor:pointer;color:var(--ffa-text-primary);background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);transition:0.3s var(--ffa-easing);opacity:0.5;box-sizing:border-box}`,
+        `.ffa-toolbar__search-btn:hover{opacity:1;border-color:var(--ffa-accent);background:var(--ffa-accent-glow);color:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow)}`,
+
+        // ── 搜索输入框 ──
+        `.ffa-toolbar__search-input{-webkit-appearance:none;appearance:none;border:none;background:transparent;padding:0;outline:none;width:0;min-width:0;font-size:var(--ffa-font-size-base);line-height:1.2;color:var(--ffa-text-primary);border-radius:0;transition:width 0.45s var(--ffa-easing),padding 0.45s var(--ffa-easing),opacity 0.3s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);opacity:0}`,
+        `.ffa-toolbar__input--expanded .ffa-toolbar__search-input{width:200px;padding:6px 10px 6px 6px;opacity:1}`,
+        `.ffa-toolbar__search-input::placeholder{color:var(--ffa-text-secondary);opacity:0.55}`,
+
+        // ── 建议下拉框 ──
+        `.ffa-suggest{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);width:95vw;max-width:720px;display:none;flex-wrap:wrap;gap:12px;justify-content:center;padding-bottom:35px}`,
+        `.ffa-suggest--visible{display:flex;animation:ffa-suggest-in 0.5s var(--ffa-easing)}`,
+        `@keyframes ffa-suggest-in{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
+        `@keyframes ffa-suggest-item-in{from{opacity:0;transform:translateY(16px) scale(0.92)}to{opacity:1;transform:translateY(0) scale(1)}}`,
+        `.ffa-suggest__item:nth-child(1){animation-delay:0ms}.ffa-suggest__item:nth-child(2){animation-delay:40ms}.ffa-suggest__item:nth-child(3){animation-delay:80ms}.ffa-suggest__item:nth-child(4){animation-delay:120ms}.ffa-suggest__item:nth-child(5){animation-delay:160ms}.ffa-suggest__item:nth-child(6){animation-delay:200ms}.ffa-suggest__item:nth-child(7){animation-delay:240ms}.ffa-suggest__item:nth-child(8){animation-delay:280ms}.ffa-suggest__item:nth-child(9){animation-delay:320ms}.ffa-suggest__item:nth-child(10){animation-delay:360ms}`,
+        `.ffa-suggest__item{padding:10px 24px;font-size:var(--ffa-font-size-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-primary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
+        `.ffa-suggest__item:hover,.ffa-suggest__item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent) !important}`,
+
+        // ── 建议分隔线 ──
+        `.ffa-suggest__divider{width:100%;display:flex;align-items:center;gap:8px;padding:0 4px;opacity:0;animation:ffa-suggest-item-in 0.3s var(--ffa-easing) forwards}`,
+        `.ffa-suggest__divider-line{flex:1;height:1px;background:rgba(255,255,255,0.25)}`,
+        `.ffa-suggest__divider-label{font-size:var(--ffa-font-size-xs);font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
+
+        // ── 历史条目 ──
+        `.ffa-suggest__history-item{padding:10px 20px 10px 16px;font-size:var(--ffa-font-size-md);font-weight:600;cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
+        `.ffa-suggest__history-item:hover,.ffa-suggest__history-item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent) !important}`,
+        `.ffa-suggest__history-icon{font-size:var(--ffa-font-size-sm);opacity:0.5;flex-shrink:0;transition:0.25s}`,
+        `.ffa-suggest__history-item:hover .ffa-suggest__history-icon{opacity:1}`,
+        `.ffa-suggest__history-del{margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:var(--ffa-font-size-xs);opacity:0;transition:0.2s var(--ffa-easing);flex-shrink:0;color:inherit}`,
+        `.ffa-suggest__history-item:hover .ffa-suggest__history-del{opacity:0.6}`,
+        `.ffa-suggest__history-del:hover{opacity:1 !important;background:rgba(255,71,87,0.25);color:#ff4757}`,
+
+        // ── 设置按钮 ──
+        `.ffa-toolbar__settings-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ffa-text-primary);transition:0.5s var(--ffa-easing);border-radius:50%;opacity:0.5}`,
+        `.ffa-toolbar__settings-btn:hover{opacity:1;background:var(--ffa-accent-glow);color:var(--ffa-accent);transform:rotate(90deg);box-shadow:0 0 15px var(--ffa-accent-glow),0 0 30px var(--ffa-accent-glow)}`,
     ].join('');
 
     const HistoryModule = {
@@ -683,9 +759,9 @@
         _CACHE_TTL: 5 * 60 * 1000,
         _sources: { google: true, baidu: false, duckduckgo: true },
         _initialized: false,
-        _requestToken: 0,      // 取消过期请求
+        _requestToken: 0,
         _focusedIndex: -1,
-        _navItems: [],         // 当前可导航的词条列表
+        _navItems: [],
 
         _cacheGet(key) {
             const item = this._cache.get(key);
@@ -703,10 +779,6 @@
             this._cache.set(key, { value, ts: Date.now() });
         },
 
-        /**
-         * 清理过期缓存项（每 30 秒调用一次）
-         * 防止大量过期项堆积导致的内存泄漏
-         */
         _cleanupCache() {
             const now = Date.now();
             for (const [key, item] of this._cache) {
@@ -812,7 +884,7 @@
 
             try {
                 const suggests = await this._fetchFromSources(q);
-                if (token !== this._requestToken) return; // 请求已过期，丢弃
+                if (token !== this._requestToken) return;
                 const deduped = suggests.filter(s => !matchedHistory.includes(s));
                 this._render(box, mask, engineUrl, matchedHistory, deduped);
             } catch (e) {
@@ -823,7 +895,7 @@
 
         _render(box, mask, engineUrl, history, suggests, keepOpen = false) {
             if (history.length === 0 && suggests.length === 0) {
-                if (!keepOpen) { box.classList.remove('show'); mask.classList.remove('show'); }
+                if (!keepOpen) { box.classList.remove('ffa-suggest--visible'); mask.classList.remove('ffa-overlay--visible'); }
                 return;
             }
 
@@ -835,11 +907,11 @@
 
             const makeDivider = (label) => {
                 const wrap = document.createElement('div');
-                wrap.className = 'suggest-divider';
+                wrap.className = 'ffa-suggest__divider';
                 wrap.style.animationDelay = delay + 'ms';
-                const line = () => { const l = document.createElement('div'); l.className = 'suggest-divider-line'; return l; };
+                const line = () => { const l = document.createElement('div'); l.className = 'ffa-suggest__divider-line'; return l; };
                 const lbl = document.createElement('span');
-                lbl.className = 'suggest-divider-label';
+                lbl.className = 'ffa-suggest__divider-label';
                 lbl.textContent = label;
                 wrap.append(line(), lbl, line());
                 return wrap;
@@ -849,12 +921,12 @@
                 if (suggests.length > 0) { box.appendChild(makeDivider(t('labelRecent'))); delay += STEP; }
                 history.forEach(term => {
                     const item = document.createElement('div');
-                    item.className = 'history-item';
+                    item.className = 'ffa-suggest__history-item';
                     item.style.animationDelay = delay + 'ms';
 
-                    const icon = document.createElement('span'); icon.className = 'history-icon'; icon.textContent = '🕐';
-                    const text = document.createElement('span'); text.className = 'history-text'; text.textContent = term;
-                    const del  = document.createElement('span'); del.className  = 'history-del';  del.textContent = '✕'; del.title = t('btnRemoveHistory');
+                    const icon = document.createElement('span'); icon.className = 'ffa-suggest__history-icon'; icon.textContent = '🕐';
+                    const text = document.createElement('span'); text.className = 'ffa-suggest__history-text'; text.textContent = term;
+                    const del  = document.createElement('span'); del.className  = 'ffa-suggest__history-del';  del.textContent = '✕'; del.title = t('btnRemoveHistory');
 
                     text.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
                     del.onclick  = e => {
@@ -877,7 +949,7 @@
                 if (history.length > 0) { box.appendChild(makeDivider(t('labelSuggestions'))); delay += STEP; }
                 suggests.forEach(term => {
                     const item = document.createElement('div');
-                    item.className = 'suggest-item';
+                    item.className = 'ffa-suggest__item';
                     item.style.animationDelay = delay + 'ms';
                     item.textContent = term;
                     item.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
@@ -887,13 +959,13 @@
                 });
             }
 
-            mask.classList.add('show');
-            box.classList.add('show');
+            mask.classList.add('ffa-overlay--visible');
+            box.classList.add('ffa-suggest--visible');
         },
 
         handleKeyNav(e, box, mask, engineUrl) {
             const items = this._navItems;
-            if (!box.classList.contains('show') || items.length === 0) return false;
+            if (!box.classList.contains('ffa-suggest--visible') || items.length === 0) return false;
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
@@ -912,8 +984,8 @@
                 return true;
             }
             if (e.key === 'Escape') {
-                box.classList.remove('show');
-                mask.classList.remove('show');
+                box.classList.remove('ffa-suggest--visible');
+                mask.classList.remove('ffa-overlay--visible');
                 box.innerHTML = '';
                 this._navItems = [];
                 this._focusedIndex = -1;
@@ -923,12 +995,13 @@
         },
 
         _moveFocus(dir, items) {
-            if (this._focusedIndex >= 0) items[this._focusedIndex].el.classList.remove('kb-focus');
+            if (this._focusedIndex >= 0) items[this._focusedIndex].el.classList.remove('ffa-suggest__item--focused', 'ffa-suggest__history-item--focused');
             const next = this._focusedIndex + dir;
             this._focusedIndex = Math.max(-1, Math.min(items.length - 1, next));
             if (this._focusedIndex >= 0) {
-                items[this._focusedIndex].el.classList.add('kb-focus');
-                items[this._focusedIndex].el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                const el = items[this._focusedIndex].el;
+                el.classList.add(el.classList.contains('ffa-suggest__history-item') ? 'ffa-suggest__history-item--focused' : 'ffa-suggest__item--focused');
+                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
             }
         },
 
@@ -965,7 +1038,7 @@
 
         if (isBlacklisted(SettingsManager.current.bl)) {
             AppRoot.destroy();
-            _isInitialized = false; // 允许设置变更后重新初始化
+            _isInitialized = false;
             return;
         }
 
@@ -976,14 +1049,15 @@
         AppRoot.resetMount();
         const lifecycle = new AbortController();
         const { signal } = lifecycle;
+
         const mask  = document.createElement('div');
-        mask.className = 'neo-mask';
+        mask.className = 'ffa-overlay';
 
         const shell = document.createElement('div');
-        shell.className = 'neo-panel-shell';
+        shell.className = 'ffa-panel-shell';
 
         const tabNav = document.createElement('div');
-        tabNav.className = 'neo-tab-nav';
+        tabNav.className = 'ffa-panel__tab-nav';
 
         const TAB_DEFS = [
             { key: 'general',    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M11 18.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75m-8-12a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 3 6.25m13 6a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75M8.75 16a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75"/><path fill="currentColor" d="M3 18.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75m0-6a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75M16.75 10a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75M14 6.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1-.75-.75M11.25 4a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75"/></svg>' },
@@ -994,45 +1068,45 @@
 
         TAB_DEFS.forEach(def => {
             const btn = document.createElement('div');
-            btn.className = 'neo-tab-btn' + (_activeTab === def.key ? ' active' : '');
+            btn.className = 'ffa-panel__tab-btn' + (_activeTab === def.key ? ' ffa-panel__tab-btn--active' : '');
             btn.dataset.tab = def.key;
             const _lbl = t('tab' + def.key.charAt(0).toUpperCase() + def.key.slice(1));
-            btn.innerHTML = def.svg + `<span class="neo-tab-btn-label">${_lbl}</span>`;
+            btn.innerHTML = def.svg + `<span class="ffa-panel__tab-label">${_lbl}</span>`;
             btn.title = _lbl;
             btn.onclick = () => {
                 _activeTab = def.key;
-                tabNav.querySelectorAll('.neo-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === def.key));
-                panel.querySelectorAll('.neo-tab-content').forEach(c => {
+                tabNav.querySelectorAll('.ffa-panel__tab-btn').forEach(b => b.classList.toggle('ffa-panel__tab-btn--active', b.dataset.tab === def.key));
+                panel.querySelectorAll('.ffa-panel__tab-content').forEach(c => {
                     const isActive = c.dataset.tab === def.key;
                     if (isActive) {
-                                        c.classList.remove('active');
+                        c.classList.remove('ffa-panel__tab-content--active');
                         void c.offsetWidth; // force reflow
-                        c.classList.add('active');
+                        c.classList.add('ffa-panel__tab-content--active');
                     } else {
-                        c.classList.remove('active');
+                        c.classList.remove('ffa-panel__tab-content--active');
                     }
                 });
-                    };
+            };
             tabNav.append(btn);
         });
 
         const panel = document.createElement('div');
-        panel.className = 'neo-panel';
+        panel.className = 'ffa-panel';
 
         shell.append(tabNav, panel);
 
         const toolbarHost = document.createElement('div');
-        toolbarHost.className = 'toolbar-host';
+        toolbarHost.className = 'ffa-toolbar-host';
         const wrapper     = document.createElement('div');
         const toolbar     = document.createElement('div');
         const suggestBox  = document.createElement('div');
         const miniIcon    = document.createElement('div');
         const miniHitArea = document.createElement('div');
 
-        wrapper.className    = 'wrapper';
-        toolbar.className    = 'toolbar';
-        suggestBox.className = 'suggest-box';
-        miniIcon.className   = 'ffa-mini-icon';
+        wrapper.className     = 'ffa-toolbar-wrapper';
+        toolbar.className     = 'ffa-toolbar';
+        suggestBox.className  = 'ffa-suggest';
+        miniIcon.className    = 'ffa-mini-icon';
         miniHitArea.className = 'ffa-mini-hitarea';
 
         miniIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.253c1.044 0 1.956.569 2.44 1.412l4.589 7.932l4.45 7.691c.047.074.21.359.27.494a2.808 2.808 0 0 1-3.406 3.836l-7.901-2.606a1.4 1.4 0 0 0-.442-.07a1.4 1.4 0 0 0-.442.07l-7.9 2.606l-.162.046a2.8 2.8 0 0 1-.684.083a2.81 2.81 0 0 1-2.644-3.763c.03-.091.074-.176.111-.264c.072-.15.161-.288.242-.432l4.449-7.691l4.588-7.932A2.81 2.81 0 0 1 12 1.253"/></svg>`;
@@ -1044,47 +1118,48 @@
 
         const qPanel = sel => panel.querySelector(sel);
         const qToolbar = sel => toolbar.querySelector(sel);
+
         const UIState = {
-            openMask() { mask.classList.add('show'); },
-            closeMask() { mask.classList.remove('show'); },
-            openShell() { shell.classList.add('show'); },
-            closeShell() { shell.classList.remove('show'); },
-            openSuggest() { suggestBox.classList.add('show'); },
-            closeSuggest() { suggestBox.classList.remove('show'); },
+            openMask()    { mask.classList.add('ffa-overlay--visible'); },
+            closeMask()   { mask.classList.remove('ffa-overlay--visible'); },
+            openShell()   { shell.classList.add('ffa-panel-shell--visible'); },
+            closeShell()  { shell.classList.remove('ffa-panel-shell--visible'); },
+            openSuggest() { suggestBox.classList.add('ffa-suggest--visible'); },
+            closeSuggest(){ suggestBox.classList.remove('ffa-suggest--visible'); },
             clearSuggest() {
                 this.closeSuggest();
                 suggestBox.innerHTML = '';
                 SuggestModule.clearNav();
             },
             isOverlayVisible() {
-                return shell.classList.contains('show') || suggestBox.classList.contains('show');
+                return shell.classList.contains('ffa-panel-shell--visible') || suggestBox.classList.contains('ffa-suggest--visible');
             },
             closePanelOverlay() {
                 this.closeMask();
                 this.closeShell();
                 this.clearSuggest();
-                qPanel('#n-sub')?.classList.remove('show');
-                wrapper.classList.remove('active', 'pinned');
-                toolbar.classList.remove('focused', 'pinned');
-                const ic = qToolbar('.input-container');
-                const inp = qToolbar('.search-input');
-                if (ic && !inp?.value?.trim()) ic.classList.remove('expanded');
+                qPanel('#n-sub')?.classList.remove('ffa-subpanel--visible');
+                wrapper.classList.remove('ffa-toolbar-wrapper--pinned');
+                toolbar.classList.remove('ffa-toolbar--focused', 'ffa-toolbar--pinned');
+                const ic = qToolbar('.ffa-toolbar__input');
+                const inp = qToolbar('.ffa-toolbar__search-input');
+                if (ic && !inp?.value?.trim()) ic.classList.remove('ffa-toolbar__input--expanded');
                 updateMiniMode();
             },
         };
 
         suggestBox.addEventListener('mousedown', (e) => {
-            const isItem = e.target.closest('.suggest-item, .history-item, .suggest-divider');
+            const isItem = e.target.closest('.ffa-suggest__item, .ffa-suggest__history-item, .ffa-suggest__divider');
             if (!isItem) {
-                e.preventDefault(); // 阻止 input blur，由此处统一处理关闭逻辑
+                e.preventDefault();
                 UIState.closePanelOverlay();
             }
         });
 
         miniHitArea.addEventListener('mouseenter', () => {
-            wrapper.classList.add('toolbar-visible');
-            miniIcon.classList.add('hidden');
-            miniIcon.classList.remove('visible', 'hovered');
+            wrapper.classList.add('ffa-toolbar-wrapper--revealed');
+            miniIcon.classList.add('ffa-mini-icon--hidden');
+            miniIcon.classList.remove('ffa-mini-icon--visible', 'ffa-mini-icon--hovered');
         });
 
         const inRect = (el, x, y) => {
@@ -1093,16 +1168,16 @@
         };
         let _miniMoveTimer = null;
         document.addEventListener('mousemove', (e) => {
-            if (!wrapper.classList.contains('toolbar-visible') || UIState.isOverlayVisible()) return;
+            if (!wrapper.classList.contains('ffa-toolbar-wrapper--revealed') || UIState.isOverlayVisible()) return;
             if (inRect(miniHitArea, e.clientX, e.clientY) || inRect(toolbarHost, e.clientX, e.clientY)) {
                 clearTimeout(_miniMoveTimer);
             } else {
                 clearTimeout(_miniMoveTimer);
                 _miniMoveTimer = setTimeout(() => {
-                    if (!wrapper.classList.contains('toolbar-visible') || UIState.isOverlayVisible()) return;
-                    wrapper.classList.remove('toolbar-visible');
-                    miniIcon.classList.remove('hidden', 'hovered');
-                    miniIcon.classList.add('visible');
+                    if (!wrapper.classList.contains('ffa-toolbar-wrapper--revealed') || UIState.isOverlayVisible()) return;
+                    wrapper.classList.remove('ffa-toolbar-wrapper--revealed');
+                    miniIcon.classList.remove('ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
+                    miniIcon.classList.add('ffa-mini-icon--visible');
                 }, 80);
             }
         }, { signal });
@@ -1117,45 +1192,16 @@
         }));
 
         const Refresh = {
-            panel() {
-                renderPanel();
-            },
-            styles() {
-                applyStyles();
-            },
-            toolbar() {
-                ToolbarController.render();
-            },
-            miniMode() {
-                updateMiniMode();
-            },
-            save() {
-                SettingsManager.save();
-            },
-            saveAndPanel() {
-                this.save();
-                this.panel();
-            },
-            saveAndStyles() {
-                this.save();
-                this.styles();
-            },
-            saveStylesAndToolbar() {
-                this.save();
-                this.styles();
-                this.toolbar();
-            },
-            saveStylesAndPanel() {
-                this.save();
-                this.styles();
-                this.panel();
-            },
-            saveStylesMiniAndPanel() {
-                this.save();
-                this.styles();
-                this.miniMode();
-                this.panel();
-            },
+            panel()  { renderPanel(); },
+            styles() { applyStyles(); },
+            toolbar(){ ToolbarController.render(); },
+            miniMode(){ updateMiniMode(); },
+            save()   { SettingsManager.save(); },
+            saveAndPanel()         { this.save(); this.panel(); },
+            saveAndStyles()        { this.save(); this.styles(); },
+            saveStylesAndToolbar() { this.save(); this.styles(); this.toolbar(); },
+            saveStylesAndPanel()   { this.save(); this.styles(); this.panel(); },
+            saveStylesMiniAndPanel(){ this.save(); this.styles(); this.miniMode(); this.panel(); },
         };
 
         const EngineEditor = {
@@ -1169,7 +1215,7 @@
                 const iconVal = engine.icon && !BUILTIN_HOSTS.has(engine.host) ? engine.icon : '';
                 qPanel('#e-icon').value = iconVal;
                 updateIconPreview(iconVal, qPanel('#e-icon-preview'));
-                subPanel.classList.add('show');
+                subPanel.classList.add('ffa-subpanel--visible');
             },
 
             openForCreate() {
@@ -1181,11 +1227,11 @@
                     if (node) node.value = '';
                 });
                 updateIconPreview('', qPanel('#e-icon-preview'));
-                subPanel.classList.add('show');
+                subPanel.classList.add('ffa-subpanel--visible');
             },
 
             close() {
-                qPanel('#n-sub')?.classList.remove('show');
+                qPanel('#n-sub')?.classList.remove('ffa-subpanel--visible');
                 editingEngine = null;
             },
 
@@ -1199,10 +1245,10 @@
 
                 const iconResult = SecurityUtils.validateIcon(iconRaw);
                 if (iconRaw && !iconResult.valid) {
-                    errorEl.classList.add('show');
+                    errorEl.classList.add('ffa-icon-editor__error--visible');
                     return false;
                 }
-                errorEl.classList.remove('show');
+                errorEl.classList.remove('ffa-icon-editor__error--visible');
                 const icon = (iconResult.valid && iconResult.type !== 'default') ? iconResult.value : undefined;
 
                 if (!editingEngine) {
@@ -1222,15 +1268,15 @@
 
         const PanelActions = {
             syncSwitch(el, on) {
-                el?.classList?.toggle('on', !!on);
+                el?.classList?.toggle('ffa-switch--on', !!on);
             },
 
             handleVisual(action, el, settings) {
                 if (action === 'swatch') {
                     const { color, target } = el.dataset;
                     settings[target] = color;
-                    panel.querySelectorAll(`.neo-swatch[data-target="${target}"]`).forEach(sw => sw.classList.remove('selected'));
-                    el.classList.add('selected');
+                    panel.querySelectorAll(`.ffa-swatch[data-target="${target}"]`).forEach(sw => sw.classList.remove('ffa-swatch--selected'));
+                    el.classList.add('ffa-swatch--selected');
                     const picker = qPanel(target === 'b' ? '#s-bc' : '#s-ac');
                     if (picker) picker.value = color;
                     Refresh.saveAndStyles();
@@ -1250,11 +1296,11 @@
                 if (action === 'lang') {
                     SettingsManager.update({ lang: el.dataset.lang });
                     Refresh.panel();
-                    tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
+                    tabNav.querySelectorAll('.ffa-panel__tab-btn').forEach(btn => {
                         const key = btn.dataset.tab;
                         const label = t('tab' + key.charAt(0).toUpperCase() + key.slice(1));
                         btn.title = label;
-                        const labelSpan = btn.querySelector('.neo-tab-btn-label');
+                        const labelSpan = btn.querySelector('.ffa-panel__tab-label');
                         if (labelSpan) labelSpan.textContent = label;
                     });
                     return true;
@@ -1290,20 +1336,9 @@
                     return true;
                 }
 
-                if (action === 'add-engine') {
-                    EngineEditor.openForCreate();
-                    return true;
-                }
-
-                if (action === 'confirm-engine') {
-                    EngineEditor.confirm();
-                    return true;
-                }
-
-                if (action === 'cancel-engine') {
-                    EngineEditor.close();
-                    return true;
-                }
+                if (action === 'add-engine') { EngineEditor.openForCreate(); return true; }
+                if (action === 'confirm-engine') { EngineEditor.confirm(); return true; }
+                if (action === 'cancel-engine') { EngineEditor.close(); return true; }
 
                 return false;
             },
@@ -1312,9 +1347,7 @@
                 if (action === 'toggle-mm') {
                     settings.mm = !settings.mm;
                     this.syncSwitch(el, settings.mm);
-                    Refresh.save();
-                    Refresh.styles();
-                    Refresh.miniMode();
+                    Refresh.save(); Refresh.styles(); Refresh.miniMode();
                     return true;
                 }
 
@@ -1379,17 +1412,10 @@
                     return true;
                 }
 
-                if (action === 'apply') {
-                    SettingsManager.save();
-                    location.reload();
-                    return true;
-                }
+                if (action === 'apply') { SettingsManager.save(); location.reload(); return true; }
 
                 if (action === 'reset') {
-                    if (confirm(t('confirmReset'))) {
-                        SettingsManager.reset();
-                        location.reload();
-                    }
+                    if (confirm(t('confirmReset'))) { SettingsManager.reset(); location.reload(); }
                     return true;
                 }
 
@@ -1405,33 +1431,33 @@
 
         function bindToolbarSearch(input, inputContainer, enabled, activeEngineUrl) {
             const getEngineUrl = () => {
-                const btn = qToolbar('.engine-btn.active');
+                const btn = qToolbar('.ffa-toolbar__engine-btn--active');
                 return btn ? btn.dataset.engineUrl : enabled[0]?.url;
             };
 
             const collapseInput = () => {
                 if (input.value.trim()) return;
-                inputContainer.classList.remove('expanded');
-                toolbar.classList.remove('focused');
-                wrapper.classList.remove('pinned');
-                toolbar.classList.remove('pinned');
+                inputContainer.classList.remove('ffa-toolbar__input--expanded');
+                toolbar.classList.remove('ffa-toolbar--focused');
+                wrapper.classList.remove('ffa-toolbar-wrapper--pinned');
+                toolbar.classList.remove('ffa-toolbar--pinned');
             };
 
             const expand = () => {
-                inputContainer.classList.add('expanded');
-                wrapper.classList.add('active', 'pinned');
-                toolbar.classList.add('focused', 'pinned');
+                inputContainer.classList.add('ffa-toolbar__input--expanded');
+                wrapper.classList.add('ffa-toolbar-wrapper--pinned');
+                toolbar.classList.add('ffa-toolbar--focused', 'ffa-toolbar--pinned');
                 UIState.openMask();
                 UIState.openSuggest();
             };
 
-            if (extractPageQuery()) inputContainer.classList.add('expanded');
+            if (extractPageQuery()) inputContainer.classList.add('ffa-toolbar__input--expanded');
 
             return {
                 getEngineUrl,
                 bind(searchBtn) {
                     searchBtn.onclick = () => {
-                        if (!inputContainer.classList.contains('expanded')) {
+                        if (!inputContainer.classList.contains('ffa-toolbar__input--expanded')) {
                             expand();
                             setTimeout(() => input.focus(), 50);
                         } else if (input.value.trim()) {
@@ -1449,7 +1475,7 @@
                     };
                     input.onblur = () => {
                         setTimeout(() => {
-                            if (!suggestBox.classList.contains('show') && !shell.classList.contains('show')) {
+                            if (!suggestBox.classList.contains('ffa-suggest--visible') && !shell.classList.contains('ffa-panel-shell--visible')) {
                                 collapseInput();
                             }
                         }, 150);
@@ -1467,7 +1493,7 @@
                         if (e.key === 'Escape') { input.blur(); }
                     };
 
-                    if (!activeEngineUrl) qToolbar('.engine-btn')?.classList.add('active');
+                    if (!activeEngineUrl) qToolbar('.ffa-toolbar__engine-btn')?.classList.add('ffa-toolbar__engine-btn--active');
                 },
             };
         }
@@ -1475,56 +1501,56 @@
         const PanelTemplates = {
             renderGeneralTab(s) {
                 return `
-                    <div class="neo-tab-content${_activeTab==='general'?' active':''}" data-tab="general">
+                    <div class="ffa-panel__tab-content${_activeTab==='general'?' ffa-panel__tab-content--active':''}" data-tab="general">
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardLanguage')}</span>
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardLanguage')}</span>
                             <div style="display:flex;gap:8px">
-                                <button class="neo-theme-btn ${s.lang==='en'?'active':''}" data-action="lang" data-lang="en">English</button>
-                                <button class="neo-theme-btn ${s.lang==='zh'?'active':''}" data-action="lang" data-lang="zh">中文</button>
+                                <button class="ffa-theme-btn ${s.lang==='en'?'ffa-theme-btn--active':''}" data-action="lang" data-lang="en">English</button>
+                                <button class="ffa-theme-btn ${s.lang==='zh'?'ffa-theme-btn--active':''}" data-action="lang" data-lang="zh">中文</button>
                             </div>
                         </div>
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardInteraction')}</span>
-                            <div class="neo-label">
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardInteraction')}</span>
+                            <div class="ffa-field__label">
                                 <span>${t('labelMiniMode')}</span>
-                                <div class="neo-switch ${s.mm?'on':''}" data-action="toggle-mm"></div>
+                                <div class="ffa-switch ${s.mm?'ffa-switch--on':''}" data-action="toggle-mm"></div>
                             </div>
-                            <div class="neo-field-hint">${t('hintMiniMode')}</div>
-                            <div class="neo-label" style="margin-top:16px">
+                            <div class="ffa-field__hint">${t('hintMiniMode')}</div>
+                            <div class="ffa-field__label" style="margin-top:16px">
                                 ${t('labelOffset')} <b>${s.bt}px</b>
                             </div>
                             <input type="range" id="s-bt" min="0" max="300" value="${s.bt}">
                         </div>
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardSearch')}</span>
-                            <div class="neo-label">
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardSearch')}</span>
+                            <div class="ffa-field__label">
                                 <span>${t('labelNewTab')}</span>
-                                <div class="neo-switch ${s.searchBehavior.openInNewTab?'on':''}" data-action="toggle-newtab"></div>
+                                <div class="ffa-switch ${s.searchBehavior.openInNewTab?'ffa-switch--on':''}" data-action="toggle-newtab"></div>
                             </div>
-                            <div class="neo-field-hint">${t('hintNewTab')}</div>
-                            <div class="neo-label" style="margin-top:16px">
+                            <div class="ffa-field__hint">${t('hintNewTab')}</div>
+                            <div class="ffa-field__label" style="margin-top:16px">
                                 <span>${t('labelSuggestionsToggle')}</span>
-                                <div class="neo-switch ${s.searchBehavior.suggestions?'on':''}" data-action="toggle-suggestions"></div>
+                                <div class="ffa-switch ${s.searchBehavior.suggestions?'ffa-switch--on':''}" data-action="toggle-suggestions"></div>
                             </div>
-                            <div class="neo-field-hint">${t('hintSuggestionsToggle')}</div>
-                            <div class="neo-label" style="margin-top:16px">
+                            <div class="ffa-field__hint">${t('hintSuggestionsToggle')}</div>
+                            <div class="ffa-field__label" style="margin-top:16px">
                                 <span>${t('labelHistoryToggle')}</span>
-                                <div class="neo-switch ${s.searchBehavior.history?'on':''}" data-action="toggle-history"></div>
+                                <div class="ffa-switch ${s.searchBehavior.history?'ffa-switch--on':''}" data-action="toggle-history"></div>
                             </div>
-                            <div class="neo-field-hint">${t('hintHistoryToggle')}</div>
+                            <div class="ffa-field__hint">${t('hintHistoryToggle')}</div>
                         </div>
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardData')}</span>
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardData')}</span>
                             <div style="display:flex;gap:10px">
-                                <button data-action="export" class="neo-btn-ghost" style="flex:1">
+                                <button data-action="export" class="ffa-btn--ghost" style="flex:1">
                                     ${t('btnExport')}
                                 </button>
                                 <label style="flex:1;display:block">
-                                    <span class="neo-btn-ghost" style="display:block;text-align:center">
+                                    <span class="ffa-btn--ghost" style="display:block;text-align:center">
                                         ${t('btnImport')}
                                     </span>
                                     <input type="file" id="s-import" accept=".json" style="display:none">
@@ -1536,74 +1562,74 @@
 
             renderAppearanceTab(s, themeButtons, mkSwatches, bgColors, acColors) {
                 return `
-                    <div class="neo-tab-content${_activeTab==='appearance'?' active':''}" data-tab="appearance">
+                    <div class="ffa-panel__tab-content${_activeTab==='appearance'?' ffa-panel__tab-content--active':''}" data-tab="appearance">
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardTheme')}</span>
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardTheme')}</span>
                             <div style="display:flex;gap:8px">${themeButtons}</div>
                         </div>
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardColors')}</span>
-                            <div class="neo-label">${t('labelBgColor')}</div>
-                            <div class="neo-swatch-row">
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardColors')}</span>
+                            <div class="ffa-field__label">${t('labelBgColor')}</div>
+                            <div class="ffa-swatch-row">
                                 ${mkSwatches(bgColors, 'b', s.b)}
-                                <div class="neo-swatch-custom" title="${t('btnCustomColor')}"><input type="color" id="s-bc" value="${escAttr(s.b)}"></div>
+                                <div class="ffa-swatch-custom" title="${t('btnCustomColor')}"><input type="color" id="s-bc" value="${escAttr(s.b)}"></div>
                             </div>
-                            <div class="neo-label" style="margin-top:16px">${t('labelAccentColor')}</div>
-                            <div class="neo-swatch-row">
+                            <div class="ffa-field__label" style="margin-top:16px">${t('labelAccentColor')}</div>
+                            <div class="ffa-swatch-row">
                                 ${mkSwatches(acColors, 'a', s.a)}
-                                <div class="neo-swatch-custom" title="${t('btnCustomColor')}"><input type="color" id="s-ac" value="${escAttr(s.a)}"></div>
+                                <div class="ffa-swatch-custom" title="${t('btnCustomColor')}"><input type="color" id="s-ac" value="${escAttr(s.a)}"></div>
                             </div>
                             <div style="margin-top:20px">
-                                <div class="neo-label">${t('labelFont')}</div>
-                                <input type="text" id="s-font" class="neo-edit-input"
+                                <div class="ffa-field__label">${t('labelFont')}</div>
+                                <input type="text" id="s-font" class="ffa-input"
                                     value="${escAttr(s.font)}"
                                     placeholder="${escAttr(t('labelFontHint'))}"
                                     style="margin-bottom:0">
                             </div>
                         </div>
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardLayout')}</span>
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardLayout')}</span>
                             <div style="display:flex;gap:20px">
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelFontSize')} <b>${s.fs}px</b></div>
+                                    <div class="ffa-field__label">${t('labelFontSize')} <b>${s.fs}px</b></div>
                                     <input type="range" id="s-fs" min="10" max="24" value="${s.fs}">
                                 </div>
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelPanelRadius')} <b>${s.r}px</b></div>
+                                    <div class="ffa-field__label">${t('labelPanelRadius')} <b>${s.r}px</b></div>
                                     <input type="range" id="s-r" min="0" max="60" value="${s.r}">
                                 </div>
                             </div>
                             <div style="display:flex;gap:20px;margin-top:16px">
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelWidgetRadius')} <b>${s.ir}px</b></div>
+                                    <div class="ffa-field__label">${t('labelWidgetRadius')} <b>${s.ir}px</b></div>
                                     <input type="range" id="s-ir" min="0" max="40" value="${s.ir}">
                                 </div>
                                 <div style="flex:1"></div>
                             </div>
                         </div>
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardOpacity')}</span>
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardOpacity')}</span>
                             <div style="display:flex;gap:20px">
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelToolbarAlpha')} <b>${s.ta}%</b></div>
+                                    <div class="ffa-field__label">${t('labelToolbarAlpha')} <b>${s.ta}%</b></div>
                                     <input type="range" id="s-ta" min="5" max="100" value="${s.ta}">
                                 </div>
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelPanelAlpha')} <b>${s.pa}%</b></div>
+                                    <div class="ffa-field__label">${t('labelPanelAlpha')} <b>${s.pa}%</b></div>
                                     <input type="range" id="s-pa" min="5" max="100" value="${s.pa}">
                                 </div>
                             </div>
                             <div style="display:flex;gap:20px;margin-top:16px">
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelToolbarBlur')} <b>${s.tb}px</b></div>
+                                    <div class="ffa-field__label">${t('labelToolbarBlur')} <b>${s.tb}px</b></div>
                                     <input type="range" id="s-tb" min="0" max="80" value="${s.tb}">
                                 </div>
                                 <div style="flex:1">
-                                    <div class="neo-label">${t('labelPanelBlur')} <b>${s.pb}px</b></div>
+                                    <div class="ffa-field__label">${t('labelPanelBlur')} <b>${s.pb}px</b></div>
                                     <input type="range" id="s-pb" min="0" max="80" value="${s.pb}">
                                 </div>
                             </div>
@@ -1613,12 +1639,12 @@
 
             renderEnginesTab(engineRows) {
                 return `
-                    <div class="neo-tab-content${_activeTab==='engines'?' active':''}" data-tab="engines">
+                    <div class="ffa-panel__tab-content${_activeTab==='engines'?' ffa-panel__tab-content--active':''}" data-tab="engines">
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardEngines')}</span>
-                            <div class="n-list">${engineRows}</div>
-                            <button data-action="add-engine" class="neo-btn-ghost"
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardEngines')}</span>
+                            <div class="ffa-engine-list">${engineRows}</div>
+                            <button data-action="add-engine" class="ffa-btn--ghost"
                                 style="width:100%;margin-top:15px">
                                 ${t('btnAddEngine')}
                             </button>
@@ -1628,31 +1654,31 @@
 
             renderBlocklistTab(s) {
                 return `
-                    <div class="neo-tab-content${_activeTab==='blocklist'?' active':''}" data-tab="blocklist">
+                    <div class="ffa-panel__tab-content${_activeTab==='blocklist'?' ffa-panel__tab-content--active':''}" data-tab="blocklist">
 
-                        <div class="neo-card">
-                            <span class="neo-card-title">${t('cardBlacklist')}</span>
-                            <div class="neo-field-hint" style="margin-top:0;margin-bottom:14px">${t('labelBlacklistHint')}</div>
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardBlacklist')}</span>
+                            <div class="ffa-field__hint" style="margin-top:0;margin-bottom:14px">${t('labelBlacklistHint')}</div>
                             <div id="bl-list">
                                 ${(!s.bl || s.bl.length === 0)
-                                    ? `<div style="opacity:0.4;font-size:var(--nfs-sm);padding:6px 4px;font-style:italic">${t('blacklistEmpty')}</div>`
+                                    ? `<div style="opacity:0.4;font-size:var(--ffa-font-size-sm);padding:6px 4px;font-style:italic">${t('blacklistEmpty')}</div>`
                                     : s.bl.map(d => `
-                                        <div class="neo-engine-row" style="padding:9px 12px;margin-bottom:8px;cursor:default">
-                                            <div style="flex:1;font-size:var(--nfs-sm);font-family:monospace;letter-spacing:0.3px;color:var(--ntm)">${SecurityUtils.escapeHtml(d)}</div>
-                                            <div data-action="remove-blacklist" data-domain="${escAttr(d)}" title="Remove" style="color:#ff6b6b;cursor:pointer;font-size:var(--nfs-md);padding:2px 4px;border-radius:4px;transition:0.2s;line-height:1">✕</div>
+                                        <div class="ffa-engine-row" style="padding:9px 12px;margin-bottom:8px;cursor:default">
+                                            <div style="flex:1;font-size:var(--ffa-font-size-sm);font-family:monospace;letter-spacing:0.3px;color:var(--ffa-text-primary)">${SecurityUtils.escapeHtml(d)}</div>
+                                            <div data-action="remove-blacklist" data-domain="${escAttr(d)}" title="Remove" style="color:#ff6b6b;cursor:pointer;font-size:var(--ffa-font-size-md);padding:2px 4px;border-radius:4px;transition:0.2s;line-height:1">✕</div>
                                         </div>`).join('')
                                 }
                             </div>
                             <div style="display:flex;gap:8px;margin-top:12px;align-items:stretch">
-                                <input type="text" id="bl-input" class="neo-edit-input"
+                                <input type="text" id="bl-input" class="ffa-input"
                                     placeholder="${escAttr(t('labelBlacklistInput'))}"
                                     style="flex:1;margin-bottom:0">
-                                <button data-action="add-blacklist" class="neo-btn-ghost"
+                                <button data-action="add-blacklist" class="ffa-btn--ghost"
                                     style="flex-shrink:0;padding:10px 16px;white-space:nowrap">${t('btnAddDomain')}</button>
                             </div>
-                            <div id="bl-feedback" style="font-size:var(--nfs-xs);color:#ff6b6b;min-height:16px;margin-top:4px;padding-left:2px;display:none"></div>
-                            <button data-action="add-current-site" class="neo-btn-ghost"
-                                style="width:100%;margin-top:10px;opacity:0.7;font-size:var(--nfs-xs)">
+                            <div id="bl-feedback" style="font-size:var(--ffa-font-size-xs);color:#ff6b6b;min-height:16px;margin-top:4px;padding-left:2px;display:none"></div>
+                            <button data-action="add-current-site" class="ffa-btn--ghost"
+                                style="width:100%;margin-top:10px;opacity:0.7;font-size:var(--ffa-font-size-xs)">
                                 ${t('btnAddCurrent')} — ${SecurityUtils.escapeHtml(window.location.hostname)}
                             </button>
                         </div>
@@ -1661,45 +1687,45 @@
 
             renderEngineSubPanel() {
                 return `
-                <div class="neo-sub-panel" id="n-sub">
-                    <div class="neo-sub-scroll">
-                        <h3 id="sub-title" style="color:var(--na);margin:0 0 20px;font-size:var(--nfs-md);font-weight:900;letter-spacing:2px"></h3>
-                        <div class="neo-label">${t('labelName')}</div>
-                        <input type="text" id="e-n" class="neo-edit-input">
-                        <div class="neo-field-hint">
+                <div class="ffa-subpanel" id="n-sub">
+                    <div class="ffa-subpanel__scroll">
+                        <h3 id="sub-title" style="color:var(--ffa-accent);margin:0 0 20px;font-size:var(--ffa-font-size-md);font-weight:900;letter-spacing:2px"></h3>
+                        <div class="ffa-field__label">${t('labelName')}</div>
+                        <input type="text" id="e-n" class="ffa-input">
+                        <div class="ffa-field__hint">
                             ${t('hintNameDesc')}<br>
-                            <span class="neo-field-ex" data-field-copy="${escAttr(t('hintNameEx'))}">
-                                <span class="ex-icon">⎘</span>${t('hintNameEx')}
+                            <span class="ffa-field__example" data-field-copy="${escAttr(t('hintNameEx'))}">
+                                <span class="ffa-field__example-icon">⎘</span>${t('hintNameEx')}
                             </span>
                         </div>
-                        <div class="neo-label">${t('labelIcon')}</div>
-                        <div class="neo-icon-row">
-                            <textarea id="e-icon" class="neo-icon-textarea" placeholder="${escAttr(t('hintIconEx1'))}"></textarea>
-                            <div class="neo-icon-preview" id="e-icon-preview" title="${escAttr(t('labelIconPreview'))}">—</div>
+                        <div class="ffa-field__label">${t('labelIcon')}</div>
+                        <div class="ffa-icon-editor">
+                            <textarea id="e-icon" class="ffa-icon-editor__textarea" placeholder="${escAttr(t('hintIconEx1'))}"></textarea>
+                            <div class="ffa-icon-editor__preview" id="e-icon-preview" title="${escAttr(t('labelIconPreview'))}">—</div>
                         </div>
-                        <div class="neo-field-hint" style="margin-top:6px">
+                        <div class="ffa-field__hint" style="margin-top:6px">
                             ${t('hintIconDesc')}<br><br>
-                            <span style="font-size:var(--nfs-xs);font-weight:700;color:var(--ntd)">${t('hintIconFmt1')}</span><br>
-                            <span class="neo-field-ex" data-field-copy="${escAttr(t('hintIconEx1'))}"><span class="ex-icon">⎘</span>${t('hintIconEx1')}</span>
+                            <span style="font-size:var(--ffa-font-size-xs);font-weight:700;color:var(--ffa-text-secondary)">${t('hintIconFmt1')}</span><br>
+                            <span class="ffa-field__example" data-field-copy="${escAttr(t('hintIconEx1'))}"><span class="ffa-field__example-icon">⎘</span>${t('hintIconEx1')}</span>
                         </div>
-                        <div class="neo-icon-error" id="e-icon-error">${t('hintIconErr')}</div>
-                        <div class="neo-label">${t('labelUrl')}</div>
-                        <input type="text" id="e-u" class="neo-edit-input">
-                        <div class="neo-field-hint">
+                        <div class="ffa-icon-editor__error" id="e-icon-error">${t('hintIconErr')}</div>
+                        <div class="ffa-field__label">${t('labelUrl')}</div>
+                        <input type="text" id="e-u" class="ffa-input">
+                        <div class="ffa-field__hint">
                             ${t('hintUrlDesc')}<br>
-                            <span class="neo-field-ex" data-field-copy="${escAttr(t('hintUrlEx'))}"><span class="ex-icon">⎘</span>${t('hintUrlEx')}</span>
+                            <span class="ffa-field__example" data-field-copy="${escAttr(t('hintUrlEx'))}"><span class="ffa-field__example-icon">⎘</span>${t('hintUrlEx')}</span>
                         </div>
-                        <div class="neo-label">${t('labelHost')}</div>
-                        <input type="text" id="e-h" class="neo-edit-input">
-                        <div class="neo-field-hint">
+                        <div class="ffa-field__label">${t('labelHost')}</div>
+                        <input type="text" id="e-h" class="ffa-input">
+                        <div class="ffa-field__hint">
                             ${t('hintHostDesc')}<br>
-                            <span class="neo-field-ex" data-field-copy="${escAttr(t('hintHostEx'))}"><span class="ex-icon">⎘</span>${t('hintHostEx')}</span>
-                            <div class="neo-field-tip">${t('hintHostTip')}</div>
+                            <span class="ffa-field__example" data-field-copy="${escAttr(t('hintHostEx'))}"><span class="ffa-field__example-icon">⎘</span>${t('hintHostEx')}</span>
+                            <div class="ffa-field__tip">${t('hintHostTip')}</div>
                         </div>
                     </div>
-                    <div style="padding:16px 30px;border-top:1px solid var(--nbd);display:flex;gap:15px;flex-shrink:0">
-                        <button data-action="confirm-engine" class="neo-btn-main" style="flex:1">${t('btnConfirm')}</button>
-                        <button data-action="cancel-engine"  class="neo-btn-ghost" style="flex:1">${t('btnCancel')}</button>
+                    <div style="padding:16px 30px;border-top:1px solid var(--ffa-border);display:flex;gap:15px;flex-shrink:0">
+                        <button data-action="confirm-engine" class="ffa-btn--primary" style="flex:1">${t('btnConfirm')}</button>
+                        <button data-action="cancel-engine"  class="ffa-btn--ghost"   style="flex:1">${t('btnCancel')}</button>
                     </div>
                 </div>`;
             },
@@ -1711,8 +1737,8 @@
                 if (fresh) Object.assign(SettingsManager.current, fresh);
                 UIState.openMask();
                 UIState.openShell();
-                wrapper.classList.add('pinned');
-                toolbar.classList.add('pinned');
+                wrapper.classList.add('ffa-toolbar-wrapper--pinned');
+                toolbar.classList.add('ffa-toolbar--pinned');
                 renderPanel();
             },
 
@@ -1721,7 +1747,7 @@
                 toolbar.innerHTML = '';
 
                 const settingsBtn = document.createElement('div');
-                settingsBtn.className = 'settings-btn';
+                settingsBtn.className = 'ffa-toolbar__settings-btn';
                 settingsBtn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54A.484.484 0 0 0 14 3h-4c-.24 0-.43.17-.47.41l-.36 2.54a7.4 7.4 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.65 9.47a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a7.4 7.4 0 0 0 1.62-.94l2.39.96a.48.48 0 0 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>`;
                 settingsBtn.onclick = () => this.openSettings();
                 toolbar.append(settingsBtn);
@@ -1732,16 +1758,16 @@
 
                 enabled.forEach(eng => {
                     const btn = document.createElement('div');
-                    btn.className = 'engine-btn';
+                    btn.className = 'ffa-toolbar__engine-btn';
                     btn.dataset.engineUrl = eng.url;
-                    if (activeEngineUrl === eng.url) btn.classList.add('active');
+                    if (activeEngineUrl === eng.url) btn.classList.add('ffa-toolbar__engine-btn--active');
 
                     const iconSpan = document.createElement('span');
-                    iconSpan.className = 'btn-icon';
+                    iconSpan.className = 'ffa-toolbar__engine-btn-icon';
                     iconSpan.appendChild(renderIconElement(eng.icon, 16));
 
                     const labelSpan = document.createElement('span');
-                    labelSpan.className = 'btn-label';
+                    labelSpan.className = 'ffa-toolbar__engine-btn-label';
                     labelSpan.textContent = eng.name;
                     btn.append(iconSpan, labelSpan);
 
@@ -1753,8 +1779,8 @@
                             performSearch(engineUrl, query);
                             return;
                         }
-                        toolbar.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
+                        toolbar.querySelectorAll('.ffa-toolbar__engine-btn').forEach(b => b.classList.remove('ffa-toolbar__engine-btn--active'));
+                        btn.classList.add('ffa-toolbar__engine-btn--active');
                         UIState.clearSuggest();
                         input.focus();
                         if (engineUrl) fetchSuggestions('', suggestBox, mask, engineUrl);
@@ -1764,14 +1790,14 @@
                 });
 
                 const inputContainer = document.createElement('div');
-                inputContainer.className = 'input-container';
+                inputContainer.className = 'ffa-toolbar__input';
 
                 const searchBtn = document.createElement('div');
-                searchBtn.className = 'search-btn';
+                searchBtn.className = 'ffa-toolbar__search-btn';
                 searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"/></svg>`;
 
                 const input = document.createElement('input');
-                input.className = 'search-input';
+                input.className = 'ffa-toolbar__search-input';
                 input.value = currentQuery;
                 input.setAttribute('aria-label', 'Search');
 
@@ -1792,20 +1818,20 @@
 
             const themeButtons = Object.keys(THEMES).map(key => {
                 const active = s.b.toUpperCase() === THEMES[key].b.toUpperCase();
-                return `<button class="neo-theme-btn${active ? ' active' : ''}" data-action="theme" data-key="${key}">${SecurityUtils.escapeHtml(THEMES[key].n[s.lang] ?? THEMES[key].n.en)}</button>`;
+                return `<button class="ffa-theme-btn${active ? ' ffa-theme-btn--active' : ''}" data-action="theme" data-key="${key}">${SecurityUtils.escapeHtml(THEMES[key].n[s.lang] ?? THEMES[key].n.en)}</button>`;
             }).join('');
 
             const engineRows = s.en.map((eng, i) => {
                 const _iconEl = renderIconElement(eng.icon, 18);
                 const iconHtml = _iconEl.outerHTML;
                 return `
-                    <div class="neo-engine-row" draggable="true" data-i="${i}">
+                    <div class="ffa-engine-row" draggable="true" data-i="${i}">
                         <div style="cursor:grab;opacity:0.3">☰</div>
-                        <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ntm);opacity:0.8">${iconHtml}</div>
-                        <div class="neo-switch ${eng.enabled ? 'on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
+                        <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ffa-text-primary);opacity:0.8">${iconHtml}</div>
+                        <div class="ffa-switch ${eng.enabled ? 'ffa-switch--on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
                         <div style="flex:1">
-                            <div style="font-size:var(--nfs-md);font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
-                            <div class="neo-engine-host">${SecurityUtils.escapeHtml(eng.host)}</div>
+                            <div style="font-size:var(--ffa-font-size-md);font-weight:700">${SecurityUtils.escapeHtml(eng.name)}</div>
+                            <div class="ffa-engine-row__host">${SecurityUtils.escapeHtml(eng.host)}</div>
                         </div>
                         <div data-action="edit-engine" data-i="${i}" style="cursor:pointer">✎</div>
                         <div data-action="delete-engine" data-i="${i}" style="color:#ff6b6b;cursor:pointer">✕</div>
@@ -1815,25 +1841,24 @@
             const bgColors = ['#FFFFFF','#F5F5F7','#F9F3E9','#F0EEF8','#E8F0FE','#E8F5E9','#FFF8E1','#1A1A2E','#0D0D1A','#0F1A12','#1A0A0A','#12121F'];
             const acColors = ['#1D1D1F','#2C2C3E','#6B4C3B','#8E6D5A','#007AFF','#5856D6','#FF2D55','#FF9500','#34C759','#00D4FF','#89D4A0','#FFD60A'];
             const mkSwatches = (colors, target, currentVal) =>
-                colors.map(c => `<div class="neo-swatch${currentVal===c?' selected':''}" data-action="swatch" data-color="${c}" data-target="${target}" style="background:${c}" title="${c}"></div>`).join('');
+                colors.map(c => `<div class="ffa-swatch${currentVal===c?' ffa-swatch--selected':''}" data-action="swatch" data-color="${c}" data-target="${target}" style="background:${c}" title="${c}"></div>`).join('');
 
             panel.innerHTML = `
-                <div class="neo-panel-title">${t('panelTitle')}</div>
-                <div class="neo-scroll" style="padding-top:20px">
+                <div class="ffa-panel__title">${t('panelTitle')}</div>
+                <div class="ffa-panel__scroll" style="padding-top:20px">
                     ${PanelTemplates.renderGeneralTab(s)}
                     ${PanelTemplates.renderAppearanceTab(s, themeButtons, mkSwatches, bgColors, acColors)}
                     ${PanelTemplates.renderEnginesTab(engineRows)}
                     ${PanelTemplates.renderBlocklistTab(s)}
-
                 </div>
-                <div class="neo-footer">
-                    <button data-action="apply" class="neo-btn-main" style="flex:2">${t('btnApply')}</button>
-                    <button data-action="reset"  class="neo-btn-danger" style="flex:1">${t('btnReset')}</button>
+                <div class="ffa-panel__footer">
+                    <button data-action="apply" class="ffa-btn--primary" style="flex:2">${t('btnApply')}</button>
+                    <button data-action="reset"  class="ffa-btn--danger"  style="flex:1">${t('btnReset')}</button>
                 </div>
                 ${PanelTemplates.renderEngineSubPanel()}`;
 
-                tabNav.querySelectorAll('.neo-tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === _activeTab);
+            tabNav.querySelectorAll('.ffa-panel__tab-btn').forEach(btn => {
+                btn.classList.toggle('ffa-panel__tab-btn--active', btn.dataset.tab === _activeTab);
             });
 
             bindPanelInputs();
@@ -1872,12 +1897,12 @@
             bindAppearance(settings) {
                 qPanel('#s-bc').oninput = e => {
                     settings.b = e.target.value;
-                    panel.querySelectorAll('.neo-swatch[data-target="b"]').forEach(sw => sw.classList.remove('selected'));
+                    panel.querySelectorAll('.ffa-swatch[data-target="b"]').forEach(sw => sw.classList.remove('ffa-swatch--selected'));
                     Refresh.saveAndStyles();
                 };
                 qPanel('#s-ac').oninput = e => {
                     settings.a = e.target.value;
-                    panel.querySelectorAll('.neo-swatch[data-target="a"]').forEach(sw => sw.classList.remove('selected'));
+                    panel.querySelectorAll('.ffa-swatch[data-target="a"]').forEach(sw => sw.classList.remove('ffa-swatch--selected'));
                     Refresh.saveAndStyles();
                 };
                 qPanel('#s-font').oninput = e => {
@@ -1890,7 +1915,7 @@
                 const iconInput = qPanel('#e-icon');
                 if (iconInput) {
                     iconInput.oninput = () => {
-                        qPanel('#e-icon-error')?.classList.remove('show');
+                        qPanel('#e-icon-error')?.classList.remove('ffa-icon-editor__error--visible');
                         updateIconPreview(iconInput.value.trim(), qPanel('#e-icon-preview'));
                     };
                 }
@@ -1898,7 +1923,7 @@
                 panel.querySelectorAll('[data-field-copy]').forEach(chip => {
                     chip.onclick = e => {
                         e.stopPropagation();
-                        const hint = chip.closest('.neo-field-hint');
+                        const hint = chip.closest('.ffa-field__hint');
                         const label = hint?.previousElementSibling;
                         const input = label?.previousElementSibling;
                         if (input?.tagName === 'INPUT' && !input.value.trim()) {
@@ -1953,33 +1978,33 @@
             },
 
             bindEngineSort(settings) {
-                const list = qPanel('.n-list');
+                const list = qPanel('.ffa-engine-list');
                 if (!list) return;
                 let draggingEngine = null;
 
                 list.ondragstart = e => {
-                    const row = e.target.closest('.neo-engine-row');
+                    const row = e.target.closest('.ffa-engine-row');
                     if (!row) return;
                     const idx = parseInt(row.dataset.i);
                     if (isNaN(idx) || idx < 0 || idx >= settings.en.length) return;
                     draggingEngine = settings.en[idx];
-                    row.classList.add('dragging');
+                    row.classList.add('ffa-engine-row--dragging');
                     e.dataTransfer.effectAllowed = 'move';
                 };
 
                 list.ondragenter = e => {
                     if (!draggingEngine) return;
                     e.preventDefault();
-                    list.classList.add('drag-active');
+                    list.classList.add('ffa-engine-list--drag-active');
                 };
 
                 list.ondragover = e => {
                     if (!draggingEngine) return;
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
-                    const dragging = list.querySelector('.dragging');
+                    const dragging = list.querySelector('.ffa-engine-row--dragging');
                     if (!dragging) return;
-                    const sibling = [...list.querySelectorAll('.neo-engine-row:not(.dragging)')]
+                    const sibling = [...list.querySelectorAll('.ffa-engine-row:not(.ffa-engine-row--dragging)')]
                         .reduce((best, row) => {
                             const rect = row.getBoundingClientRect();
                             const offset = e.clientY - rect.top - rect.height / 2;
@@ -1989,17 +2014,17 @@
                 };
 
                 list.ondragleave = e => {
-                    if (e.target === list || !list.contains(e.relatedTarget)) list.classList.remove('drag-active');
+                    if (e.target === list || !list.contains(e.relatedTarget)) list.classList.remove('ffa-engine-list--drag-active');
                 };
 
                 list.ondrop = e => { e.preventDefault(); e.stopPropagation(); };
 
                 list.ondragend = e => {
-                    e.target.closest('.neo-engine-row')?.classList.remove('dragging');
-                    list.classList.remove('drag-active');
+                    e.target.closest('.ffa-engine-row')?.classList.remove('ffa-engine-row--dragging');
+                    list.classList.remove('ffa-engine-list--drag-active');
                     if (!draggingEngine) return;
 
-                    const reordered = [...list.querySelectorAll('.neo-engine-row')].reduce((acc, row) => {
+                    const reordered = [...list.querySelectorAll('.ffa-engine-row')].reduce((acc, row) => {
                         const idx = parseInt(row.dataset.i);
                         if (!isNaN(idx) && idx >= 0 && idx < settings.en.length) {
                             const eng = settings.en[idx];
@@ -2041,19 +2066,19 @@
 
             const anyVisible = UIState.isOverlayVisible();
             if (!s.mm) {
-                wrapper.classList.remove('mini-mode', 'toolbar-visible');
-                miniIcon?.classList.remove('visible', 'hidden', 'hovered');
-                miniHitArea?.classList.remove('active');
+                wrapper.classList.remove('ffa-toolbar-wrapper--mini', 'ffa-toolbar-wrapper--revealed');
+                miniIcon?.classList.remove('ffa-mini-icon--visible', 'ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
+                miniHitArea?.classList.remove('ffa-mini-hitarea--active');
             } else if (anyVisible) {
-                wrapper.classList.add('mini-mode', 'toolbar-visible');
-                miniIcon?.classList.remove('visible', 'hidden', 'hovered');
-                miniHitArea?.classList.remove('active');
+                wrapper.classList.add('ffa-toolbar-wrapper--mini', 'ffa-toolbar-wrapper--revealed');
+                miniIcon?.classList.remove('ffa-mini-icon--visible', 'ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
+                miniHitArea?.classList.remove('ffa-mini-hitarea--active');
             } else {
-                wrapper.classList.add('mini-mode');
-                wrapper.classList.remove('toolbar-visible');
-                miniIcon?.classList.add('visible');
-                miniIcon?.classList.remove('hidden', 'hovered');
-                miniHitArea?.classList.add('active');
+                wrapper.classList.add('ffa-toolbar-wrapper--mini');
+                wrapper.classList.remove('ffa-toolbar-wrapper--revealed');
+                miniIcon?.classList.add('ffa-mini-icon--visible');
+                miniIcon?.classList.remove('ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
+                miniHitArea?.classList.add('ffa-mini-hitarea--active');
             }
         }
 
@@ -2069,7 +2094,7 @@
 
         applyStyles();
         updateMiniMode();
-        cleanupTasks.push(observePanelChanges()); // 开始监听面板变化
+        cleanupTasks.push(observePanelChanges());
         renderPanel();
 
         const cleanup = () => {
