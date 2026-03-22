@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.4.1
+// @version      3.4.2
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -123,6 +123,12 @@
         tabAppearance:       { en: 'Appearance',                                  zh: '外观'                             },
         tabEngines:          { en: 'Engines',                                     zh: '引擎'                             },
         tabBlocklist:        { en: 'Blocklist',                                   zh: '黑名单'                           },
+        tabAbout:            { en: 'About',                                       zh: '关于'                             },
+        cardAbout:           { en: 'About FFA Omnibar',                           zh: '关于 FFA Omnibar'                 },
+        labelAuthor:         { en: 'Author',                                      zh: '作者'                             },
+        labelWebsite:        { en: 'Website',                                     zh: '网站'                             },
+        labelVersion:        { en: 'Version',                                     zh: '版本'                             },
+        labelDescription:    { en: 'Description',                                 zh: '描述'                             },
         cardColors:          { en: 'Colors & Font',                               zh: '颜色与字体'                        },
         cardLayout:          { en: 'Size & Shape',                                zh: '尺寸与形状'                        },
         cardOpacity:         { en: 'Opacity & Blur',                              zh: '透明度与模糊'                      },
@@ -1064,6 +1070,7 @@
             { key: 'appearance', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M14.4 3.419a.639.639 0 0 1 1.2 0l.61 1.668a9.59 9.59 0 0 0 5.703 5.703l1.668.61a.639.639 0 0 1 0 1.2l-1.668.61a9.59 9.59 0 0 0-5.703 5.703l-.61 1.668a.639.639 0 0 1-1.2 0l-.61-1.668a9.59 9.59 0 0 0-5.703-5.703l-1.668-.61a.639.639 0 0 1 0-1.2l1.668-.61a9.59 9.59 0 0 0 5.703-5.703zM8 16.675a.266.266 0 0 1 .5 0l.254.694a4 4 0 0 0 2.376 2.377l.695.254a.266.266 0 0 1 0 .5l-.695.254a4 4 0 0 0-2.376 2.377l-.254.694a.266.266 0 0 1-.5 0l-.254-.694a4 4 0 0 0-2.376-2.377l-.695-.254a.266.266 0 0 1 0-.5l.695-.254a4 4 0 0 0 2.376-2.377zM4.2.21a.32.32 0 0 1 .6 0l.305.833a4.8 4.8 0 0 0 2.852 2.852l.833.305a.32.32 0 0 1 0 .6l-.833.305a4.8 4.8 0 0 0-2.852 2.852L4.8 8.79a.32.32 0 0 1-.6 0l-.305-.833a4.8 4.8 0 0 0-2.852-2.852L.21 4.8a.32.32 0 0 1 0-.6l.833-.305a4.8 4.8 0 0 0 2.852-2.852z"/></svg>' },
             { key: 'engines',    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M20.322.75h1.176a1.75 1.75 0 0 1 1.75 1.749v1.177a10.75 10.75 0 0 1-2.925 7.374l-1.228 1.304a24 24 0 0 1-1.596 1.542v5.038c0 .615-.323 1.184-.85 1.5l-4.514 2.709a.75.75 0 0 1-1.12-.488l-.963-4.572a1.3 1.3 0 0 1-.14-.129L8.04 15.96l-1.994-1.873a1.3 1.3 0 0 1-.129-.14l-4.571-.963a.75.75 0 0 1-.49-1.12l2.71-4.514c.316-.527.885-.85 1.5-.85h5.037a24 24 0 0 1 1.542-1.594l1.304-1.23A10.75 10.75 0 0 1 20.321.75Zm-6.344 4.018v-.001l-1.304 1.23a22.3 22.3 0 0 0-3.255 3.851l-2.193 3.29l1.859 1.744l.034.034l1.743 1.858l3.288-2.192a22.3 22.3 0 0 0 3.854-3.257l1.228-1.303a9.25 9.25 0 0 0 2.517-6.346V2.5a.25.25 0 0 0-.25-.25h-1.177a9.25 9.25 0 0 0-6.344 2.518M6.5 21c-1.209 1.209-3.901 1.445-4.743 1.49a.24.24 0 0 1-.18-.067a.24.24 0 0 1-.067-.18c.045-.842.281-3.534 1.49-4.743c.9-.9 2.6-.9 3.5 0s.9 2.6 0 3.5m-.592-8.588L8.17 9.017q.346-.519.717-1.017H5.066a.25.25 0 0 0-.214.121l-2.167 3.612ZM16 15.112q-.5.372-1.018.718l-3.393 2.262l.678 3.223l3.612-2.167a.25.25 0 0 0 .121-.214ZM17.5 8a1.5 1.5 0 1 1-3.001-.001A1.5 1.5 0 0 1 17.5 8"/></svg>' },
             { key: 'blocklist',  svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M9.28 7.72a.75.75 0 0 0-1.06 1.06l2.72 2.72l-2.72 2.72a.75.75 0 1 0 1.06 1.06L12 12.56l2.72 2.72a.75.75 0 1 0 1.06-1.06l-2.72-2.72l2.72-2.72a.75.75 0 0 0-1.06-1.06L12 10.44z"/><path fill="currentColor" d="m12.54.637l8.25 2.675A1.75 1.75 0 0 1 22 4.976V10c0 6.19-3.771 10.704-9.401 12.83a1.7 1.7 0 0 1-1.198 0C5.77 20.705 2 16.19 2 10V4.976c0-.758.489-1.43 1.21-1.664L11.46.637a1.75 1.75 0 0 1 1.08 0m-.617 1.426l-8.25 2.676a.25.25 0 0 0-.173.237V10c0 5.46 3.28 9.483 8.43 11.426a.2.2 0 0 0 .14 0C17.22 19.483 20.5 15.461 20.5 10V4.976a.25.25 0 0 0-.173-.237l-8.25-2.676a.25.25 0 0 0-.154 0"/></svg>' },
+            { key: 'about',      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10.501 11.724L.631 7.16c-.841-.399-.841-1.014 0-1.376l9.87-4.563c.841-.399 2.194-.399 2.998 0l9.87 4.563c.841.398.841 1.014 0 1.376l-9.87 4.563c-.841.362-2.194.362-2.998 0zm0 5.468l-9.87-4.563c-.841-.399-.841-1.014 0-1.376l3.363-1.558l6.507 3.006c.841.398 2.194.398 2.998 0l6.507-3.006l3.363 1.558c.841.398.841 1.014 0 1.376l-9.87 4.563c-.841.398-2.194.398-2.998 0m0 0L.631 12.63c-.841-.399-.841-1.014 0-1.376l3.363-1.558l6.507 3.006c.841.398 2.194.398 2.998 0l6.507-3.006l3.363 1.558c.841.398.841 1.014 0 1.376l-9.87 4.563c-.841.398-2.194.398-2.998 0m0 5.613l-9.87-4.563c-.841-.398-.841-1.014 0-1.376l3.436-1.593l6.398 2.97c.84.398 2.193.398 2.997 0l6.398-2.97l3.436 1.593c.841.4.841 1.014 0 1.376l-9.87 4.563c-.768.362-2.12.362-2.925 0"/></svg>' },
         ];
 
         TAB_DEFS.forEach(def => {
@@ -1695,6 +1702,44 @@
                     </div>`;
             },
 
+            renderAboutTab(s) {
+                const scriptInfo = {
+                    name: GM_info.script.name,
+                    description: s.lang === 'zh' 
+                        ? (GM_info.script.description_zh || GM_info.script.description)
+                        : GM_info.script.description,
+                    author: GM_info.script.author,
+                    website: GM_info.script.homepage,
+                    version: GM_info.script.version
+                };
+
+                return `
+                    <div class="ffa-panel__tab-content${_activeTab==='about'?' ffa-panel__tab-content--active':''}" data-tab="about">
+
+                        <div class="ffa-card">
+                            <span class="ffa-card__title">${t('cardAbout')}</span>
+                            <div style="margin-bottom:20px">
+                                <div style="font-size:var(--ffa-font-size-lg);font-weight:700;color:var(--ffa-accent);margin-bottom:8px">${SecurityUtils.escapeHtml(scriptInfo.name)}</div>
+                                <div style="font-size:var(--ffa-font-size-sm);color:var(--ffa-text-secondary);line-height:1.5">${SecurityUtils.escapeHtml(scriptInfo.description)}</div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:12px">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-weight:600;color:var(--ffa-text-primary)">${t('labelAuthor')}</span>
+                                    <a href="https://github.com/ffainy" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.author)}</a>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-weight:600;color:var(--ffa-text-primary)">${t('labelVersion')}</span>
+                                    <span style="color:var(--ffa-text-secondary)">${SecurityUtils.escapeHtml(scriptInfo.version)}</span>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-weight:600;color:var(--ffa-text-primary)">${t('labelWebsite')}</span>
+                                    <a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.website)}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            },
+
             renderEngineSubPanel() {
                 return `
                 <div class="ffa-subpanel" id="n-sub">
@@ -1860,6 +1905,7 @@
                     ${PanelTemplates.renderAppearanceTab(s, themeButtons, mkSwatches, bgColors, acColors)}
                     ${PanelTemplates.renderEnginesTab(engineRows)}
                     ${PanelTemplates.renderBlocklistTab(s)}
+                    ${PanelTemplates.renderAboutTab(s)}
                 </div>
                 <div class="ffa-panel__footer">
                     <button data-action="apply" class="ffa-btn--primary" style="flex:2">${t('btnApply')}</button>
