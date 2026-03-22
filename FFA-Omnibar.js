@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.4.4
+// @version      3.5.0
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy
 // @supportURL   https://github.com/ffainy/FFA-UserScripts
@@ -45,15 +45,14 @@
 
     const THEMES = {
         minimal: { n: { en: 'Clean Steel',  zh: '极简工业' }, b: '#F4F4F5', a: '#1A1A2E', r: 8,  ir: 6,  ta: 70, pa: 80, glow: 0.6 },
-        warm:    { n: { en: 'Warm Reading', zh: '午后书屋' }, b: '#F5ECD8', a: '#8B5E3C', r: 20, ir: 10, ta: 65, pa: 75, glow: 0.9 },
-        cyber:   { n: { en: 'Neon Noir',    zh: '暗夜霓虹' }, b: '#080810', a: '#00FFEA', r: 28, ir: 14, ta: 35, pa: 45, glow: 1.6 },
-        forest:  { n: { en: 'Deep Forest',  zh: '宁静森林' }, b: '#0A1A0F', a: '#5C7A5A', r: 16, ir: 10, ta: 40, pa: 50, glow: 1.2 },
+        warm:    { n: { en: 'Warm Sepia',  zh: '午后书屋' }, b: '#F5ECD8', a: '#8B5E3C', r: 20, ir: 10, ta: 65, pa: 75, glow: 0.9 },
+        cyber:   { n: { en: 'Neon Noir',    zh: '暗夜霓虹' }, b: '#05050F', a: '#7ECFFF', r: 28, ir: 14, ta: 35, pa: 75, glow: 1.2 },
+        forest:  { n: { en: 'Deep Forest',  zh: '宁静森林' }, b: '#080F0A', a: '#4AC878', r: 16, ir: 10, ta: 40, pa: 75, glow: 1.3 },
     };
 
     const LOCALES = {
         panelTitle:          { en: 'FFA Omnibar',                    zh: 'FFA Omnibar'         },
         cardTheme:           { en: 'Theme',                          zh: '主题'                },
-        cardVisual:          { en: 'Appearance',                     zh: '外观'                },
         cardInteraction:     { en: 'Toolbar',                        zh: '搜索条'               },
         cardEngines:         { en: 'Search Engines',                 zh: '搜索引擎'             },
         cardSearch:          { en: 'Search',                         zh: '搜索'                },
@@ -129,8 +128,9 @@
         labelWebsite:        { en: 'Website',                                     zh: '网站'                             },
         labelVersion:        { en: 'Version',                                     zh: '版本'                             },
         labelDescription:    { en: 'Description',                                 zh: '描述'                             },
+        labelGlow:           { en: 'Glow Intensity',                 zh: '光晕强度'             },
         cardColors:          { en: 'Colors & Font',                               zh: '颜色与字体'                        },
-        cardLayout:          { en: 'Size & Shape',                                zh: '尺寸与形状'                        },
+        cardLayout:          { en: 'Size & Style',                                zh: '尺寸与风格'                        },
         cardOpacity:         { en: 'Opacity & Blur',                              zh: '透明度与模糊'                      },
     };
 
@@ -138,7 +138,7 @@
         bt: 30,           // 搜索条距页面底部的距离 (px)
         fs: 14,           // 基准字号 (px)，所有 UI 字号均基于此缩放
         ta: 50,           // 搜索条背景透明度 (%)
-        pa: 60,           // 设置面板背景透明度 (%)
+        pa: 75,           // 设置面板背景透明度 (%)
         tb: 40,           // 搜索条背景模糊半径 (px)
         pb: 45,           // 设置面板背景模糊半径 (px)
         mm: true,         // 迷你模式：空闲时收起为小图标
@@ -151,7 +151,7 @@
         },
         bl: [],           // 黑名单：在这些精确域名上隐藏搜索栏
         en: DEFAULT_ENGINES,   // 搜索引擎列表
-        ...THEMES.cyber,  // 当前主题（展开字段：b 背景色、a 强调色、r 面板圆角、ir 元素圆角、ta/pa 透明度、glow 光晕强度）
+        ...THEMES.cyber,  // 默认主题，首次安装时会根据系统深色偏好自动切换
     };
 
     let _activeTab = 'general'; // 当前激活的设置 tab，内存状态不持久化
@@ -274,14 +274,7 @@
         el.appendChild(decodeBase64Icon(result.value, 24));
     }
 
-    // ─── CSS 变量构建 ────────────────────────────────────────────────────────────
-    // 命名规范：--ffa-* 前缀，按功能分层：
-    //   间距/尺寸：--ffa-offset-bottom / --ffa-radius-panel / --ffa-radius-widget / --ffa-font-size-*
-    //   背景色：   --ffa-bg-panel / --ffa-bg-panel-deep / --ffa-bg-toolbar / --ffa-bg-inner / --ffa-bg-inner-strong
-    //   文字色：   --ffa-text-primary / --ffa-text-secondary / --ffa-text-on-accent
-    //   强调色：   --ffa-accent / --ffa-accent-glow / --ffa-border
-    //   文字光晕： --ffa-glow-accent-sm / -md / -lg / --ffa-glow-on-accent / --ffa-glow-text
-    //   效果：     --ffa-font-stack / --ffa-easing / --ffa-shadow / --ffa-backdrop-toolbar / --ffa-backdrop-panel
+    // ─── CSS 变量构建：将设置对象转换为 Shadow DOM 内的 CSS 自定义属性 ────────────
     function buildCSSVariables(s) {
         const textColor  = contrastColor(s.b);
         const isDark     = textColor === '#fff';
@@ -300,43 +293,48 @@
 
         return `:host,:root{` +
             // ── 间距 & 尺寸 ──
-            `--ffa-offset-bottom:${s.bt}px;` +      // 搜索条距底部距离
-            `--ffa-radius-panel:${s.r}px;` +         // 面板圆角半径
-            `--ffa-radius-widget:${s.ir}px;` +       // 元素（按钮/输入框）圆角半径
-            `--ffa-font-size-base:${s.fs}px;` +      // 基准字号
-            `--ffa-font-size-xs:${Math.max(s.fs - 3, 9)}px;` + // 辅助文字：提示、徽章、标注
-            `--ffa-font-size-sm:${Math.max(s.fs - 2, 9)}px;` + // 次要文字：标签、幽灵按钮
-            `--ffa-font-size-md:${s.fs + 2}px;` +              // 强调文字：卡片标题、列表项
-            `--ffa-font-size-lg:${s.fs + 6}px;` +              // 大标题：设置面板顶部标题
+            `--ffa-offset-bottom:${s.bt}px;` +
+            `--ffa-radius-panel:${s.r}px;` +
+            `--ffa-radius-widget:${s.ir}px;` +
+            `--ffa-font-size-base:${s.fs}px;` +
+            `--ffa-font-size-xs:${Math.max(s.fs - 2, 10)}px;` +
+            `--ffa-font-size-sm:${Math.max(s.fs - 1, 10)}px;` +
+            `--ffa-font-size-md:${s.fs + 2}px;` +
+            `--ffa-font-size-lg:${s.fs + 6}px;` +
             `--ffa-font-weight-normal:400;` +
             `--ffa-font-weight-semibold:600;` +
             `--ffa-font-weight-bold:800;` +
             // ── 背景色 ──
-            `--ffa-bg-panel:${hexToRgba(s.b, s.pa / 100)};` +                              // 面板背景（面板透明度）
-            `--ffa-bg-panel-deep:${hexToRgba(s.b, Math.max(s.pa / 100, 0.85))};` +         // 子面板/加深背景（最低 85%）
-            `--ffa-bg-toolbar:${hexToRgba(s.b, s.ta / 100)};` +                             // 搜索条背景（搜索条透明度）
-            `--ffa-bg-inner:${innerBg};` +            // 内部元素底色（淡化强调色）
-            `--ffa-bg-inner-strong:${innerBg2};` +    // 内部元素底色（稍深版本）
+            `--ffa-bg-panel:${hexToRgba(s.b, s.pa / 100)};` +
+            `--ffa-bg-panel-deep:${hexToRgba(s.b, s.pa / 100)};` +
+            `--ffa-bg-toolbar:${hexToRgba(s.b, s.ta / 100)};` +
+            `--ffa-bg-inner:${innerBg};` +
+            `--ffa-bg-inner-strong:${innerBg2};` +
             // ── 颜色：强调 & 边框 ──
-            `--ffa-accent:${s.a};` +                  // 强调色（十六进制）
-            `--ffa-accent-glow:${hexToRgba(s.a, nagAlpha)};` + // 强调色半透明光晕，用于阴影/发光
-            `--ffa-border:${borderColor};` +           // 边框色
+            `--ffa-accent:${s.a};` +
+            `--ffa-accent-rgb:${[1,3,5].map(i=>parseInt(s.a.slice(i,i+2),16)||0).join(',')};` +
+            `--ffa-accent-glow:${hexToRgba(s.a, nagAlpha)};` +
+            `--ffa-accent-hover-glow:${hexToRgba(s.a, isDark ? 0.45 * glow : 0.22 * glow)};` +
+            `--ffa-border:${borderColor};` +
             // ── 颜色：文字 ──
-            `--ffa-text-primary:${textColor};` +       // 主文字色（根据背景亮暗自动取黑或白）
-            `--ffa-text-secondary:${dimText};` +       // 次文字色（灰化处理）
-            `--ffa-text-on-accent:${contrastColor(s.a)};` + // 强调色背景上的文字色（自动黑或白）
-            // ── 文字光晕（三档强度：sm/md/lg） ──
+            `--ffa-text-primary:${textColor};` +
+            `--ffa-text-primary-rgb:${textColor==='#fff'?'255,255,255':'0,0,0'};` +
+            `--ffa-text-secondary:${dimText};` +
+            `--ffa-text-on-accent:${contrastColor(s.a)};` +
+            // ── 文字光晕 ──
+            `--ffa-glow-accent-xs:0 0 4px ${hexToRgba(s.a, 0.4)};` +
             `--ffa-glow-accent-sm:0 0 6px ${hexToRgba(s.a, 0.55)};` +
             `--ffa-glow-accent-md:0 0 8px ${hexToRgba(s.a, 0.7)},0 0 20px ${hexToRgba(s.a, 0.35)};` +
             `--ffa-glow-accent-lg:0 0 10px ${hexToRgba(s.a, 0.9)},0 0 25px ${hexToRgba(s.a, 0.55)},0 0 50px ${hexToRgba(s.a, 0.25)};` +
-            `--ffa-glow-on-accent:0 0 6px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.35)};` + // 强调色背景上的文字光晕
-            `--ffa-glow-text:0 0 5px ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'};` + // 正文色文字光晕
+            `--ffa-glow-on-accent:0 0 5px ${hexToRgba(contrastColor(s.a) === '#fff' ? '#ffffff' : '#000000', 0.3)};` +
+            `--ffa-glow-text:0 0 4px ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)'};` +
+            `--ffa-glow-danger:0 0 5px rgba(255,71,87,0.45);` +
             // ── 效果 ──
-            `--ffa-font-stack:${fontStack}system-ui,sans-serif;` + // 字体栈
-            `--ffa-easing:cubic-bezier(0.23,1,0.32,1);` +          // 弹性缓动曲线
-            `--ffa-shadow:${shadowSpec};` +                          // 投影（发光效果）
-            `--ffa-backdrop-toolbar:blur(${s.tb}px) saturate(${saturation});` +  // 搜索条 backdrop-filter
-            `--ffa-backdrop-panel:blur(${s.pb}px) saturate(${saturation});` +    // 面板 backdrop-filter
+            `--ffa-font-stack:${fontStack}system-ui,sans-serif;` +
+            `--ffa-easing:cubic-bezier(0.23,1,0.32,1);` +
+            `--ffa-shadow:${shadowSpec};` +
+            `--ffa-backdrop-toolbar:blur(${s.tb}px) saturate(${saturation});` +
+            `--ffa-backdrop-panel:blur(${s.pb}px) saturate(${saturation});` +
             `}` +
             `:host *{font-family:${fontStack}system-ui,sans-serif}`;
     }
@@ -358,9 +356,17 @@
 
         load() {
             const saved = GM_getValue(STORAGE_KEY, {});
+            const isFirstRun = Object.keys(saved).length === 0;
             this._s = { ...DEFAULT_SETTINGS, ...saved };
             this._s.en = this._mergeEngines(saved);
             if (!Array.isArray(this._s.bl)) this._s.bl = [];
+            // 首次安装：根据系统色彩偏好自动选择主题
+            if (isFirstRun) {
+                const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+                const autoTheme = prefersDark ? THEMES.cyber : THEMES.minimal;
+                Object.assign(this._s, autoTheme);
+                this.save();
+            }
             return this._s;
         },
 
@@ -408,7 +414,6 @@
         addToBlacklist(domain) {
             const d = domain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0];
             if (!d) return false;
-            if (!this._s.bl) this._s.bl = [];
             if (this._s.bl.includes(d)) return 'duplicate';
             this._s.bl.push(d);
             this.save();
@@ -508,37 +513,23 @@
         },
     };
 
-    // ─── APP_CSS ─────────────────────────────────────────────────────────────────
-    // 注入到统一 shadow root 内，作用于整套隔离 UI。
-    // 类名规范：ffa-[block] / ffa-[block]__[element] / ffa-[block]--[modifier]
-    //
-    // 主要块（block）：
-    //   .ffa-app-root          — 全局容器
-    //   .ffa-overlay           — 设置面板背后的全屏遮罩
-    //   .ffa-panel-shell       — 面板定位外壳（含 tab 导航和面板主体）
-    //   .ffa-panel             — 设置面板主体
-    //   .ffa-panel__tab-nav    — 左侧 tab 切换抽屉
-    //   .ffa-panel__tab-btn    — 单个 tab 按钮
-    //   .ffa-card              — 设置卡片
-    //   .ffa-subpanel          — 引擎编辑子面板
-    //   .ffa-switch            — 开关组件
-    //   .ffa-btn--primary/ghost/danger — 按钮变体
-    //   .ffa-mini-icon         — 迷你模式图标
-    //   .ffa-mini-hitarea      — 迷你模式触发区域
+    // ─── APP_CSS：面板、卡片、按钮、开关等 UI 组件样式 ───────────────────────────
     const APP_CSS = [
         `:host{all:initial}`,
         `:host,:host *,:host *::before,:host *::after{box-sizing:border-box}`,
         `.ffa-app-root{position:fixed;inset:0;z-index:2147483640;pointer-events:none;font-family:var(--ffa-font-stack);line-height:1.4;color:var(--ffa-text-primary);text-size-adjust:none;-webkit-font-smoothing:antialiased}`,
         `.ffa-app-root *{box-sizing:border-box}`,
-        `.ffa-overlay,.ffa-panel-shell,.ffa-mini-icon,.ffa-mini-hitarea,.ffa-toolbar-host,.ffa-suggest,.ffa-toolbar-wrapper,.ffa-toolbar,.ffa-toolbar__input,.ffa-toolbar__search-btn,.ffa-toolbar__search-input,.ffa-toolbar__engine-btn,.ffa-toolbar__settings-btn{pointer-events:auto}`,
+        `.ffa-overlay,.ffa-panel-shell,.ffa-mini-icon,.ffa-mini-hitarea,.ffa-suggest,.ffa-toolbar,.ffa-toolbar__input,.ffa-toolbar__search-btn,.ffa-toolbar__search-input,.ffa-toolbar__engine-btn,.ffa-toolbar__settings-btn{pointer-events:auto}`,
 
         // ── 遮罩层 ──
         `.ffa-overlay{position:fixed;inset:0;background:var(--ffa-bg-inner-strong);backdrop-filter:blur(8px);z-index:2147483640;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s}`,
         `.ffa-overlay--visible{visibility:visible;opacity:1;pointer-events:auto}`,
 
         // ── 面板全局字体继承 ──
-        `.ffa-panel *{font-family:var(--ffa-font-stack);color:inherit;box-sizing:border-box;text-shadow:none}`,
+        `.ffa-panel *{font-family:var(--ffa-font-stack);color:inherit;box-sizing:border-box}`,
         `.ffa-panel a,.ffa-panel a:visited,.ffa-panel a:hover{color:inherit;text-decoration:none}`,
+        // hint/tip 类小文字不加光晕
+        `.ffa-field__hint,.ffa-field__tip,.ffa-field__hint code,.ffa-field__example{text-shadow:none}`,
 
         // ── 面板滚动区 ──
         `.ffa-panel__scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 28px}`,
@@ -550,23 +541,33 @@
 
         // ── 引擎行 ──
         `.ffa-engine-row__host{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary)}`,
-        `.ffa-engine-row{display:flex;align-items:center;gap:15px;padding:12px 15px;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);border:1px solid var(--ffa-border);margin-bottom:12px;cursor:grab;transition:0.25s var(--ffa-easing);position:relative}`,
-        `.ffa-engine-row:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-3px);box-shadow:0 6px 20px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow)}`,
-        `.ffa-engine-row--dragging{opacity:0.5;border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);cursor:grabbing;box-shadow:0 10px 40px var(--ffa-accent-glow),0 0 20px var(--ffa-accent-glow);transform:scale(1.02) rotate(2deg);transition:0.15s var(--ffa-easing)}`,
-        `.ffa-engine-list.ffa-engine-list--drag-active{background:rgba(0,0,0,0.02);border-radius:var(--ffa-radius-widget);padding:8px}`,
+        `.ffa-engine-row{display:flex;align-items:center;gap:12px;padding:10px 13px;background:rgba(255,255,255,0.025);border-radius:var(--ffa-radius-widget);border:1px solid var(--ffa-border);margin-bottom:10px;cursor:grab;transition:background 0.25s var(--ffa-easing),border-color 0.25s var(--ffa-easing),transform 0.35s var(--ffa-easing),box-shadow 0.35s var(--ffa-easing),opacity 0.25s;position:relative}`,
+        `.ffa-engine-row:hover{background:rgba(var(--ffa-accent-rgb),0.05);border-color:rgba(var(--ffa-accent-rgb),0.28);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.15),0 0 0 1px rgba(var(--ffa-accent-rgb),0.12),0 0 20px var(--ffa-accent-hover-glow)}`,
+        // 拖动中：原地半透明作为空位占位，不旋转不缩放
+        `.ffa-engine-row--dragging{opacity:0.3;background:var(--ffa-bg-inner);border-color:rgba(var(--ffa-accent-rgb),0.15);cursor:grabbing;transform:none;box-shadow:none;transition:opacity 0.15s,background 0.15s,border-color 0.15s}`,
+        // 放置目标：脉冲边框提示插入位置
+        `@keyframes ffa-drop-pulse{0%,100%{border-color:rgba(var(--ffa-accent-rgb),0.25)}50%{border-color:rgba(var(--ffa-accent-rgb),0.65)}}`,
+        `.ffa-engine-row--drop-target{background:rgba(var(--ffa-accent-rgb),0.04);border-color:rgba(var(--ffa-accent-rgb),0.4);animation:ffa-drop-pulse 1s ease-in-out infinite}`,
+        `.ffa-engine-list.ffa-engine-list--drag-active{border-radius:var(--ffa-radius-widget)}`,
 
         // ── 开关 ──
-        `.ffa-switch{width:40px;height:20px;border-radius:20px;background:var(--ffa-border);position:relative;cursor:pointer;transition:0.25s var(--ffa-easing)}`,
-        `.ffa-switch::after{content:'';position:absolute;left:4px;top:4px;width:12px;height:12px;background:var(--ffa-text-secondary);border-radius:50%;transition:0.25s var(--ffa-easing)}`,
-        `.ffa-switch--on{background:var(--ffa-accent)}`,
-        `.ffa-switch--on::after{left:24px;background:var(--ffa-text-on-accent)}`,
+        `.ffa-switch{width:40px;height:22px;border-radius:22px;background:rgba(255,255,255,0.08);border:1px solid var(--ffa-border);position:relative;cursor:pointer;transition:background 0.35s var(--ffa-easing),border-color 0.35s var(--ffa-easing),box-shadow 0.35s var(--ffa-easing);flex-shrink:0}`,
+        `.ffa-switch::after{content:'';position:absolute;left:3px;top:3px;width:14px;height:14px;background:var(--ffa-text-secondary);border-radius:50%;transition:left 0.35s var(--ffa-easing),background 0.35s var(--ffa-easing),box-shadow 0.35s var(--ffa-easing),transform 0.2s var(--ffa-easing)}`,
+        `.ffa-switch:hover::after{transform:scale(1.1)}`,
+        `.ffa-switch--on{background:rgba(var(--ffa-accent-rgb),0.2);border-color:rgba(var(--ffa-accent-rgb),0.45)}`,
+        `.ffa-switch--on::after{left:21px;background:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow),0 0 16px var(--ffa-accent-glow)}`,
 
         // ── 卡片 ──
-        `.ffa-card{background:var(--ffa-bg-panel);backdrop-filter:blur(15px);border-radius:min(calc(var(--ffa-radius-panel) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--ffa-border);box-shadow:0 10px 30px rgba(0,0,0,0.05);box-sizing:border-box}`,
-        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:1px;color:var(--ffa-accent);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-md)}`,
+        `.ffa-card{background:var(--ffa-bg-panel);backdrop-filter:blur(15px);border-radius:min(calc(var(--ffa-radius-panel) * 0.7),20px);padding:22px;margin-bottom:16px;border:1px solid var(--ffa-border);box-shadow:0 4px 12px rgba(0,0,0,0.15),inset 0 1px 0 transparent;box-sizing:border-box;position:relative;overflow:hidden;transition:border-color 0.35s var(--ffa-easing),background 0.35s var(--ffa-easing),box-shadow 0.35s var(--ffa-easing),transform 0.35s var(--ffa-easing)}`,
+        // 顶部向下散射晕光（::before 仅用于此，不再做线条）
+        `.ffa-card::before{content:'';position:absolute;top:0;left:0;right:0;height:60px;background:linear-gradient(to bottom,rgba(var(--ffa-accent-rgb),0.07),transparent);opacity:0;transition:opacity 0.35s var(--ffa-easing);pointer-events:none}`,
+        // hover：线条用 inset box-shadow 实现，与其他过渡完全同步
+        `.ffa-card:hover{border-color:rgba(var(--ffa-accent-rgb),0.28);background:rgba(var(--ffa-accent-rgb),0.025);box-shadow:0 8px 24px rgba(0,0,0,0.2),0 0 0 1px rgba(var(--ffa-accent-rgb),0.12),0 0 28px var(--ffa-accent-hover-glow),inset 0 1px 0 var(--ffa-accent);transform:translateY(-1px)}`,
+        `.ffa-card:hover::before{opacity:1}`,
+        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:1px;color:var(--ffa-accent);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-xs)}`,
 
         // ── 字段标签 & 提示 ──
-        `.ffa-field__label{display:flex;justify-content:space-between;align-items:center;font-size:var(--ffa-font-size-sm);color:var(--ffa-text-primary);margin-bottom:8px;font-weight:var(--ffa-font-weight-semibold);transform:translateZ(0)}`,
+        `.ffa-field__label{display:flex;justify-content:space-between;align-items:center;font-size:var(--ffa-font-size-base);color:var(--ffa-text-primary);margin-bottom:8px;font-weight:var(--ffa-font-weight-semibold);transform:translateZ(0);text-shadow:var(--ffa-glow-text)}`,
         `.ffa-field__label b{font-weight:var(--ffa-font-weight-normal);color:var(--ffa-text-secondary);font-size:var(--ffa-font-size-xs);background:var(--ffa-bg-inner);padding:2px 8px;border-radius:10px}`,
         `.ffa-field__hint{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary);margin:4px 0 12px;line-height:1.6}`,
         `.ffa-field__hint code{font-family:monospace;font-size:var(--ffa-font-size-xs);color:var(--ffa-accent);background:var(--ffa-bg-inner);padding:1px 5px;border-radius:4px;border:1px solid var(--ffa-border)}`,
@@ -585,15 +586,40 @@
         `input[type=range]:hover::-moz-range-thumb{box-shadow:0 0 10px var(--ffa-accent),0 0 20px var(--ffa-accent-glow);transform:scale(1.15)}`,
 
         // ── 面板底部操作区 ──
-        `.ffa-panel__footer{padding:20px 28px;display:flex;gap:15px;border-top:1px solid var(--ffa-border)}`,
+        `.ffa-panel__footer{padding:18px 28px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--ffa-border);background:linear-gradient(to top,rgba(var(--ffa-accent-rgb),0.02),transparent)}`,
+        `.ffa-panel__footer-spacer{flex:1}`,
 
-        // ── 按钮变体 ──
-        `.ffa-btn--primary{padding:14px;background:var(--ffa-accent);color:var(--ffa-text-on-accent);border:none;border-radius:var(--ffa-radius-widget);font-weight:var(--ffa-font-weight-bold);cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;box-shadow:0 4px 15px var(--ffa-accent-glow);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.ffa-btn--primary:hover{transform:translateY(-3px);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-on-accent)}`,
-        `.ffa-btn--ghost{padding:14px;background:var(--ffa-bg-inner);color:var(--ffa-text-primary);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);font-size:var(--ffa-font-size-sm);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.ffa-btn--ghost:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);transform:translateY(-3px);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);color:var(--ffa-text-primary);text-shadow:var(--ffa-glow-accent-sm)}`,
-        `.ffa-btn--danger{padding:14px;background:var(--ffa-bg-inner);color:#ff4757;border:1px solid rgba(255,71,87,0.3);border-radius:var(--ffa-radius-widget);font-weight:var(--ffa-font-weight-bold);cursor:pointer;transition:0.25s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;transform:translateZ(0)}`,
-        `.ffa-btn--danger:hover{background:rgba(255,71,87,0.12);border-color:#ff4757;transform:translateY(-3px);box-shadow:0 4px 15px rgba(255,71,87,0.3),0 0 10px rgba(255,71,87,0.2);text-shadow:0 0 6px rgba(255,71,87,0.5)}`,
+        // ── 按钮基础 ──
+        `.ffa-btn--primary,.ffa-btn--secondary,.ffa-btn--tertiary,.ffa-btn--danger{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 20px;border-radius:var(--ffa-radius-widget);font-size:var(--ffa-font-size-sm);font-weight:var(--ffa-font-weight-bold);letter-spacing:0.3px;cursor:pointer;box-sizing:border-box;position:relative;overflow:hidden;white-space:nowrap;-webkit-font-smoothing:antialiased;font-family:var(--ffa-font-stack);transition:transform 0.35s var(--ffa-easing),box-shadow 0.35s var(--ffa-easing),background 0.25s var(--ffa-easing),border-color 0.25s var(--ffa-easing),color 0.2s var(--ffa-easing)}`,
+        `.ffa-btn--primary:active,.ffa-btn--secondary:active,.ffa-btn--tertiary:active,.ffa-btn--danger:active{transform:translateY(1px) scale(0.984);transition-duration:0.08s}`,
+        `.ffa-btn--primary::after,.ffa-btn--danger::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--ffa-mx,50%) var(--ffa-my,50%),rgba(255,255,255,0.15) 0%,transparent 65%);opacity:0;transition:opacity 0.4s;pointer-events:none}`,
+        `.ffa-btn--primary:hover::after,.ffa-btn--danger:hover::after{opacity:1}`,
+        `.ffa-btn--secondary::after,.ffa-btn--tertiary::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.07) 50%,transparent 60%);transform:translateX(-100%);transition:transform 0s;pointer-events:none}`,
+        `.ffa-btn--secondary:hover::after,.ffa-btn--tertiary:hover::after{transform:translateX(100%);transition:transform 0.5s ease}`,
+
+        // ── Primary — 实心 accent，最高权重 ──
+        `.ffa-btn--primary{background:var(--ffa-accent);color:var(--ffa-text-on-accent);border:1px solid var(--ffa-accent);box-shadow:0 2px 10px var(--ffa-accent-glow),inset 0 1px 0 rgba(255,255,255,0.2);text-shadow:var(--ffa-glow-on-accent)}`,
+        `.ffa-btn--primary::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,0.22) 0%,transparent 50%);opacity:0;transition:opacity 0.3s var(--ffa-easing);pointer-events:none}`,
+        `.ffa-btn--primary:hover{transform:translateY(-2px);box-shadow:0 10px 32px var(--ffa-accent-hover-glow),0 0 0 1px var(--ffa-accent),0 0 40px rgba(var(--ffa-accent-rgb),0.2),inset 0 1px 0 rgba(255,255,255,0.25);text-shadow:var(--ffa-glow-on-accent)}`,
+        `.ffa-btn--primary:hover::before{opacity:1}`,
+
+        // ── Secondary — accent 色轮廓，次级有意义操作（Export/Import/Confirm）──
+        `.ffa-btn--secondary{background:rgba(var(--ffa-accent-rgb),0.06);color:var(--ffa-accent);border:1px solid rgba(var(--ffa-accent-rgb),0.25);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-btn--secondary:hover{background:rgba(var(--ffa-accent-rgb),0.12);border-color:rgba(var(--ffa-accent-rgb),0.55);color:var(--ffa-accent);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.15),0 0 0 1px rgba(var(--ffa-accent-rgb),0.3),0 0 20px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-accent-xs)}`,
+
+        // ── Tertiary — 低优先级操作（Add/Cancel/Add Domain）──
+        `.ffa-btn--tertiary{background:var(--ffa-bg-inner);color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);text-shadow:var(--ffa-glow-text)}`,
+        `.ffa-btn--tertiary:hover{background:var(--ffa-bg-inner-strong);border-color:rgba(var(--ffa-accent-rgb),0.35);color:var(--ffa-text-primary);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.12),0 0 0 1px rgba(var(--ffa-accent-rgb),0.15),0 0 16px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-text)}`,
+
+        // ── Danger — 克制红色，仅用于 Reset；默认态低调，hover 才完全亮起 ──
+        `.ffa-btn--danger{background:transparent;color:rgba(255,71,87,0.7);border:1px solid rgba(255,71,87,0.2);text-shadow:var(--ffa-glow-danger)}`,
+        `.ffa-btn--danger:hover{color:#ff4757;background:rgba(255,71,87,0.06);border-color:rgba(255,71,87,0.5);transform:translateY(-2px);box-shadow:0 4px 16px rgba(255,71,87,0.12),0 0 0 1px rgba(255,71,87,0.25),0 0 20px rgba(255,71,87,0.1);text-shadow:var(--ffa-glow-danger)}`,
+
+        // ── Icon button — 方形图标按钮（引擎行 编辑/删除）──
+        `.ffa-btn--icon{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;border-radius:var(--ffa-radius-widget);border:1px solid var(--ffa-border);background:transparent;color:var(--ffa-text-secondary);transition:background 0.2s var(--ffa-easing),border-color 0.2s var(--ffa-easing),color 0.2s var(--ffa-easing),transform 0.25s var(--ffa-easing)}`,
+        `.ffa-btn--icon:hover{background:var(--ffa-bg-inner-strong);border-color:rgba(var(--ffa-accent-rgb),0.3);color:var(--ffa-text-primary);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.1),0 0 12px var(--ffa-accent-hover-glow)}`,
+        `.ffa-btn--icon--danger:hover{background:rgba(255,71,87,0.12);border-color:rgba(255,71,87,0.5);color:#ff4757}`,
+        `.ffa-btn--icon svg{width:14px;height:14px;flex-shrink:0;pointer-events:none}`,
 
         // ── 子面板（引擎编辑） ──
         `.ffa-subpanel{position:absolute;inset:0;background:var(--ffa-bg-panel-deep);backdrop-filter:var(--ffa-backdrop-panel);z-index:100;padding:0;transform:translateY(100%);transition:0.5s var(--ffa-easing);display:flex;flex-direction:column;box-sizing:border-box;border-top:1px solid var(--ffa-border)}`,
@@ -606,13 +632,17 @@
         `.ffa-subpanel--visible{transform:translateY(0)}`,
 
         // ── 通用输入框 ──
-        `.ffa-input{width:100%;padding:14px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);color:var(--ffa-text-primary);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--ffa-font-stack)}`,
+        `.ffa-input{width:100%;height:40px;padding:0 14px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);color:var(--ffa-text-primary);margin-bottom:15px;outline:none;box-sizing:border-box;font-family:var(--ffa-font-stack);font-size:var(--ffa-font-size-base)}`,
         `.ffa-input:focus{border-color:var(--ffa-accent);background:var(--ffa-bg-panel);box-shadow:0 0 12px var(--ffa-accent-glow)}`,
 
-        // ── 主题按钮 ──
-        `.ffa-theme-btn{flex:1;padding:12px 5px;font-size:var(--ffa-font-size-sm);border-radius:var(--ffa-radius-widget);cursor:pointer;border:1px solid var(--ffa-border);background:var(--ffa-bg-inner);color:var(--ffa-text-primary);font-weight:var(--ffa-font-weight-bold);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;transform:translateZ(0)}`,
-        `.ffa-theme-btn:hover{background:var(--ffa-accent-glow);border-color:var(--ffa-accent);box-shadow:0 4px 15px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm)}`,
-        `.ffa-theme-btn--active{border-color:var(--ffa-accent);background:var(--ffa-accent);color:var(--ffa-text-on-accent);text-shadow:var(--ffa-glow-on-accent)}`,
+        // ── 主题/语言选项按钮（option button）──
+        `.ffa-theme-btn{flex:1;padding:10px 5px;font-size:var(--ffa-font-size-sm);border-radius:var(--ffa-radius-widget);cursor:pointer;border:1px solid var(--ffa-border);background:var(--ffa-bg-inner);color:var(--ffa-text-secondary);font-weight:var(--ffa-font-weight-semibold);letter-spacing:0.3px;transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.25s var(--ffa-easing),box-shadow 0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;position:relative;overflow:hidden}`,
+        `.ffa-theme-btn::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.07) 50%,transparent 60%);transform:translateX(-100%);transition:transform 0s;pointer-events:none}`,
+        `.ffa-theme-btn:hover{background:var(--ffa-bg-inner-strong);border-color:rgba(var(--ffa-accent-rgb),0.35);color:var(--ffa-text-primary);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.12),0 0 0 1px rgba(var(--ffa-accent-rgb),0.15),0 0 16px var(--ffa-accent-hover-glow)}`,
+        `.ffa-theme-btn:hover::after{transform:translateX(100%);transition:transform 0.5s ease}`,
+        `.ffa-theme-btn:active{transform:scale(0.97);transition-duration:0.08s}`,
+        `.ffa-theme-btn--active{background:rgba(var(--ffa-accent-rgb),0.1);border-color:rgba(var(--ffa-accent-rgb),0.5);color:var(--ffa-accent);box-shadow:0 0 12px rgba(var(--ffa-accent-rgb),0.1),inset 0 1px 0 rgba(var(--ffa-accent-rgb),0.15),inset 0 -2px 0 var(--ffa-accent);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-theme-btn--active:hover{background:rgba(var(--ffa-accent-rgb),0.15);border-color:rgba(var(--ffa-accent-rgb),0.7);transform:translateY(-2px);box-shadow:0 4px 16px rgba(var(--ffa-accent-rgb),0.2),inset 0 1px 0 rgba(var(--ffa-accent-rgb),0.2),inset 0 -2px 0 var(--ffa-accent);text-shadow:var(--ffa-glow-accent-xs)}`,
 
         // ── 图标编辑器 ──
         `.ffa-icon-editor{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
@@ -644,13 +674,13 @@
         // ── 面板外壳 & tab 导航 ──
         `.ffa-panel-shell{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.94);z-index:2147483645;visibility:hidden;opacity:0;pointer-events:none;transition:0.5s var(--ffa-easing);display:inline-block}`,
         `.ffa-panel-shell--visible{visibility:visible;opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}`,
-        `.ffa-panel__tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:56px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--ffa-bg-panel-deep);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:width 0.35s var(--ffa-easing);z-index:1;overflow:hidden}`,
+        `.ffa-panel__tab-nav{position:absolute;top:50%;transform:translateY(-50%);right:calc(100% + 10px);height:auto;width:56px;display:flex;flex-direction:column;padding:8px 6px;gap:4px;background:var(--ffa-bg-panel-deep);backdrop-filter:var(--ffa-backdrop-panel);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:width 0.35s var(--ffa-easing);z-index:1;overflow:hidden}`,
         `.ffa-panel__tab-nav:hover{width:160px}`,
         `.ffa-panel__tab-nav .ffa-panel__tab-btn{justify-content:center;width:100%;box-sizing:border-box;padding:0;min-width:0;overflow:hidden;gap:0}`,
-        `.ffa-panel__tab-nav:hover .ffa-panel__tab-btn{justify-content:flex-start;padding-left:10px;gap:6px}`,  
+        `.ffa-panel__tab-nav:hover .ffa-panel__tab-btn{justify-content:flex-start;padding-left:10px;gap:6px}`,
         `.ffa-panel__tab-btn{height:40px;display:flex;align-items:center;gap:10px;padding:0 11px;cursor:pointer;flex-shrink:0;color:var(--ffa-text-secondary);border-radius:var(--ffa-radius-panel);transition:background 0.2s var(--ffa-easing),color 0.2s var(--ffa-easing);position:relative;white-space:nowrap}`,
         `.ffa-panel__tab-btn svg{width:18px;height:18px;flex:0 0 18px;transition:color 0.2s var(--ffa-easing);align-self:center}`,
-        `.ffa-panel__tab-label{font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);letter-spacing:0.5px;opacity:0;max-width:0;overflow:hidden;display:inline-block;vertical-align:middle;transition:opacity 0.08s linear,max-width 0.25s var(--ffa-easing)}`,
+        `.ffa-panel__tab-label{font-size:var(--ffa-font-size-sm);font-weight:var(--ffa-font-weight-semibold);letter-spacing:0.5px;opacity:0;max-width:0;overflow:hidden;display:inline-block;vertical-align:middle;transition:opacity 0.08s linear,max-width 0.25s var(--ffa-easing)}`,
         `.ffa-panel__tab-nav:hover .ffa-panel__tab-label{opacity:1;max-width:220px;margin-left:6px;transition:opacity 0.15s var(--ffa-easing) 0.15s,max-width 0.25s var(--ffa-easing) 0.15s}`,
         `.ffa-panel__tab-btn:not(.ffa-panel__tab-btn--active):hover{background:var(--ffa-accent-glow);color:var(--ffa-text-primary)}`,
         `.ffa-panel__tab-btn--active{background:var(--ffa-accent);color:var(--ffa-text-on-accent);box-shadow:0 4px 14px var(--ffa-accent-glow),0 0 8px var(--ffa-accent-glow)}`,
@@ -664,49 +694,37 @@
         `.ffa-panel__tab-content{display:none}`,
         `@keyframes ffa-tab-fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`,
         `.ffa-panel__tab-content--active{display:block;animation:ffa-tab-fadein 0.2s var(--ffa-easing) both}`,
-        `.ffa-panel__title{text-align:center;font-weight:var(--ffa-font-weight-bold);letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-lg);border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
+        `.ffa-panel__title{text-align:center;font-weight:var(--ffa-font-weight-bold);letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-md);border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
     ].join('');
 
-    // ─── TOOLBAR_CSS ──────────────────────────────────────────────────────────────
-    // 搜索条样式，同样注入到统一 shadow root。
-    // 类名规范：ffa-toolbar（block）+ __element + --modifier
-    //
-    //   .ffa-toolbar-host          — 定位容器（fixed 居中）
-    //   .ffa-toolbar-wrapper       — 动画包装层（mini-mode 控制入口）
-    //   .ffa-toolbar               — 搜索条主体
-    //   .ffa-toolbar__engine-btn   — 引擎切换按钮
-    //   .ffa-toolbar__input        — 可展开的搜索输入区域
-    //   .ffa-toolbar__search-btn   — 搜索触发按钮
-    //   .ffa-toolbar__search-input — 文本输入框
-    //   .ffa-toolbar__settings-btn — 设置按钮
-    //   .ffa-suggest               — 自动补全下拉框
-    //   .ffa-suggest__item         — 补全建议条目
-    //   .ffa-suggest__history-item — 历史搜索条目
-    //   .ffa-suggest__divider      — 分隔线
+    // ─── TOOLBAR_CSS：搜索条、引擎按钮、建议下拉样式 ────────────────────────────
     const TOOLBAR_CSS = [
-        `.ffa-toolbar-host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--ffa-offset-bottom);z-index:2147483642;font-family:var(--ffa-font-stack)}`,
-        `.ffa-toolbar-wrapper{transition:0.8s var(--ffa-easing)}`,
+        `.ffa-toolbar-host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--ffa-offset-bottom);z-index:2147483642;font-family:var(--ffa-font-stack);pointer-events:none}`,
+        `.ffa-toolbar-wrapper{transition:0.8s var(--ffa-easing);pointer-events:auto}`,
+        `.ffa-toolbar-wrapper--mini{pointer-events:none}`,
         `.ffa-toolbar-wrapper--mini .ffa-toolbar{opacity:0;transform:translateY(70px) scale(0.92);pointer-events:none;visibility:hidden;transition:opacity 0.5s var(--ffa-easing),transform 0.6s var(--ffa-easing)}`,
+        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed{pointer-events:auto}`,
         `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed .ffa-toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;visibility:visible;transition-delay:0.1s}`,
         `.ffa-toolbar-wrapper--mini .ffa-toolbar{will-change:opacity,transform}`,
         `.ffa-toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--ffa-bg-toolbar);backdrop-filter:var(--ffa-backdrop-toolbar);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:border-color 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),background 0.4s var(--ffa-easing)}`,
-        `.ffa-toolbar--focused{background:var(--ffa-bg-panel);border-color:var(--ffa-accent);box-shadow:var(--ffa-shadow),0 0 0 1px var(--ffa-accent),0 0 18px var(--ffa-accent-glow)}`,
+        `.ffa-toolbar--focused{background:var(--ffa-bg-panel);border-color:rgba(var(--ffa-text-primary-rgb),0.18);box-shadow:var(--ffa-shadow),0 0 0 1px rgba(var(--ffa-text-primary-rgb),0.08)}`,
 
         // ── 引擎按钮 ──
-        `.ffa-toolbar__engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--ffa-font-size-base);line-height:1.2;color:var(--ffa-text-primary);cursor:pointer;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:var(--ffa-font-weight-semibold);border:1px solid var(--ffa-border);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
+        `.ffa-toolbar__engine-btn{display:inline-flex;align-items:center;justify-content:center;gap:0;padding:6px;font-size:var(--ffa-font-size-sm);line-height:1.2;color:var(--ffa-text-primary);cursor:pointer;background:var(--ffa-bg-inner);border-radius:var(--ffa-radius-widget);transition:opacity 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),border-color 0.35s cubic-bezier(0.4,0,0.2,1),background 0.35s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.34,1.56,0.64,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),padding 0.5s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;font-weight:var(--ffa-font-weight-semibold);border:1px solid var(--ffa-border);box-sizing:border-box;font-family:var(--ffa-font-stack);-webkit-font-smoothing:antialiased;opacity:0.5;max-width:38px;overflow:hidden;will-change:max-width,transform}`,
         `.ffa-toolbar__engine-btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:16px;height:16px;overflow:visible;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
         `.ffa-toolbar__engine-btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;padding-left:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
         `.ffa-toolbar:hover .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active),.ffa-toolbar--pinned .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active){opacity:1}`,
-        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-sm);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
+        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-xs);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
         `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-icon{transform:scale(1.1)}`,
         `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
-        `.ffa-toolbar__engine-btn--active{border-color:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow),0 0 16px var(--ffa-accent-glow);opacity:1;max-width:160px;padding-right:10px}`,
+        `.ffa-toolbar__engine-btn--active{border-color:rgba(var(--ffa-accent-rgb),0.35);background:rgba(var(--ffa-accent-rgb),0.08);color:var(--ffa-accent);box-shadow:inset 0 -1.5px 0 var(--ffa-accent);opacity:1;max-width:160px;padding-right:10px;text-shadow:var(--ffa-glow-accent-xs)}`,
         `.ffa-toolbar__engine-btn--active .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0)}`,
         `.ffa-toolbar__engine-btn--active:hover{background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02)}`,
 
         // ── 搜索输入区 ──
         `.ffa-toolbar__input{position:relative;display:flex;align-items:center;transition:width 0.45s var(--ffa-easing),background 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),border-color 0.3s var(--ffa-easing);width:34px;border-radius:var(--ffa-radius-widget);border:1px solid transparent;box-sizing:border-box}`,
         `.ffa-toolbar__input--expanded{width:236px;background:var(--ffa-bg-inner);border-color:transparent;box-shadow:none;border-radius:var(--ffa-radius-widget)}`,
+        `.ffa-toolbar--focused .ffa-toolbar__input--expanded{box-shadow:0 0 0 1px rgba(var(--ffa-accent-rgb),0.25),0 0 12px var(--ffa-accent-hover-glow)}`,
         `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn{background:var(--ffa-bg-inner-strong);border-color:transparent;box-shadow:none;color:var(--ffa-accent);opacity:1}`,
         `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn:hover{background:var(--ffa-accent-glow);border-color:transparent;border-right-color:var(--ffa-border)}`,
 
@@ -720,27 +738,36 @@
         `.ffa-toolbar__search-input::placeholder{color:var(--ffa-text-secondary);opacity:0.55}`,
 
         // ── 建议下拉框 ──
-        `.ffa-suggest{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);width:95vw;max-width:720px;display:none;flex-wrap:wrap;gap:12px;justify-content:center;padding-bottom:35px}`,
+        `.ffa-suggest{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);width:95vw;max-width:720px;display:none;flex-wrap:wrap;gap:10px;justify-content:center;padding-bottom:35px;pointer-events:auto}`,
         `.ffa-suggest--visible{display:flex;animation:ffa-suggest-in 0.5s var(--ffa-easing)}`,
         `@keyframes ffa-suggest-in{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
-        `@keyframes ffa-suggest-item-in{from{opacity:0;transform:translateY(16px) scale(0.92)}to{opacity:1;transform:translateY(0) scale(1)}}`,
+        `@keyframes ffa-suggest-item-in{from{opacity:0;transform:translateY(14px) scale(0.93)}to{opacity:1;transform:translateY(0) scale(1)}}`,
         `.ffa-suggest__item:nth-child(1){animation-delay:0ms}.ffa-suggest__item:nth-child(2){animation-delay:40ms}.ffa-suggest__item:nth-child(3){animation-delay:80ms}.ffa-suggest__item:nth-child(4){animation-delay:120ms}.ffa-suggest__item:nth-child(5){animation-delay:160ms}.ffa-suggest__item:nth-child(6){animation-delay:200ms}.ffa-suggest__item:nth-child(7){animation-delay:240ms}.ffa-suggest__item:nth-child(8){animation-delay:280ms}.ffa-suggest__item:nth-child(9){animation-delay:320ms}.ffa-suggest__item:nth-child(10){animation-delay:360ms}`,
-        `.ffa-suggest__item{padding:10px 24px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-primary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.08);letter-spacing:0.3px}`,
-        `.ffa-suggest__item:hover,.ffa-suggest__item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent)}`,
+        // 默认态：统一平底色，去掉渐变
+        `.ffa-suggest__item{padding:9px 22px;font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:var(--ffa-bg-inner);color:var(--ffa-text-primary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.28s var(--ffa-easing),box-shadow 0.28s var(--ffa-easing);font-family:var(--ffa-font-stack);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;letter-spacing:0.3px;position:relative;overflow:hidden;text-shadow:var(--ffa-glow-text)}`,
+        // shimmer
+        `.ffa-suggest__item::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.08) 50%,transparent 60%);transform:translateX(-100%);transition:transform 0s;pointer-events:none}`,
+        // hover：文字变 accent + 背景加深 + accent glow，不再跳到实心填充
+        `.ffa-suggest__item:hover{background:rgba(var(--ffa-accent-rgb),0.14);border-color:rgba(var(--ffa-accent-rgb),0.55);color:var(--ffa-accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.2),0 0 0 1px rgba(var(--ffa-accent-rgb),0.25),0 0 18px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-suggest__item:hover::after{transform:translateX(100%);transition:transform 0.45s ease}`,
+        `.ffa-suggest__item:active{transform:scale(0.97);transition-duration:0.08s}`,
 
         // ── 建议分隔线 ──
         `.ffa-suggest__divider{width:100%;display:flex;align-items:center;gap:8px;padding:0 4px;opacity:0;animation:ffa-suggest-item-in 0.3s var(--ffa-easing) forwards}`,
-        `.ffa-suggest__divider-line{flex:1;height:1px;background:rgba(255,255,255,0.25)}`,
-        `.ffa-suggest__divider-label{font-size:var(--ffa-font-size-xs);font-weight:var(--ffa-font-weight-semibold);letter-spacing:1.5px;color:rgba(255,255,255,0.55);text-transform:uppercase;white-space:nowrap}`,
+        `.ffa-suggest__divider-line{flex:1;height:1px;background:var(--ffa-border)}`,
+        `.ffa-suggest__divider-label{font-size:var(--ffa-font-size-xs);font-weight:var(--ffa-font-weight-semibold);letter-spacing:1.5px;color:var(--ffa-text-secondary);text-transform:uppercase;white-space:nowrap}`,
 
         // ── 历史条目 ──
-        `.ffa-suggest__history-item{padding:10px 20px 10px 16px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:linear-gradient(135deg,var(--ffa-bg-inner),var(--ffa-bg-toolbar));color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:0.25s var(--ffa-easing);font-family:var(--ffa-font-stack);transform:translateZ(0);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;box-shadow:0 2px 8px rgba(0,0,0,0.06);letter-spacing:0.3px;display:flex;align-items:center;gap:8px;position:relative}`,
-        `.ffa-suggest__history-item:hover,.ffa-suggest__history-item--focused{background:linear-gradient(135deg,var(--ffa-accent),var(--ffa-accent));color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);box-shadow:0 8px 25px var(--ffa-accent-glow),0 0 15px var(--ffa-accent-glow);transform:translateY(-4px) scale(1.02);text-shadow:var(--ffa-glow-on-accent)}`,
-        `.ffa-suggest__history-icon{font-size:var(--ffa-font-size-sm);opacity:0.5;flex-shrink:0;transition:0.25s}`,
-        `.ffa-suggest__history-item:hover .ffa-suggest__history-icon{opacity:1}`,
-        `.ffa-suggest__history-del{margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:var(--ffa-font-size-xs);opacity:0;transition:0.2s var(--ffa-easing);flex-shrink:0;color:inherit}`,
-        `.ffa-suggest__history-item:hover .ffa-suggest__history-del{opacity:0.6}`,
-        `.ffa-suggest__history-del:hover{opacity:1;background:rgba(255,71,87,0.25);color:#ff4757}`,
+        `.ffa-suggest__history-item{padding:9px 18px 9px 14px;font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:var(--ffa-bg-inner);color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.28s var(--ffa-easing),box-shadow 0.28s var(--ffa-easing);font-family:var(--ffa-font-stack);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;letter-spacing:0.3px;display:flex;align-items:center;gap:7px;position:relative;overflow:hidden;text-shadow:var(--ffa-glow-text)}`,
+        `.ffa-suggest__history-item::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.07) 50%,transparent 60%);transform:translateX(-100%);transition:transform 0s;pointer-events:none}`,
+        // hover：历史条目文字不变 accent，更克制
+        `.ffa-suggest__history-item:hover{background:rgba(var(--ffa-accent-rgb),0.1);border-color:rgba(var(--ffa-accent-rgb),0.4);color:var(--ffa-text-primary);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.18),0 0 0 1px rgba(var(--ffa-accent-rgb),0.2),0 0 14px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-text)}`,
+        `.ffa-suggest__history-item:hover::after{transform:translateX(100%);transition:transform 0.45s ease}`,
+        `.ffa-suggest__history-icon{font-size:var(--ffa-font-size-xs);opacity:0.4;flex-shrink:0;transition:opacity 0.22s}`,
+        `.ffa-suggest__history-item:hover .ffa-suggest__history-icon{opacity:0.7}`,
+        `.ffa-suggest__history-del{margin-left:2px;width:15px;height:15px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:var(--ffa-font-size-xs);opacity:0;transition:0.2s var(--ffa-easing);flex-shrink:0;color:inherit}`,
+        `.ffa-suggest__history-item:hover .ffa-suggest__history-del{opacity:0.5}`,
+        `.ffa-suggest__history-del:hover{opacity:1!important;background:rgba(255,71,87,0.2);color:#ff4757}`,
 
         // ── 设置按钮 ──
         `.ffa-toolbar__settings-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ffa-text-primary);transition:0.5s var(--ffa-easing);border-radius:50%;opacity:0.5}`,
@@ -771,8 +798,6 @@
         _sources: { google: true, baidu: false, duckduckgo: true },
         _initialized: false,
         _requestToken: 0,
-        _focusedIndex: -1,
-        _navItems: [],
 
         _cacheGet(key) {
             const item = this._cache.get(key);
@@ -911,8 +936,6 @@
             }
 
             box.innerHTML = '';
-            this._navItems = [];
-            this._focusedIndex = -1;
             let delay = 0;
             const STEP = 40;
 
@@ -946,12 +969,11 @@
                         item.style.transition = '0.2s';
                         item.style.opacity = '0';
                         item.style.transform = 'scale(0.85)';
-                        setTimeout(() => { item.remove(); this._navItems = this._navItems.filter(x => x.el !== item); }, 200);
+                        setTimeout(() => item.remove(), 200);
                     };
 
                     item.append(icon, text, del);
                     box.appendChild(item);
-                    this._navItems.push({ el: item, term });
                     delay += STEP;
                 });
             }
@@ -965,7 +987,6 @@
                     item.textContent = term;
                     item.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
                     box.appendChild(item);
-                    this._navItems.push({ el: item, term });
                     delay += STEP;
                 });
             }
@@ -974,52 +995,6 @@
             box.classList.add('ffa-suggest--visible');
         },
 
-        handleKeyNav(e, box, mask, engineUrl) {
-            const items = this._navItems;
-            if (!box.classList.contains('ffa-suggest--visible') || items.length === 0) return false;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                this._moveFocus(1, items);
-                return true;
-            }
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                this._moveFocus(-1, items);
-                return true;
-            }
-            if (e.key === 'Enter' && this._focusedIndex >= 0) {
-                e.preventDefault();
-                const { term } = items[this._focusedIndex];
-                performSearch(engineUrl, term);
-                return true;
-            }
-            if (e.key === 'Escape') {
-                box.classList.remove('ffa-suggest--visible');
-                mask.classList.remove('ffa-overlay--visible');
-                box.innerHTML = '';
-                this._navItems = [];
-                this._focusedIndex = -1;
-                return true;
-            }
-            return false;
-        },
-
-        _moveFocus(dir, items) {
-            if (this._focusedIndex >= 0) items[this._focusedIndex].el.classList.remove('ffa-suggest__item--focused', 'ffa-suggest__history-item--focused');
-            const next = this._focusedIndex + dir;
-            this._focusedIndex = Math.max(-1, Math.min(items.length - 1, next));
-            if (this._focusedIndex >= 0) {
-                const el = items[this._focusedIndex].el;
-                el.classList.add(el.classList.contains('ffa-suggest__history-item') ? 'ffa-suggest__history-item--focused' : 'ffa-suggest__item--focused');
-                el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
-        },
-
-        clearNav() {
-            this._navItems = [];
-            this._focusedIndex = -1;
-        },
     };
 
     const fetchSuggestions = debounce(
@@ -1087,6 +1062,9 @@
             btn.title = _lbl;
             btn.onclick = () => {
                 _activeTab = def.key;
+                // 切换 tab 时关闭引擎编辑子面板并重置状态
+                panel.querySelector('#n-sub')?.classList.remove('ffa-subpanel--visible');
+                editingEngine = null;
                 tabNav.querySelectorAll('.ffa-panel__tab-btn').forEach(b => b.classList.toggle('ffa-panel__tab-btn--active', b.dataset.tab === def.key));
                 panel.querySelectorAll('.ffa-panel__tab-content').forEach(c => {
                     const isActive = c.dataset.tab === def.key;
@@ -1141,7 +1119,6 @@
             clearSuggest() {
                 this.closeSuggest();
                 suggestBox.innerHTML = '';
-                SuggestModule.clearNav();
             },
             isOverlayVisible() {
                 return shell.classList.contains('ffa-panel-shell--visible') || suggestBox.classList.contains('ffa-suggest--visible');
@@ -1222,7 +1199,6 @@
             saveAndPanel()         { this.save(); this.panel(); },
             saveAndStyles()        { this.save(); this.styles(); },
             saveStylesAndToolbar() { this.save(); this.styles(); this.toolbar(); },
-            saveStylesAndPanel()   { this.save(); this.styles(); this.panel(); },
             saveStylesMiniAndPanel(){ this.save(); this.styles(); this.miniMode(); this.panel(); },
         };
 
@@ -1460,9 +1436,8 @@
             const collapseInput = () => {
                 if (input.value.trim()) return;
                 inputContainer.classList.remove('ffa-toolbar__input--expanded');
-                toolbar.classList.remove('ffa-toolbar--focused');
+                toolbar.classList.remove('ffa-toolbar--focused', 'ffa-toolbar--pinned');
                 wrapper.classList.remove('ffa-toolbar-wrapper--pinned');
-                toolbar.classList.remove('ffa-toolbar--pinned');
             };
 
             const expand = () => {
@@ -1476,7 +1451,6 @@
             if (extractPageQuery()) inputContainer.classList.add('ffa-toolbar__input--expanded');
 
             return {
-                getEngineUrl,
                 bind(searchBtn) {
                     searchBtn.onclick = () => {
                         if (!inputContainer.classList.contains('ffa-toolbar__input--expanded')) {
@@ -1510,7 +1484,6 @@
                     };
                     input.onkeydown = (e) => {
                         const url = getEngineUrl();
-                        if (url && SuggestModule.handleKeyNav(e, suggestBox, mask, url)) return;
                         if (e.key === 'Enter' && input.value.trim()) performSearch(url, input.value);
                         if (e.key === 'Escape') { input.blur(); }
                     };
@@ -1568,11 +1541,11 @@
                         <div class="ffa-card">
                             <span class="ffa-card__title">${t('cardData')}</span>
                             <div style="display:flex;gap:10px">
-                                <button data-action="export" class="ffa-btn--ghost" style="flex:1">
+                                <button data-action="export" class="ffa-btn--secondary" style="flex:1">
                                     ${t('btnExport')}
                                 </button>
                                 <label style="flex:1;display:block">
-                                    <span class="ffa-btn--ghost" style="display:block;text-align:center">
+                                    <span class="ffa-btn--secondary" style="display:block;text-align:center;height:40px;line-height:40px;cursor:pointer">
                                         ${t('btnImport')}
                                     </span>
                                     <input type="file" id="s-import" accept=".json" style="display:none">
@@ -1629,7 +1602,10 @@
                                     <div class="ffa-field__label">${t('labelWidgetRadius')} <b>${s.ir}px</b></div>
                                     <input type="range" id="s-ir" min="0" max="40" value="${s.ir}">
                                 </div>
-                                <div style="flex:1"></div>
+                                <div style="flex:1">
+                                    <div class="ffa-field__label">${t('labelGlow')} <b>${s.glow.toFixed(1)}</b></div>
+                                    <input type="range" id="s-glow" min="0.2" max="2.0" step="0.1" value="${s.glow}">
+                                </div>
                             </div>
                         </div>
 
@@ -1666,7 +1642,7 @@
                         <div class="ffa-card">
                             <span class="ffa-card__title">${t('cardEngines')}</span>
                             <div class="ffa-engine-list">${engineRows}</div>
-                            <button data-action="add-engine" class="ffa-btn--ghost"
+                            <button data-action="add-engine" class="ffa-btn--tertiary"
                                 style="width:100%;margin-top:15px">
                                 ${t('btnAddEngine')}
                             </button>
@@ -1691,16 +1667,16 @@
                                         </div>`).join('')
                                 }
                             </div>
-                            <div style="display:flex;gap:8px;margin-top:12px;align-items:stretch">
+                            <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
                                 <input type="text" id="bl-input" class="ffa-input"
                                     placeholder="${escAttr(t('labelBlacklistInput'))}"
                                     style="flex:1;margin-bottom:0">
-                                <button data-action="add-blacklist" class="ffa-btn--ghost"
-                                    style="flex-shrink:0;padding:10px 16px;white-space:nowrap">${t('btnAddDomain')}</button>
+                                <button data-action="add-blacklist" class="ffa-btn--secondary"
+                                    style="flex-shrink:0;white-space:nowrap">${t('btnAddDomain')}</button>
                             </div>
                             <div id="bl-feedback" style="font-size:var(--ffa-font-size-xs);color:#ff6b6b;min-height:16px;margin-top:4px;padding-left:2px;display:none"></div>
-                            <button data-action="add-current-site" class="ffa-btn--ghost"
-                                style="width:100%;margin-top:10px;opacity:0.7;font-size:var(--ffa-font-size-xs)">
+                            <button data-action="add-current-site" class="ffa-btn--tertiary"
+                                style="width:100%;margin-top:10px;font-size:var(--ffa-font-size-xs)">
                                 ${t('btnAddCurrent')} — ${SecurityUtils.escapeHtml(window.location.hostname)}
                             </button>
                         </div>
@@ -1780,9 +1756,9 @@
                             <div class="ffa-field__tip">${t('hintHostTip')}</div>
                         </div>
                     </div>
-                    <div style="padding:16px 30px;border-top:1px solid var(--ffa-border);display:flex;gap:15px;flex-shrink:0">
+                    <div style="padding:16px 30px;border-top:1px solid var(--ffa-border);display:flex;gap:10px;flex-shrink:0">
                         <button data-action="confirm-engine" class="ffa-btn--primary" style="flex:1">${t('btnConfirm')}</button>
-                        <button data-action="cancel-engine"  class="ffa-btn--ghost"   style="flex:1">${t('btnCancel')}</button>
+                        <button data-action="cancel-engine"  class="ffa-btn--tertiary" style="flex:1">${t('btnCancel')}</button>
                     </div>
                 </div>`;
             },
@@ -1883,15 +1859,19 @@
                 const iconHtml = _iconEl.outerHTML;
                 return `
                     <div class="ffa-engine-row" draggable="true" data-i="${i}">
-                        <div style="cursor:grab;opacity:0.3">☰</div>
+                        <div style="cursor:grab;opacity:0.25;font-size:13px;user-select:none">☰</div>
                         <div style="width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ffa-text-primary);opacity:0.8">${iconHtml}</div>
                         <div class="ffa-switch ${eng.enabled ? 'ffa-switch--on' : ''}" data-action="toggle-engine" data-i="${i}"></div>
                         <div style="flex:1">
                             <div style="font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold)">${SecurityUtils.escapeHtml(eng.name)}</div>
                             <div class="ffa-engine-row__host">${SecurityUtils.escapeHtml(eng.host)}</div>
                         </div>
-                        <div data-action="edit-engine" data-i="${i}" style="cursor:pointer">✎</div>
-                        <div data-action="delete-engine" data-i="${i}" style="color:#ff6b6b;cursor:pointer">✕</div>
+                        <div class="ffa-btn--icon" data-action="edit-engine" data-i="${i}" title="${escAttr(t('subPanelTitle'))}">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2-9 9H2.5v-2l9-9z"/></svg>
+                        </div>
+                        <div class="ffa-btn--icon ffa-btn--icon--danger" data-action="delete-engine" data-i="${i}" title="${escAttr(t('confirmDeleteEngine'))}">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M5 4V3h6v1M6 7v4M10 7v4M4 4l1 9h6l1-9"/></svg>
+                        </div>
                     </div>`;
             }).join('');
 
@@ -1910,8 +1890,9 @@
                     ${PanelTemplates.renderAboutTab(s)}
                 </div>
                 <div class="ffa-panel__footer">
-                    <button data-action="apply" class="ffa-btn--primary" style="flex:2">${t('btnApply')}</button>
-                    <button data-action="reset"  class="ffa-btn--danger"  style="flex:1">${t('btnReset')}</button>
+                    <div class="ffa-panel__footer-spacer"></div>
+                    <button data-action="reset"  class="ffa-btn--danger"  style="width:110px;height:44px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold)">${t('btnReset')}</button>
+                    <button data-action="apply" class="ffa-btn--primary" style="width:160px;height:44px;padding:0 32px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-semibold)">${t('btnApply')}</button>
                 </div>
                 ${PanelTemplates.renderEngineSubPanel()}`;
 
@@ -1950,6 +1931,16 @@
                 bindRange('s-pb', 'pb', 'px');
                 bindRange('s-r', 'r');
                 bindRange('s-ir', 'ir');
+                // glow 含小数，单独绑定
+                const glowEl = qPanel('#s-glow');
+                if (glowEl) {
+                    const glowLabel = glowEl.previousElementSibling?.querySelector('b');
+                    glowEl.oninput = e => {
+                        settings.glow = parseFloat(e.target.value);
+                        if (glowLabel) glowLabel.textContent = settings.glow.toFixed(1);
+                        Refresh.saveAndStyles();
+                    };
+                }
             },
 
             bindAppearance(settings) {
@@ -2015,30 +2006,14 @@
                 };
             },
 
-            bindBlocklist() {
-                const blInput = qPanel('#bl-input');
-                if (!blInput) return;
-                blInput.onkeydown = e => {
-                    if (e.key !== 'Enter') return;
-                    const val = blInput.value.trim();
-                    if (!val) return;
-                    const blFeedback = qPanel('#bl-feedback');
-                    const result = SettingsManager.addToBlacklist(val);
-                    if (result === 'duplicate') {
-                        if (blFeedback) { blFeedback.textContent = t('blacklistDuplicate'); blFeedback.style.display = 'block'; }
-                        setTimeout(() => { if (blFeedback) blFeedback.style.display = 'none'; }, 2000);
-                    } else {
-                        blInput.value = '';
-                        if (blFeedback) blFeedback.style.display = 'none';
-                        Refresh.panel();
-                    }
-                };
-            },
-
             bindEngineSort(settings) {
                 const list = qPanel('.ffa-engine-list');
                 if (!list) return;
                 let draggingEngine = null;
+
+                const clearDropTargets = () => {
+                    list.querySelectorAll('.ffa-engine-row--drop-target').forEach(r => r.classList.remove('ffa-engine-row--drop-target'));
+                };
 
                 list.ondragstart = e => {
                     const row = e.target.closest('.ffa-engine-row');
@@ -2046,7 +2021,7 @@
                     const idx = parseInt(row.dataset.i);
                     if (isNaN(idx) || idx < 0 || idx >= settings.en.length) return;
                     draggingEngine = settings.en[idx];
-                    row.classList.add('ffa-engine-row--dragging');
+                    setTimeout(() => row.classList.add('ffa-engine-row--dragging'), 0);
                     e.dataTransfer.effectAllowed = 'move';
                 };
 
@@ -2068,11 +2043,20 @@
                             const offset = e.clientY - rect.top - rect.height / 2;
                             return (offset < 0 && offset > best.offset) ? { offset, element: row } : best;
                         }, { offset: -Infinity }).element;
-                    sibling ? list.insertBefore(dragging, sibling) : list.appendChild(dragging);
+                    clearDropTargets();
+                    if (sibling) {
+                        sibling.classList.add('ffa-engine-row--drop-target');
+                        list.insertBefore(dragging, sibling);
+                    } else {
+                        list.appendChild(dragging);
+                    }
                 };
 
                 list.ondragleave = e => {
-                    if (e.target === list || !list.contains(e.relatedTarget)) list.classList.remove('ffa-engine-list--drag-active');
+                    if (e.target === list || !list.contains(e.relatedTarget)) {
+                        list.classList.remove('ffa-engine-list--drag-active');
+                        clearDropTargets();
+                    }
                 };
 
                 list.ondrop = e => { e.preventDefault(); e.stopPropagation(); };
@@ -2080,6 +2064,7 @@
                 list.ondragend = e => {
                     e.target.closest('.ffa-engine-row')?.classList.remove('ffa-engine-row--dragging');
                     list.classList.remove('ffa-engine-list--drag-active');
+                    clearDropTargets();
                     if (!draggingEngine) return;
 
                     const reordered = [...list.querySelectorAll('.ffa-engine-row')].reduce((acc, row) => {
@@ -2104,13 +2089,19 @@
                 this.bindAppearance(settings);
                 this.bindEngineEditor();
                 this.bindImport();
-                this.bindBlocklist();
                 this.bindEngineSort(settings);
             },
         };
 
         function bindPanelInputs() {
             PanelBindings.bindAll(SettingsManager.current);
+            panel.querySelectorAll('.ffa-btn--primary,.ffa-btn--secondary,.ffa-btn--tertiary,.ffa-btn--danger').forEach(btn => {
+                btn.addEventListener('mousemove', e => {
+                    const r = btn.getBoundingClientRect();
+                    btn.style.setProperty('--ffa-mx', ((e.clientX - r.left) / r.width * 100) + '%');
+                    btn.style.setProperty('--ffa-my', ((e.clientY - r.top) / r.height * 100) + '%');
+                });
+            });
         }
 
         const applyStyles = debounce(() => {
