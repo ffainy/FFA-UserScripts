@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [FFA-Omnibar] 3.4.0 - 2026-03-22
+
+### Changed
+- unify naming under ffa- namespace with BEM conventions
+- isolate omnibar UI in a unified shadow root
+
 ## [FFA-Omnibar] 3.2.1 - 2026-03-17
 
 ### Added
