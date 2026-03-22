@@ -16,8 +16,9 @@ const path = require('path');
 
 const CHANGELOG_PATH = path.resolve('CHANGELOG.md');
 
-// BUMPED_FILES 格式：file:newVer:oldVer，多个用逗号分隔
-// 示例："FFA-Omnibar.js:1.3.0:1.2.0,FFA-NewScript.js:1.0.0:"
+// BUMPED_FILES 格式：file:newestVer:oldestVer:versionHistory，多个用逗号分隔
+// 其中 versionHistory 是所有中间版本用|分隔
+// 示例："FFA-Omnibar.js:1.3.0:1.2.0:1.2.0|1.2.5|1.3.0,FFA-NewScript.js:1.0.0:1.0.0:1.0.0"
 const BUMPED_FILES = process.env.BUMPED_FILES;
 
 if (!BUMPED_FILES) {
@@ -26,8 +27,9 @@ if (!BUMPED_FILES) {
 }
 
 const targets = BUMPED_FILES.split(',').map(entry => {
-  const [file, newVer, oldVer] = entry.split(':');
-  return { file, newVer, oldVer: oldVer || '' };
+  const [file, newVer, oldVer, versionHistory] = entry.split(':');
+  const versions = versionHistory ? versionHistory.split('|') : [newVer];
+  return { file, newVer, oldVer: oldVer || '', versions };
 });
 
 // ── commit message 分类规则（Conventional Commits） ──────────────────────
@@ -61,8 +63,8 @@ function categorize(messages) {
   return cats;
 }
 
-// ── 为单个脚本生成版本段落 ───────────────────────────────────────────────
-function buildSection(file, newVer, oldVer) {
+// ── 为单个脚本生成版本段落（支持多个中间版本） ─────────────────────────────
+function buildSection(file, newVer, oldVer, versions) {
   const scriptName = path.basename(file, '.js');
   const today = new Date().toISOString().slice(0, 10);
 
@@ -82,7 +84,12 @@ function buildSection(file, newVer, oldVer) {
   const cats = categorize(commitMessages);
   const hasContent = Object.values(cats).some(a => a.length > 0);
 
-  const lines = [`## [${scriptName}] ${newVer} - ${today}`];
+  // 若有多个版本，显示版本链
+  const versionStr = versions.length > 1 
+    ? `${newVer} (${versions.join(' → ')})` 
+    : newVer;
+  
+  const lines = [`## [${scriptName}] ${versionStr} - ${today}`];
 
   if (hasContent) {
     for (const cat of CAT_ORDER) {
@@ -113,9 +120,12 @@ if (fs.existsSync(CHANGELOG_PATH)) {
 }
 
 const newSections = targets
-  .map(({ file, newVer, oldVer }) => {
-    const section = buildSection(file, newVer, oldVer);
-    console.log(`✅ Generated section for ${file} → v${newVer}`);
+  .map(({ file, newVer, oldVer, versions }) => {
+    const section = buildSection(file, newVer, oldVer, versions);
+    const versionStr = versions.length > 1 
+      ? `v${versions[0]} → v${versions[versions.length - 1]}` 
+      : `v${newVer}`;
+    console.log(`✅ Generated section for ${file} → ${versionStr}`);
     return section;
   })
   .join('\n\n');
