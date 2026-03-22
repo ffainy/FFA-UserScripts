@@ -5,14 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [FFA-Omnibar] 3.4.3 - 2026-03-22
 
+### Fixed
+- improve tab navigation layout and animations
 
+## [FFA-Omnibar] 3.4.2 - 2026-03-22
 
+### Added
+- enhance about tab with dynamic script info and custom icon
+- update blocklist and about tab icons
+
+## [FFA-Omnibar] 3.4.1 - 2026-03-22
+
+### Fixed
+- resolve mini mode icon hover residual glow
 
 ## [FFA-Omnibar] 3.4.0 - 2026-03-22
 
 ### Changed
-- unify naming under ffa- namespace with BEM conventions
+- isolate omnibar UI in a unified shadow root
+
+## [FFA-Omnibar] 3.3.0 - 2026-03-22
+
+### Changed
 - isolate omnibar UI in a unified shadow root
 
 ## [FFA-Omnibar] 3.2.1 - 2026-03-17
@@ -20,33 +36,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - add search suggestions and history toggles
 
-### Changed
-- streamline utilities, trim comments, and refine CSS variable/style handling
-
 ## [FFA-Omnibar] 3.2.0 - 2026-03-16
 
 ### Added
 - Refactor settings panel with tabbed layout and update engine icons
 
-### Other
-- support multiple bumped files in changelog
+### Changed
+- streamline utilities, trim comments, and refine CSS variable/style handling
 
-## [3.1.0] - 2026-03-16
-
-> 📦 `FFA-Omnibar.js`
+## [FFA-Omnibar] 3.1.0 - 2026-03-16
 
 ### Added
 - Add domain blacklist to hide omnibar
 
-### Other
-- use portable sed for version extraction
-
-## [3.0.2] - 2026-03-16
+## [FFA-Omnibar] 3.0.2 - 2026-03-16
 
 ### Added
-- Refine engine button animations with advanced easing and micro-interactions
+- improve engine-button UI animations
 
-## [3.0.1] - 2026-03-15
+## [FFA-Omnibar] 3.0.1 - 2026-03-15
 
 ### Added
 - Enhance search input with expandable design and search button
@@ -55,47 +63,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Remove redundant @connect directive and iframe check
 
-## [3.0.0] - 2026-03-15
+## [FFA-Omnibar] 3.0.0 - 2026-03-15
 
 ### Added
 - Major visual overhaul with brand icons and enhanced theme system
 
-## [2.1.7] - 2026-03-14
+## [FFA-Omnibar] 2.1.7 - 2026-03-14
 
 ### Added
 - Add smart engine matching and improved button behavior
 
-## [2.1.6] - 2026-03-13
+## [FFA-Omnibar] 2.1.6 - 2026-03-13
 
 ### Fixed
 - Prevent duplicate toolbar in iframes with @noframes and runtime checks
 
-## [2.1.5] - 2026-03-13
+## [FFA-Omnibar] 2.1.5 - 2026-03-13
 
 ### Fixed
 - Improve SuggestModule cache mechanism to prevent memory leak
 
-## [2.1.4] - 2026-03-13
+## [FFA-Omnibar] 2.1.4 - 2026-03-13
 
 ### Added
 - Add separate blur controls for toolbar and panel
 
-## [2.1.2] - 2026-03-13
+## [FFA-Omnibar] 2.1.2 - 2026-03-13
 
 ### Fixed
 - Apply openInNewTab setting to all search actions
 
-## [2.1.1] - 2026-03-13
+## [FFA-Omnibar] 2.1.1 - 2026-03-13
 
 ### Added
 - Optimize search UI with single global input box
 
-## [2.1.0] - 2026-03-13
+## [FFA-Omnibar] 2.1.0 - 2026-03-13
 
 ### Added
 - Transform FFA Omnibar into global search assistant
 
-## [2.0.0] - 2026-03-13
+## [FFA-Omnibar] 2.0.0 - 2026-03-13
 
 ### Added
 - Add search behavior setting for opening in new tab
