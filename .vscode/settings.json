@@ -1,8 +1,0 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "/^git --no-pager show --format=fuller 4d2ae33bcbbc13a60dc4119aca83bc33d64762df \\| Select-Object -First 30$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
-}
