@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.4.0
+// @version      3.4.1
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy/FFA-UserScripts
 // @supportURL   https://github.com/ffainy/FFA-UserScripts/issues
@@ -628,7 +628,7 @@
         `.ffa-mini-icon svg{width:28px;height:28px;transition:all 0.6s;filter:drop-shadow(0 0 4px var(--ffa-accent));color:var(--ffa-accent)}`,
         `.ffa-mini-icon--hovered svg{transform:scale(1.15) rotate(8deg);filter:drop-shadow(0 0 8px var(--ffa-accent)) drop-shadow(0 0 16px var(--ffa-accent))}`,
         `.ffa-mini-icon--visible{opacity:1;pointer-events:auto}`,
-        `.ffa-mini-icon--hidden{opacity:0;transform:translateX(-50%) translateY(25px) scale(0.7);pointer-events:none}`,
+        `.ffa-mini-icon--hidden{opacity:0;transform:translateX(-50%) translateY(70px) scale(0.7);pointer-events:none}`,
         `.ffa-mini-hitarea{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:64px;height:36px;z-index:2147483642;cursor:pointer;pointer-events:none}`,
         `.ffa-mini-hitarea--active{pointer-events:auto}`,
 
@@ -675,8 +675,8 @@
     const TOOLBAR_CSS = [
         `.ffa-toolbar-host{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--ffa-offset-bottom);z-index:2147483642;font-family:var(--ffa-font-stack)}`,
         `.ffa-toolbar-wrapper{transition:0.8s var(--ffa-easing)}`,
-        `.ffa-toolbar-wrapper--mini .ffa-toolbar{opacity:0;transform:translateY(50px) scale(0.92);pointer-events:none;transition:opacity 0.5s var(--ffa-easing),transform 0.6s var(--ffa-easing)}`,
-        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed .ffa-toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;transition-delay:0.1s}`,
+        `.ffa-toolbar-wrapper--mini .ffa-toolbar{opacity:0;transform:translateY(70px) scale(0.92);pointer-events:none;visibility:hidden;transition:opacity 0.5s var(--ffa-easing),transform 0.6s var(--ffa-easing)}`,
+        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed .ffa-toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;visibility:visible;transition-delay:0.1s}`,
         `.ffa-toolbar-wrapper--mini .ffa-toolbar{will-change:opacity,transform}`,
         `.ffa-toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--ffa-bg-toolbar);backdrop-filter:var(--ffa-backdrop-toolbar);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:border-color 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),background 0.4s var(--ffa-easing)}`,
         `.ffa-toolbar--focused{background:var(--ffa-bg-panel);border-color:var(--ffa-accent);box-shadow:var(--ffa-shadow),0 0 0 1px var(--ffa-accent),0 0 18px var(--ffa-accent-glow)}`,
@@ -1156,11 +1156,20 @@
             }
         });
 
-        miniHitArea.addEventListener('mouseenter', () => {
-            wrapper.classList.add('ffa-toolbar-wrapper--revealed');
+        let _miniRevealTimer = null;
+
+        const startMiniReveal = () => {
+            clearTimeout(_miniRevealTimer);
             miniIcon.classList.add('ffa-mini-icon--hidden');
             miniIcon.classList.remove('ffa-mini-icon--visible', 'ffa-mini-icon--hovered');
-        });
+            _miniRevealTimer = setTimeout(() => {
+                if (UIState.isOverlayVisible()) return;
+                wrapper.classList.add('ffa-toolbar-wrapper--revealed');
+            }, 120);
+        };
+
+        miniHitArea.addEventListener('mouseenter', startMiniReveal);
+        miniIcon.addEventListener('mouseenter', startMiniReveal);
 
         const inRect = (el, x, y) => {
             const r = el.getBoundingClientRect();
@@ -1175,6 +1184,7 @@
                 clearTimeout(_miniMoveTimer);
                 _miniMoveTimer = setTimeout(() => {
                     if (!wrapper.classList.contains('ffa-toolbar-wrapper--revealed') || UIState.isOverlayVisible()) return;
+                    clearTimeout(_miniRevealTimer);
                     wrapper.classList.remove('ffa-toolbar-wrapper--revealed');
                     miniIcon.classList.remove('ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
                     miniIcon.classList.add('ffa-mini-icon--visible');
