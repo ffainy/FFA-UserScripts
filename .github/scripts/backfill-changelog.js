@@ -33,7 +33,7 @@ function getVersionAtCommit(hash, file) {
   try {
     const content = execSync(`git show "${hash}:${file}"`, {
       encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'ignore'], // 忽略 stderr，避免 Windows 报错污染
+      stdio: ['pipe', 'pipe', 'ignore'],
       shell: true,
     });
     const match = content.match(/\/\/ @version\s+(\S+)/);
@@ -55,7 +55,6 @@ const versionMap = new Map(); // version -> { date, commits[] }
 let currentVersion = null;
 for (const info of commitInfos) {
   if (info.version && info.version !== currentVersion) {
-    // 版本发生变化，开启新版本分组
     currentVersion = info.version;
     if (!versionMap.has(currentVersion)) {
       versionMap.set(currentVersion, { date: info.date, commits: [] });
@@ -66,36 +65,43 @@ for (const info of commitInfos) {
   }
 }
 
-// ── 4. 分类函数（复用 workflow 里的逻辑） ─────────────────────────────────
-const SKIP_PATTERNS = [/^\[skip ci\]/i, /^docs: update changelog/i, /^chore:/i];
+// ── 4. 分类函数（与 update-changelog.js 保持一致） ───────────────────────
+const SKIP_PATTERNS = [
+  /^\[skip ci\]/i,
+  /^docs:\s*update changelog/i,
+  // 同 update-changelog.js：不整体跳过 chore:
+];
 
 function categorize(commitList) {
   const cats = { Added: [], Changed: [], Fixed: [], Removed: [], Security: [], Other: [] };
   for (const { msg } of commitList) {
+    if (!msg.trim()) continue;
     if (SKIP_PATTERNS.some(p => p.test(msg))) continue;
     const clean = msg.replace(/^(feat|fix|refactor|perf|style|test|build|ci|chore|docs)(\(.+?\))?!?:\s*/i, '').trim();
-    if      (/^feat/i.test(msg))          cats.Added.push(clean);
-    else if (/^fix/i.test(msg))           cats.Fixed.push(clean);
-    else if (/^refactor|^perf/i.test(msg))cats.Changed.push(clean);
-    else if (/^remove|^drop/i.test(msg))  cats.Removed.push(clean);
-    else if (/security/i.test(msg))       cats.Security.push(clean);
-    else                                  cats.Other.push(clean);
+    if (!clean) continue;
+    if      (/^feat/i.test(msg))               cats.Added.push(clean);
+    else if (/^fix/i.test(msg))                 cats.Fixed.push(clean);
+    else if (/^refactor|^perf/i.test(msg))       cats.Changed.push(clean);
+    else if (/^(remove|drop)/i.test(msg))        cats.Removed.push(clean);
+    else if (/security/i.test(msg))              cats.Security.push(clean);
+    else                                         cats.Other.push(clean);
   }
   return cats;
 }
 
 // ── 5. 生成所有版本的 Markdown 段落（从新到旧） ──────────────────────────
+// Bug fix: 统一使用 [ScriptName] version 格式，与 update-changelog.js 一致
+const scriptName = path.basename(TARGET_FILE, '.js');
 const ORDER = ['Added', 'Changed', 'Fixed', 'Removed', 'Security', 'Other'];
 const sections = [];
 
-// 倒序：最新版本在最前
 const versions = [...versionMap.entries()].reverse();
 
 for (const [version, { date, commits: vCommits }] of versions) {
   const cats = categorize(vCommits);
   const hasContent = Object.values(cats).some(a => a.length > 0);
 
-  const lines = [`## [${version}] - ${date}`];
+  const lines = [`## [${scriptName}] ${version} - ${date}`];
   if (hasContent) {
     for (const cat of ORDER) {
       if (cats[cat].length === 0) continue;

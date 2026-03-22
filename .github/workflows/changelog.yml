@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # 需要拉取完整历史用于版本对比
+          # 拉取完整历史，确保 git log range 和 tag 查找正确工作
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -30,65 +30,33 @@ jobs:
       - name: Detect version bumps in JS files
         id: detect
         run: |
-          # 获取推送范围内的所有commit
-          BEFORE="${{ github.event.before }}"
-          AFTER="${{ github.event.after }}"
-          
-          echo "Commit range: $BEFORE..$AFTER"
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- '*.js' 2>/dev/null || true)
+          echo "Changed JS files: $CHANGED_FILES"
 
-          # 收集所有发生版本变动的文件及完整版本链
-          # 格式：file:newestVer:oldestVer:versionHistory，多个用逗号拼接
-          # 其中 versionHistory 是所有中间版本用|分隔
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No JS files changed, skipping."
+            echo "bumped_files=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           BUMPED_FILES=""
-          declare -A FILE_FIRST_VER FILE_LAST_VER FILE_HISTORY
 
-          # 遍历推送范围内的所有commit（从旧到新）
-          for COMMIT in $(git rev-list "$AFTER".."$BEFORE" | tac); do
-            # 获取该commit修改的所有JS文件
-            CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r "$COMMIT" -- '*.js')
-            
-            for FILE in $CHANGED_FILES; do
-              if [ ! -f "$FILE" ]; then continue; fi
-              
-              # 获取当前commit的版本
-              CUR=$(git show "$COMMIT":"$FILE" 2>/dev/null | sed -n 's|.*// @version[[:space:]]\+\([^[:space:]]\+\).*|\1|p' | head -1)
-              
-              echo "Commit: $COMMIT | File: $FILE | version: $CUR"
-              
-              # 只记录有版本标记的文件
-              if [ -n "$CUR" ]; then
-                # 初始化第一个版本
-                if [ -z "${FILE_FIRST_VER[$FILE]}" ]; then
-                  FILE_FIRST_VER["$FILE"]="$CUR"
-                fi
-                # 持续更新最后版本
-                FILE_LAST_VER["$FILE"]="$CUR"
-                # 添加到历史记录
-                if [ -z "${FILE_HISTORY[$FILE]}" ]; then
-                  FILE_HISTORY["$FILE"]="$CUR"
-                else
-                  # 去重：避免同版本重复
-                  LAST_IN_HISTORY=$(echo "${FILE_HISTORY[$FILE]}" | sed 's/.*|//')
-                  if [ "$LAST_IN_HISTORY" != "$CUR" ]; then
-                    FILE_HISTORY["$FILE"]="${FILE_HISTORY[$FILE]}|$CUR"
-                  fi
-                fi
-              fi
-            done
+          for FILE in $CHANGED_FILES; do
+            if [ ! -f "$FILE" ]; then continue; fi
+
+            # 使用 grep + head 替代 sed BRE \+ 语法，避免跨平台兼容问题
+            CUR=$(grep -m1 '// @version' "$FILE" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[^ ]*' | head -1)
+            PREV=$(git show HEAD~1:"$FILE" 2>/dev/null | grep -m1 '// @version' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[^ ]*' | head -1)
+
+            echo "File: $FILE | prev: ${PREV:-<none>} | current: ${CUR:-<none>}"
+
+            if [ -n "$CUR" ] && [ "$CUR" != "$PREV" ]; then
+              BUMPED_FILES="$BUMPED_FILES,$FILE:$CUR:${PREV:-}"
+            fi
           done
 
-          # 将记录转换为格式：file:newestVer:oldestVer:versionHistory
-          for FILE in "${!FILE_LAST_VER[@]}"; do
-            NEWEST="${FILE_LAST_VER[$FILE]}"
-            OLDEST="${FILE_FIRST_VER[$FILE]}"
-            HISTORY="${FILE_HISTORY[$FILE]}"
-            BUMPED_FILES="$BUMPED_FILES,$FILE:$NEWEST:$OLDEST:$HISTORY"
-          done
-
-          # 去掉开头多余的逗号
           BUMPED_FILES="${BUMPED_FILES#,}"
           echo "bumped_files=$BUMPED_FILES" >> $GITHUB_OUTPUT
-          echo "Result: $BUMPED_FILES"
 
       - name: Update CHANGELOG.md
         if: steps.detect.outputs.bumped_files != ''
