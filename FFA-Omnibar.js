@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.5.0
+// @version      3.5.1
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy
 // @supportURL   https://github.com/ffainy/FFA-UserScripts
@@ -45,7 +45,7 @@
 
     const THEMES = {
         minimal: { n: { en: 'Clean Steel',  zh: '极简工业' }, b: '#F4F4F5', a: '#1A1A2E', r: 8,  ir: 6,  ta: 70, pa: 80, glow: 0.6 },
-        warm:    { n: { en: 'Warm Sepia',  zh: '午后书屋' }, b: '#F5ECD8', a: '#8B5E3C', r: 20, ir: 10, ta: 65, pa: 75, glow: 0.9 },
+        warm:    { n: { en: 'Warm Sepia',   zh: '午后书屋' }, b: '#F5ECD8', a: '#8B5E3C', r: 20, ir: 10, ta: 65, pa: 75, glow: 0.9 },
         cyber:   { n: { en: 'Neon Noir',    zh: '暗夜霓虹' }, b: '#05050F', a: '#7ECFFF', r: 28, ir: 14, ta: 35, pa: 75, glow: 1.2 },
         forest:  { n: { en: 'Deep Forest',  zh: '宁静森林' }, b: '#080F0A', a: '#4AC878', r: 16, ir: 10, ta: 40, pa: 75, glow: 1.3 },
     };
@@ -139,8 +139,8 @@
         fs: 14,           // 基准字号 (px)，所有 UI 字号均基于此缩放
         ta: 50,           // 搜索条背景透明度 (%)
         pa: 75,           // 设置面板背景透明度 (%)
-        tb: 40,           // 搜索条背景模糊半径 (px)
-        pb: 45,           // 设置面板背景模糊半径 (px)
+        tb: 10,           // 搜索条背景模糊半径 (px)
+        pb: 10,           // 设置面板背景模糊半径 (px)
         mm: true,         // 迷你模式：空闲时收起为小图标
         lang: 'en',       // 界面语言：'en' | 'zh'
         font: '',         // 自定义字体族（CSS font-family 字符串）
@@ -149,9 +149,9 @@
             suggestions: true,   // 是否启用关键字预测
             history: true,       // 是否启用历史关键字记录
         },
-        bl: [],           // 黑名单：在这些精确域名上隐藏搜索栏
-        en: DEFAULT_ENGINES,   // 搜索引擎列表
-        ...THEMES.cyber,  // 默认主题，首次安装时会根据系统深色偏好自动切换
+        bl: [],                 // 黑名单：在这些精确域名上隐藏搜索栏
+        en: DEFAULT_ENGINES,    // 搜索引擎列表
+        ...THEMES.cyber,        // 默认主题，首次安装时会根据系统深色偏好自动切换
     };
 
     let _activeTab = 'general'; // 当前激活的设置 tab，内存状态不持久化
@@ -287,8 +287,11 @@
         const innerBg     = isDark ? hexToRgba(s.a, 0.08) : hexToRgba(s.a, 0.06);
         const innerBg2    = isDark ? hexToRgba(s.a, 0.1) : hexToRgba(s.a, 0.06);
         const nagAlpha    = isDark ? 0.35 * glow : 0.18 * glow;
-        const fontStack   = s.font?.trim()
-            ? s.font.split(',').map(f => `"${f.trim().replace(/^["']+|["']+$/g, '')}"`).filter(f => f !== '""').join(',') + ','
+        const _fontNames  = s.font?.trim()
+            ? s.font.split(',').map(f => f.trim().replace(/^["']+|["']+$/g, '').trim()).filter(Boolean)
+            : [];
+        const fontStack   = _fontNames.length
+            ? _fontNames.map(f => `"${f}"`).join(',') + ','
             : '';
 
         return `:host,:root{` +
@@ -1593,8 +1596,8 @@
                                     <input type="range" id="s-fs" min="10" max="24" value="${s.fs}">
                                 </div>
                                 <div style="flex:1">
-                                    <div class="ffa-field__label">${t('labelPanelRadius')} <b>${s.r}px</b></div>
-                                    <input type="range" id="s-r" min="0" max="60" value="${s.r}">
+                                    <div class="ffa-field__label">${t('labelGlow')} <b>${s.glow.toFixed(1)}</b></div>
+                                    <input type="range" id="s-glow" min="0.2" max="2.0" step="0.1" value="${s.glow}">
                                 </div>
                             </div>
                             <div style="display:flex;gap:20px;margin-top:16px">
@@ -1603,8 +1606,8 @@
                                     <input type="range" id="s-ir" min="0" max="40" value="${s.ir}">
                                 </div>
                                 <div style="flex:1">
-                                    <div class="ffa-field__label">${t('labelGlow')} <b>${s.glow.toFixed(1)}</b></div>
-                                    <input type="range" id="s-glow" min="0.2" max="2.0" step="0.1" value="${s.glow}">
+                                    <div class="ffa-field__label">${t('labelPanelRadius')} <b>${s.r}px</b></div>
+                                    <input type="range" id="s-r" min="0" max="60" value="${s.r}">
                                 </div>
                             </div>
                         </div>
