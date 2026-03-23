@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [FFA-Omnibar] 3.5.1 - 2026-03-23
+
+### Changed
+- optimize visual design and font handling
+
 ## [FFA-Omnibar] 3.5.0 - 2026-03-22
 
 ### Added
