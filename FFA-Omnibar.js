@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.5.2
+// @version      3.5.3
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy
 // @supportURL   https://github.com/ffainy/FFA-UserScripts
@@ -193,6 +193,30 @@
         return (r*299+g*587+b*114)/1000 >= 150 ? '#000' : '#fff';
     }
 
+    // 检测页面背景是深色还是浅色，用于 suggest item 文字色判断
+    // 遍历 body / documentElement，取第一个非透明背景色；全透明时默认浅色（白页）
+    function detectPageBgIsDark() {
+        const parseRgba = (str) => {
+            const m = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+            if (!m) return null;
+            return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
+        };
+        const targets = [document.body, document.documentElement];
+        for (const el of targets) {
+            if (!el) continue;
+            const bg = getComputedStyle(el).backgroundColor;
+            const c = parseRgba(bg);
+            if (!c || c.a < 0.05) continue; // 透明或极低不透明度，跳过
+            const luma = (c.r * 299 + c.g * 587 + c.b * 114) / 1000;
+            return luma < 128;
+        }
+        return false; // 默认：浅色背景
+    }
+
+    // 缓存检测结果，避免每次 StyleEngine.update() 都重新查询 DOM
+    let _pageBgIsDark = false;
+    const refreshPageBgDetection = () => { _pageBgIsDark = detectPageBgIsDark(); };
+
     const escAttr = str => String(str ?? '').replace(/"/g, '&quot;');
 
     function debounce(fn, delay=16) {
@@ -338,6 +362,8 @@
             `--ffa-shadow:${shadowSpec};` +
             `--ffa-backdrop-toolbar:blur(${s.tb}px) saturate(${saturation});` +
             `--ffa-backdrop-panel:blur(${s.pb}px) saturate(${saturation});` +
+            `--ffa-suggest-text:${_pageBgIsDark ? '#fff' : '#000'};` +
+            `--ffa-suggest-text-secondary:${_pageBgIsDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'};` +
             `}` +
             `:host *{font-family:${fontStack}system-ui,sans-serif}`;
     }
@@ -509,9 +535,11 @@
     const StyleEngine = {
         init() {
             AppRoot.init();
+            refreshPageBgDetection();
             this.update();
         },
         update(extraCss = TOOLBAR_CSS) {
+            refreshPageBgDetection();
             AppRoot.updateStyles(extraCss);
         },
     };
@@ -747,12 +775,12 @@
         `@keyframes ffa-suggest-in{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.9)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}`,
         `@keyframes ffa-suggest-item-in{from{opacity:0;transform:translateY(14px) scale(0.93)}to{opacity:1;transform:translateY(0) scale(1)}}`,
         `.ffa-suggest__item:nth-child(1){animation-delay:0ms}.ffa-suggest__item:nth-child(2){animation-delay:40ms}.ffa-suggest__item:nth-child(3){animation-delay:80ms}.ffa-suggest__item:nth-child(4){animation-delay:120ms}.ffa-suggest__item:nth-child(5){animation-delay:160ms}.ffa-suggest__item:nth-child(6){animation-delay:200ms}.ffa-suggest__item:nth-child(7){animation-delay:240ms}.ffa-suggest__item:nth-child(8){animation-delay:280ms}.ffa-suggest__item:nth-child(9){animation-delay:320ms}.ffa-suggest__item:nth-child(10){animation-delay:360ms}`,
-        // 默认态：统一平底色，去掉渐变
-        `.ffa-suggest__item{padding:9px 22px;font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:var(--ffa-bg-inner);color:var(--ffa-text-primary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.28s var(--ffa-easing),box-shadow 0.28s var(--ffa-easing);font-family:var(--ffa-font-stack);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;letter-spacing:0.3px;position:relative;overflow:hidden;text-shadow:var(--ffa-glow-text)}`,
+        // 默认态：文字色由 JS 检测网页背景深浅决定，与主题色解耦
+        `.ffa-suggest__item{padding:9px 22px;font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:var(--ffa-bg-inner);color:var(--ffa-suggest-text);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.28s var(--ffa-easing),box-shadow 0.28s var(--ffa-easing);font-family:var(--ffa-font-stack);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;letter-spacing:0.3px;position:relative;overflow:hidden}`,
         // shimmer
         `.ffa-suggest__item::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.08) 50%,transparent 60%);transform:translateX(-100%);transition:transform 0s;pointer-events:none}`,
-        // hover：文字变 accent + 背景加深 + accent glow，不再跳到实心填充
-        `.ffa-suggest__item:hover{background:rgba(var(--ffa-accent-rgb),0.14);border-color:rgba(var(--ffa-accent-rgb),0.55);color:var(--ffa-accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.2),0 0 0 1px rgba(var(--ffa-accent-rgb),0.25),0 0 18px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-accent-xs)}`,
+        // hover：accent 实色填充，文字切换为 on-accent（对 accent 色做对比度计算）
+        `.ffa-suggest__item:hover{background:var(--ffa-accent);color:var(--ffa-text-on-accent);border-color:var(--ffa-accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.2),0 0 0 1px rgba(var(--ffa-accent-rgb),0.25),0 0 18px var(--ffa-accent-hover-glow),inset 0 1px 0 rgba(255,255,255,0.15);text-shadow:var(--ffa-glow-on-accent)}`,
         `.ffa-suggest__item:hover::after{transform:translateX(100%);transition:transform 0.45s ease}`,
         `.ffa-suggest__item:active{transform:scale(0.97);transition-duration:0.08s}`,
 
@@ -762,10 +790,10 @@
         `.ffa-suggest__divider-label{font-size:var(--ffa-font-size-xs);font-weight:var(--ffa-font-weight-semibold);letter-spacing:1.5px;color:var(--ffa-text-secondary);text-transform:uppercase;white-space:nowrap}`,
 
         // ── 历史条目 ──
-        `.ffa-suggest__history-item{padding:9px 18px 9px 14px;font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:var(--ffa-bg-inner);color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.28s var(--ffa-easing),box-shadow 0.28s var(--ffa-easing);font-family:var(--ffa-font-stack);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;letter-spacing:0.3px;display:flex;align-items:center;gap:7px;position:relative;overflow:hidden;text-shadow:var(--ffa-glow-text)}`,
+        `.ffa-suggest__history-item{padding:9px 18px 9px 14px;font-size:var(--ffa-font-size-base);font-weight:var(--ffa-font-weight-semibold);cursor:pointer;border-radius:999px;background:var(--ffa-bg-inner);color:var(--ffa-suggest-text-secondary);border:1px solid var(--ffa-border);backdrop-filter:var(--ffa-backdrop-toolbar);transition:background 0.22s var(--ffa-easing),border-color 0.22s var(--ffa-easing),color 0.18s var(--ffa-easing),transform 0.28s var(--ffa-easing),box-shadow 0.28s var(--ffa-easing);font-family:var(--ffa-font-stack);opacity:0;animation:ffa-suggest-item-in 0.4s var(--ffa-easing) forwards;letter-spacing:0.3px;display:flex;align-items:center;gap:7px;position:relative;overflow:hidden}`,
         `.ffa-suggest__history-item::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.07) 50%,transparent 60%);transform:translateX(-100%);transition:transform 0s;pointer-events:none}`,
         // hover：历史条目文字不变 accent，更克制
-        `.ffa-suggest__history-item:hover{background:rgba(var(--ffa-accent-rgb),0.1);border-color:rgba(var(--ffa-accent-rgb),0.4);color:var(--ffa-text-primary);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.18),0 0 0 1px rgba(var(--ffa-accent-rgb),0.2),0 0 14px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-text)}`,
+        `.ffa-suggest__history-item:hover{background:rgba(var(--ffa-accent-rgb),0.1);border-color:rgba(var(--ffa-accent-rgb),0.4);color:var(--ffa-suggest-text);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.18),0 0 0 1px rgba(var(--ffa-accent-rgb),0.2),0 0 14px var(--ffa-accent-hover-glow)}`,
         `.ffa-suggest__history-item:hover::after{transform:translateX(100%);transition:transform 0.45s ease}`,
         `.ffa-suggest__history-icon{font-size:var(--ffa-font-size-xs);opacity:0.4;flex-shrink:0;transition:opacity 0.22s}`,
         `.ffa-suggest__history-item:hover .ffa-suggest__history-icon{opacity:0.7}`,
