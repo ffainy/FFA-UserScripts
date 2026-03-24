@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.5.4
+// @version      3.5.5
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy
 // @supportURL   https://github.com/ffainy/FFA-UserScripts
@@ -192,6 +192,46 @@
         return (r*299+g*587+b*114)/1000 >= 150 ? '#000' : '#fff';
     }
 
+    // WCAG 相对亮度（线性化）
+    function _wcagLuminance(hex) {
+        return [1,3,5].map(i => {
+            const c = (parseInt(hex.slice(i,i+2),16)||0) / 255;
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+        }).reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+    }
+
+    // WCAG 对比度比值（始终 >= 1）
+    function _contrastRatio(hexA, hexB) {
+        const [la, lb] = [_wcagLuminance(hexA), _wcagLuminance(hexB)].sort((a,b) => b - a);
+        return (la + 0.05) / (lb + 0.05);
+    }
+
+    // 将 hex 颜色的亮度向 target（0=暗 或 1=亮）方向推移 step 步，返回新 hex
+    function _shiftLightness(hex, towardLight, steps = 1) {
+        let [r,g,b] = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)||0);
+        const delta = towardLight ? steps * 15 : -steps * 15;
+        const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
+        [r,g,b] = [r+delta, g+delta, b+delta].map(clamp);
+        return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+    }
+
+    // 确保 accent 在 bg 背景上对比度 >= minRatio，不足时向远离背景的方向推移亮度
+    // 最多尝试 10 步（每步 +/-15 亮度），超出则返回最佳结果
+    function ensureReadableAccent(accentHex, bgHex, minRatio = 3.0) {
+        if (_contrastRatio(accentHex, bgHex) >= minRatio) return accentHex;
+        const bgLum = _wcagLuminance(bgHex);
+        const towardLight = bgLum < 0.18; // 深色背景 → accent 往亮推；浅色背景 → 往暗推
+        let best = accentHex;
+        let bestRatio = _contrastRatio(accentHex, bgHex);
+        for (let i = 1; i <= 10; i++) {
+            const candidate = _shiftLightness(accentHex, towardLight, i);
+            const ratio = _contrastRatio(candidate, bgHex);
+            if (ratio > bestRatio) { best = candidate; bestRatio = ratio; }
+            if (ratio >= minRatio) return candidate;
+        }
+        return best;
+    }
+
     // 检测页面背景是深色还是浅色，用于 suggest item 文字色判断
     // 遍历 body / documentElement，取第一个非透明背景色；全透明时默认浅色（白页）
     function detectPageBgIsDark() {
@@ -301,6 +341,7 @@
     function buildCSSVariables(s) {
         const textColor  = contrastColor(s.b);
         const isDark     = textColor === '#fff';
+        const accentReadable = ensureReadableAccent(s.a, s.b);
         const glow       = s.glow ?? 1.0;
         const shadowColor = hexToRgba(s.a, isDark ? 0.4 * glow : 0.3 * glow);
         const shadowSpec  = `0 ${isDark ? 20 : 15}px ${Math.round((isDark ? 80 : 60) * glow)}px ${shadowColor}`;
@@ -338,6 +379,7 @@
             `--ffa-bg-inner-strong:${innerBg2};` +
             // ── 颜色：强调 & 边框 ──
             `--ffa-accent:${s.a};` +
+            `--ffa-accent-readable:${accentReadable};` +
             `--ffa-accent-rgb:${[1,3,5].map(i=>parseInt(s.a.slice(i,i+2),16)||0).join(',')};` +
             `--ffa-accent-glow:${hexToRgba(s.a, nagAlpha)};` +
             `--ffa-accent-hover-glow:${hexToRgba(s.a, isDark ? 0.45 * glow : 0.22 * glow)};` +
@@ -594,14 +636,14 @@
         // hover：线条用 inset box-shadow 实现，与其他过渡完全同步
         `.ffa-card:hover{border-color:rgba(var(--ffa-accent-rgb),0.28);background:rgba(var(--ffa-accent-rgb),0.025);box-shadow:0 8px 24px rgba(0,0,0,0.2),0 0 0 1px rgba(var(--ffa-accent-rgb),0.12),0 0 28px var(--ffa-accent-hover-glow),inset 0 1px 0 var(--ffa-accent);transform:translateY(-1px)}`,
         `.ffa-card:hover::before{opacity:1}`,
-        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:1px;color:var(--ffa-accent);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-card__title{font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:1px;color:var(--ffa-accent-readable);margin-bottom:16px;display:block;text-transform:uppercase;transform:translateZ(0);text-shadow:var(--ffa-glow-accent-xs)}`,
 
         // ── 字段标签 & 提示 ──
         `.ffa-field__label{display:flex;justify-content:space-between;align-items:center;font-size:var(--ffa-font-size-base);color:var(--ffa-text-primary);margin-bottom:8px;font-weight:var(--ffa-font-weight-semibold);transform:translateZ(0);text-shadow:var(--ffa-glow-text)}`,
         `.ffa-field__label b{font-weight:var(--ffa-font-weight-normal);color:var(--ffa-text-secondary);font-size:var(--ffa-font-size-xs);background:var(--ffa-bg-inner);padding:2px 8px;border-radius:10px}`,
         `.ffa-field__hint{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary);margin:4px 0 12px;line-height:1.6}`,
-        `.ffa-field__hint code{font-family:monospace;font-size:var(--ffa-font-size-xs);color:var(--ffa-accent);background:var(--ffa-bg-inner);padding:1px 5px;border-radius:4px;border:1px solid var(--ffa-border)}`,
-        `.ffa-field__example{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:8px;font-size:var(--ffa-font-size-xs);font-family:monospace;color:var(--ffa-accent);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--ffa-easing);user-select:none}`,
+        `.ffa-field__hint code{font-family:monospace;font-size:var(--ffa-font-size-xs);color:var(--ffa-accent-readable);background:var(--ffa-bg-inner);padding:1px 5px;border-radius:4px;border:1px solid var(--ffa-border)}`,
+        `.ffa-field__example{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 10px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:8px;font-size:var(--ffa-font-size-xs);font-family:monospace;color:var(--ffa-accent-readable);letter-spacing:0.3px;cursor:pointer;transition:0.2s var(--ffa-easing);user-select:none}`,
         `.ffa-field__example:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);box-shadow:0 0 8px var(--ffa-accent-glow)}`,
         `.ffa-field__example .ffa-field__example-icon{font-size:var(--ffa-font-size-xs);opacity:0.6}`,
         `.ffa-field__tip{font-size:var(--ffa-font-size-xs);color:var(--ffa-text-secondary);margin-top:6px;padding-left:2px;opacity:0.8;font-style:italic}`,
@@ -634,8 +676,8 @@
         `.ffa-btn--primary:hover::before{opacity:1}`,
 
         // ── Secondary — accent 色轮廓，次级有意义操作（Export/Import/Confirm）──
-        `.ffa-btn--secondary{background:rgba(var(--ffa-accent-rgb),0.06);color:var(--ffa-accent);border:1px solid rgba(var(--ffa-accent-rgb),0.25);text-shadow:var(--ffa-glow-accent-xs)}`,
-        `.ffa-btn--secondary:hover{background:rgba(var(--ffa-accent-rgb),0.12);border-color:rgba(var(--ffa-accent-rgb),0.55);color:var(--ffa-accent);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.15),0 0 0 1px rgba(var(--ffa-accent-rgb),0.3),0 0 20px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-btn--secondary{background:rgba(var(--ffa-accent-rgb),0.06);color:var(--ffa-accent-readable);border:1px solid rgba(var(--ffa-accent-rgb),0.25);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-btn--secondary:hover{background:rgba(var(--ffa-accent-rgb),0.12);border-color:rgba(var(--ffa-accent-rgb),0.55);color:var(--ffa-accent-readable);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.15),0 0 0 1px rgba(var(--ffa-accent-rgb),0.3),0 0 20px var(--ffa-accent-hover-glow);text-shadow:var(--ffa-glow-accent-xs)}`,
 
         // ── Tertiary — 低优先级操作（Add/Cancel/Add Domain）──
         `.ffa-btn--tertiary{background:var(--ffa-bg-inner);color:var(--ffa-text-secondary);border:1px solid var(--ffa-border);text-shadow:var(--ffa-glow-text)}`,
@@ -671,14 +713,14 @@
         `.ffa-theme-btn:hover{background:var(--ffa-bg-inner-strong);border-color:rgba(var(--ffa-accent-rgb),0.35);color:var(--ffa-text-primary);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,0.12),0 0 0 1px rgba(var(--ffa-accent-rgb),0.15),0 0 16px var(--ffa-accent-hover-glow)}`,
         `.ffa-theme-btn:hover::after{transform:translateX(100%);transition:transform 0.5s ease}`,
         `.ffa-theme-btn:active{transform:scale(0.97);transition-duration:0.08s}`,
-        `.ffa-theme-btn--active{background:rgba(var(--ffa-accent-rgb),0.1);border-color:rgba(var(--ffa-accent-rgb),0.5);color:var(--ffa-accent);box-shadow:0 0 12px rgba(var(--ffa-accent-rgb),0.1),inset 0 1px 0 rgba(var(--ffa-accent-rgb),0.15),inset 0 -2px 0 var(--ffa-accent);text-shadow:var(--ffa-glow-accent-xs)}`,
-        `.ffa-theme-btn--active:hover{background:rgba(var(--ffa-accent-rgb),0.15);border-color:rgba(var(--ffa-accent-rgb),0.7);transform:translateY(-2px);box-shadow:0 4px 16px rgba(var(--ffa-accent-rgb),0.2),inset 0 1px 0 rgba(var(--ffa-accent-rgb),0.2),inset 0 -2px 0 var(--ffa-accent);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-theme-btn--active{background:rgba(var(--ffa-accent-rgb),0.1);border-color:rgba(var(--ffa-accent-rgb),0.5);color:var(--ffa-accent-readable);box-shadow:0 0 12px rgba(var(--ffa-accent-rgb),0.1),inset 0 1px 0 rgba(var(--ffa-accent-rgb),0.15),inset 0 -2px 0 var(--ffa-accent);text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-theme-btn--active:hover{background:rgba(var(--ffa-accent-rgb),0.15);border-color:rgba(var(--ffa-accent-rgb),0.7);color:var(--ffa-accent-readable);transform:translateY(-2px);box-shadow:0 4px 16px rgba(var(--ffa-accent-rgb),0.2),inset 0 1px 0 rgba(var(--ffa-accent-rgb),0.2),inset 0 -2px 0 var(--ffa-accent);text-shadow:var(--ffa-glow-accent-xs)}`,
 
         // ── 图标编辑器 ──
         `.ffa-icon-editor{display:flex;gap:12px;align-items:flex-start;margin-bottom:0}`,
         `.ffa-icon-editor__textarea{flex:1;height:48px;padding:10px;background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);color:var(--ffa-text-primary);outline:none;box-sizing:border-box;font-family:monospace;font-size:var(--ffa-font-size-xs);resize:none;line-height:1.5}`,
         `.ffa-icon-editor__textarea:focus{border-color:var(--ffa-accent);background:var(--ffa-bg-panel);box-shadow:0 0 12px var(--ffa-accent-glow)}`,
-        `.ffa-icon-editor__preview{width:48px;height:48px;flex-shrink:0;border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);display:flex;align-items:center;justify-content:center;background:var(--ffa-bg-inner);color:var(--ffa-accent);font-size:var(--ffa-font-size-xs);overflow:hidden}`,
+        `.ffa-icon-editor__preview{width:48px;height:48px;flex-shrink:0;border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);display:flex;align-items:center;justify-content:center;background:var(--ffa-bg-inner);color:var(--ffa-accent-readable);font-size:var(--ffa-font-size-xs);overflow:hidden}`,
         `.ffa-icon-editor__preview svg,.ffa-icon-editor__preview img{width:24px;height:24px}`,
         `.ffa-icon-editor__error{font-size:var(--ffa-font-size-xs);color:#ff4757;margin-top:5px;display:none}`,
         `.ffa-icon-editor__error--visible{display:block}`,
@@ -694,7 +736,7 @@
 
         // ── 迷你图标 & 触发区 ──
         `.ffa-mini-icon{position:fixed;bottom:calc(44px * -1 / 3);left:50%;transform:translateX(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 0.7s,transform 0.7s;opacity:0;pointer-events:none;z-index:2147483641;overflow:visible}`,
-        `.ffa-mini-icon svg{width:28px;height:28px;transition:all 0.6s;filter:drop-shadow(0 0 4px var(--ffa-accent));color:var(--ffa-accent)}`,
+        `.ffa-mini-icon svg{width:28px;height:28px;transition:all 0.6s;filter:drop-shadow(0 0 4px var(--ffa-accent));color:var(--ffa-accent-readable)}`,
         `.ffa-mini-icon--hovered svg{transform:scale(1.15) rotate(8deg);filter:drop-shadow(0 0 8px var(--ffa-accent)) drop-shadow(0 0 16px var(--ffa-accent))}`,
         `.ffa-mini-icon--visible{opacity:1;pointer-events:auto}`,
         `.ffa-mini-icon--hidden{opacity:0;transform:translateX(-50%) translateY(70px) scale(0.7);pointer-events:none}`,
@@ -724,7 +766,7 @@
         `.ffa-panel__tab-content{display:none}`,
         `@keyframes ffa-tab-fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}`,
         `.ffa-panel__tab-content--active{display:block;animation:ffa-tab-fadein 0.2s var(--ffa-easing) both}`,
-        `.ffa-panel__title{text-align:center;font-weight:var(--ffa-font-weight-bold);letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-md);border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
+        `.ffa-panel__title{text-align:center;font-weight:var(--ffa-font-weight-bold);letter-spacing:4px;padding:26px 28px 20px;color:var(--ffa-accent-readable);font-size:var(--ffa-font-size-lg);text-shadow:var(--ffa-glow-accent-md);border-bottom:1px solid var(--ffa-border);flex-shrink:0}`,
     ].join('');
 
     // ─── TOOLBAR_CSS：搜索条、引擎按钮、建议下拉样式 ────────────────────────────
@@ -745,10 +787,10 @@
         `.ffa-toolbar__engine-btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:16px;height:16px;overflow:visible;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1)}`,
         `.ffa-toolbar__engine-btn-label{display:inline;opacity:0;white-space:nowrap;max-width:0;padding-left:0;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),max-width 0.5s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1);transform:translateX(-4px);overflow:hidden}`,
         `.ffa-toolbar:hover .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active),.ffa-toolbar--pinned .ffa-toolbar__engine-btn:not(.ffa-toolbar__engine-btn--active){opacity:1}`,
-        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-xs);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
+        `.ffa-toolbar__engine-btn:hover{border-color:var(--ffa-accent);background:var(--ffa-accent-glow);color:var(--ffa-accent-readable);transform:translateY(-2px) scale(1.02);box-shadow:0 6px 18px var(--ffa-accent-glow),0 0 10px var(--ffa-accent-glow);text-shadow:var(--ffa-glow-accent-xs);max-width:160px;padding-right:10px;transition:opacity 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.25s cubic-bezier(0.4,0,0.2,1),background 0.25s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.34,1.56,0.64,1),max-width 0.45s cubic-bezier(0.23,1,0.32,1),padding 0.4s cubic-bezier(0.23,1,0.32,1)}`,
         `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-icon{transform:scale(1.1)}`,
         `.ffa-toolbar__engine-btn:hover .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0);transition-delay:0.06s;transition:opacity 0.25s cubic-bezier(0.4,0,0.2,1) 0.06s,max-width 0.45s cubic-bezier(0.23,1,0.32,1),transform 0.4s cubic-bezier(0.23,1,0.32,1) 0.04s}`,
-        `.ffa-toolbar__engine-btn--active{border-color:rgba(var(--ffa-accent-rgb),0.35);background:rgba(var(--ffa-accent-rgb),0.08);color:var(--ffa-accent);box-shadow:inset 0 -1.5px 0 var(--ffa-accent);opacity:1;max-width:160px;padding-right:10px;text-shadow:var(--ffa-glow-accent-xs)}`,
+        `.ffa-toolbar__engine-btn--active{border-color:rgba(var(--ffa-accent-rgb),0.35);background:rgba(var(--ffa-accent-rgb),0.08);color:var(--ffa-accent-readable);box-shadow:inset 0 -1.5px 0 var(--ffa-accent);opacity:1;max-width:160px;padding-right:10px;text-shadow:var(--ffa-glow-accent-xs)}`,
         `.ffa-toolbar__engine-btn--active .ffa-toolbar__engine-btn-label{opacity:1;max-width:120px;padding-left:5px;transform:translateX(0)}`,
         `.ffa-toolbar__engine-btn--active:hover{background:var(--ffa-accent-glow);transform:translateY(-2px) scale(1.02)}`,
 
@@ -756,12 +798,12 @@
         `.ffa-toolbar__input{position:relative;display:flex;align-items:center;transition:width 0.45s var(--ffa-easing),background 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),border-color 0.3s var(--ffa-easing);width:34px;border-radius:var(--ffa-radius-widget);border:1px solid transparent;box-sizing:border-box}`,
         `.ffa-toolbar__input--expanded{width:236px;background:var(--ffa-bg-inner);border-color:transparent;box-shadow:none;border-radius:var(--ffa-radius-widget)}`,
         `.ffa-toolbar--focused .ffa-toolbar__input--expanded{box-shadow:0 0 0 1px rgba(var(--ffa-accent-rgb),0.25),0 0 12px var(--ffa-accent-hover-glow)}`,
-        `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn{background:var(--ffa-bg-inner-strong);border-color:transparent;box-shadow:none;color:var(--ffa-accent);opacity:1}`,
+        `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn{background:var(--ffa-bg-inner-strong);border-color:transparent;box-shadow:none;color:var(--ffa-accent-readable);opacity:1}`,
         `.ffa-toolbar__input--expanded .ffa-toolbar__search-btn:hover{background:var(--ffa-accent-glow);border-color:transparent;border-right-color:var(--ffa-border)}`,
 
         // ── 搜索按钮 ──
         `.ffa-toolbar__search-btn{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;cursor:pointer;color:var(--ffa-text-primary);background:var(--ffa-bg-inner);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-widget);transition:0.3s var(--ffa-easing);opacity:0.5;box-sizing:border-box}`,
-        `.ffa-toolbar__search-btn:hover{opacity:1;border-color:var(--ffa-accent);background:var(--ffa-accent-glow);color:var(--ffa-accent);box-shadow:0 0 8px var(--ffa-accent-glow)}`,
+        `.ffa-toolbar__search-btn:hover{opacity:1;border-color:var(--ffa-accent);background:var(--ffa-accent-glow);color:var(--ffa-accent-readable);box-shadow:0 0 8px var(--ffa-accent-glow)}`,
 
         // ── 搜索输入框 ──
         `.ffa-toolbar__search-input{-webkit-appearance:none;appearance:none;border:none;background:transparent;padding:0;outline:none;width:0;min-width:0;font-size:var(--ffa-font-size-base);line-height:1.2;color:var(--ffa-text-primary);border-radius:0;transition:width 0.45s var(--ffa-easing),padding 0.45s var(--ffa-easing),opacity 0.3s var(--ffa-easing);box-sizing:border-box;font-family:var(--ffa-font-stack);opacity:0}`,
@@ -802,7 +844,7 @@
 
         // ── 设置按钮 ──
         `.ffa-toolbar__settings-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ffa-text-primary);transition:0.5s var(--ffa-easing);border-radius:50%;opacity:0.5}`,
-        `.ffa-toolbar__settings-btn:hover{opacity:1;background:var(--ffa-accent-glow);color:var(--ffa-accent);transform:rotate(90deg);box-shadow:0 0 15px var(--ffa-accent-glow),0 0 30px var(--ffa-accent-glow)}`,
+        `.ffa-toolbar__settings-btn:hover{opacity:1;background:var(--ffa-accent-glow);color:var(--ffa-accent-readable);transform:rotate(90deg);box-shadow:0 0 15px var(--ffa-accent-glow),0 0 30px var(--ffa-accent-glow)}`,
     ].join('');
 
     const HistoryModule = {
@@ -1734,18 +1776,18 @@
                         <div class="ffa-card">
                             <span class="ffa-card__title">${t('cardAbout')}</span>
                             <div style="margin-bottom:20px">
-                                <div style="font-size:var(--ffa-font-size-lg);font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-accent);margin-bottom:8px">${SecurityUtils.escapeHtml(scriptInfo.name)}</div>
+                                <div style="font-size:var(--ffa-font-size-lg);font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-accent-readable);margin-bottom:8px">${SecurityUtils.escapeHtml(scriptInfo.name)}</div>
                                 <div style="font-size:var(--ffa-font-size-sm);color:var(--ffa-text-secondary);line-height:1.5">${SecurityUtils.escapeHtml(scriptInfo.description)}</div>
                             </div>
                             <div style="display:flex;flex-direction:column;gap:10px">
                                 <div style="font-size:var(--ffa-font-size-sm)">
-                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelAuthor')}: </span><a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.author)}</a>
+                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelAuthor')}: </span><a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent-readable);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.author)}</a>
                                 </div>
                                 <div style="font-size:var(--ffa-font-size-sm)">
-                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelVersion')}: </span><span style="color:var(--ffa-accent)">${SecurityUtils.escapeHtml(scriptInfo.version)}</span>
+                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelVersion')}: </span><span style="color:var(--ffa-accent-readable)">${SecurityUtils.escapeHtml(scriptInfo.version)}</span>
                                 </div>
                                 <div style="font-size:var(--ffa-font-size-sm)">
-                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelWebsite')}: </span><a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.website)}</a>
+                                    <span style="font-weight:var(--ffa-font-weight-semibold);color:var(--ffa-text-primary)">${t('labelWebsite')}: </span><a href="${SecurityUtils.escapeHtml(scriptInfo.website)}" target="_blank" style="color:var(--ffa-accent-readable);text-decoration:none">${SecurityUtils.escapeHtml(scriptInfo.website)}</a>
                                 </div>
                             </div>
                         </div>
@@ -1756,7 +1798,7 @@
                 return `
                 <div class="ffa-subpanel" id="n-sub">
                     <div class="ffa-subpanel__scroll">
-                        <h3 id="sub-title" style="color:var(--ffa-accent);margin:0 0 20px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:2px"></h3>
+                        <h3 id="sub-title" style="color:var(--ffa-accent-readable);margin:0 0 20px;font-size:var(--ffa-font-size-md);font-weight:var(--ffa-font-weight-bold);letter-spacing:2px"></h3>
                         <div class="ffa-field__label">${t('labelName')}</div>
                         <input type="text" id="e-n" class="ffa-input">
                         <div class="ffa-field__hint">
