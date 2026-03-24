@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.5.3
+// @version      3.5.4
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy
 // @supportURL   https://github.com/ffainy/FFA-UserScripts
@@ -16,7 +16,6 @@
 // @grant        GM_xmlhttpRequest
 // @connect      suggestqueries.google.com
 // @connect      suggestion.baidu.com
-// @connect      ac.duckduckgo.com
 // @noframes
 // @run-at       document-end
 // ==/UserScript==
@@ -827,7 +826,10 @@
         _cache: new Map(),
         _CACHE_MAX: 100,
         _CACHE_TTL: 5 * 60 * 1000,
-        _sources: { google: true, baidu: false, duckduckgo: true },
+        _CLEANUP_INTERVAL: 60 * 1000,   // 最多每分钟清理一次，避免高频触发
+        _lastCleanup: 0,
+        // 两个源默认均未知（false），probe 后才标记可用
+        _sources: { google: false, baidu: false },
         _initialized: false,
         _requestToken: 0,
 
@@ -841,6 +843,7 @@
             return item.value;
         },
 
+        // value 为空数组也缓存，避免对必然无结果的 query 重复请求
         _cacheSet(key, value) {
             if (this._cache.size >= this._CACHE_MAX)
                 this._cache.delete(this._cache.keys().next().value);
@@ -849,6 +852,8 @@
 
         _cleanupCache() {
             const now = Date.now();
+            if (now - this._lastCleanup < this._CLEANUP_INTERVAL) return;
+            this._lastCleanup = now;
             for (const [key, item] of this._cache) {
                 if (now - item.ts > this._CACHE_TTL) this._cache.delete(key);
             }
@@ -896,40 +901,29 @@
             );
         },
 
-        _fetchDuckDuckGo(q) {
-            return this._gmFetch(
-                `https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list`,
-                text => {
-                    if (!text.startsWith('[')) return [];
-                    const d = JSON.parse(text);
-                    return Array.isArray(d)
-                        ? d.slice(0, 8).map(i => (typeof i === 'string' ? i : i?.phrase) ?? '').filter(Boolean)
-                        : [];
-                }
-            );
-        },
-
         async _fetchFromSources(q) {
             const cached = this._cacheGet(q);
-            if (cached) return cached;
+            if (cached !== null) return cached;
 
             const trySource = async (name, fetcher) => {
                 if (!this._sources[name]) return [];
                 try {
                     const results = await fetcher(q);
-                    if (results.length > 0) this._cacheSet(q, results);
                     return results;
                 } catch (e) {
-                    if (name === 'google') this._sources.google = false;
+                    // 请求失败时标记该源不可用，本次会话内不再重试
+                    this._sources[name] = false;
                     return [];
                 }
             };
 
             const google = await trySource('google', this._fetchGoogle.bind(this));
-            if (google.length > 0) return google;
+            if (google.length > 0) { this._cacheSet(q, google); return google; }
+
             const baidu = await trySource('baidu', this._fetchBaidu.bind(this));
-            if (baidu.length > 0) return baidu;
-            return trySource('duckduckgo', this._fetchDuckDuckGo.bind(this));
+            // 无论是否有结果都缓存，避免对同一 query 重复发起双源请求
+            this._cacheSet(q, baidu);
+            return baidu;
         },
 
         async fetch(query, box, mask, engineUrl) {
