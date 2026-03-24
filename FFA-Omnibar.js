@@ -4,7 +4,7 @@
 // @description  A floating search toolbar — unify Google, Bing, Baidu, Bilibili, Wikipedia, Steam and more. Switch engines instantly, get real-time suggestions, customize themes, fonts, and layout.
 // @description:zh-CN  悬浮搜索栏，整合 Google、Bing、百度、Bilibili、维基百科、Steam 等引擎，即时切换，智能补全，支持主题、字体与布局自定义。
 // @icon64       data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjZjk1Y2UzIiBkPSJNMCAxMmMwIDkuNjggMi4zMiAxMiAxMiAxMnMxMi0yLjMyIDEyLTEyUzIxLjY4IDAgMTIgMFMwIDIuMzIgMCAxMm00Ljg0IDIuNDkybDMuNzYyLTguNTU1QzkuMjM4IDQuNDk4IDEwLjQ2IDMuNzE2IDEyIDMuNzE2czIuNzYyLjc4MSAzLjM5OCAyLjIyM2wzLjc2MiA4LjU1NGMuMTcyLjQxOC4zMi45NTMuMzIgMS40MThjMCAyLjEyNS0xLjQ5MiAzLjYxNy0zLjYxNyAzLjYxN2MtLjcyNiAwLTEuMy0uMTgzLTEuODgzLS4zN2MtLjU5Ny0uMTkyLTEuMjAzLS4zODctMS45OC0uMzg3Yy0uNzcgMC0xLjM5LjE5NS0xLjk5Ni4zODZjLS41OS4xODgtMS4xNjguMzcxLTEuODY3LjM3MWMtMi4xMjUgMC0zLjYxNy0xLjQ5Mi0zLjYxNy0zLjYxN2MwLS40NjUuMTQ4LTEgLjMyLTEuNDE4Wk0xMiA3LjQzbC0zLjcxNSA4LjQwNmMxLjEwMi0uNTEyIDIuMzcxLS43NTggMy43MTUtLjc1OGMxLjI5NyAwIDIuNjEzLjI0NiAzLjY2NC43NThaIi8+PC9zdmc+
-// @version      3.5.1
+// @version      3.5.2
 // @author       Farfaraway
 // @homepage     https://github.com/ffainy
 // @supportURL   https://github.com/ffainy/FFA-UserScripts
@@ -707,7 +707,8 @@
         `.ffa-toolbar-wrapper--mini{pointer-events:none}`,
         `.ffa-toolbar-wrapper--mini .ffa-toolbar{opacity:0;transform:translateY(70px) scale(0.92);pointer-events:none;visibility:hidden;transition:opacity 0.5s var(--ffa-easing),transform 0.6s var(--ffa-easing)}`,
         `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed{pointer-events:auto}`,
-        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed .ffa-toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;visibility:visible;transition-delay:0.1s}`,
+        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--revealed .ffa-toolbar{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;visibility:visible;transition:opacity 0.5s var(--ffa-easing),transform 0.6s var(--ffa-easing);transition-delay:0.1s}`,
+        `.ffa-toolbar-wrapper--mini.ffa-toolbar-wrapper--hiding .ffa-toolbar{opacity:0;transform:translateY(50px) scale(0.94);pointer-events:none;visibility:visible;transition:opacity 0.4s var(--ffa-easing),transform 0.5s var(--ffa-easing);transition-delay:0s}`,
         `.ffa-toolbar-wrapper--mini .ffa-toolbar{will-change:opacity,transform}`,
         `.ffa-toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--ffa-bg-toolbar);backdrop-filter:var(--ffa-backdrop-toolbar);border:1px solid var(--ffa-border);border-radius:var(--ffa-radius-panel);box-shadow:var(--ffa-shadow);transition:border-color 0.3s var(--ffa-easing),box-shadow 0.3s var(--ffa-easing),background 0.4s var(--ffa-easing)}`,
         `.ffa-toolbar--focused{background:var(--ffa-bg-panel);border-color:rgba(var(--ffa-text-primary-rgb),0.18);box-shadow:var(--ffa-shadow),0 0 0 1px rgba(var(--ffa-text-primary-rgb),0.08)}`,
@@ -1152,6 +1153,8 @@
 
         const startMiniReveal = () => {
             clearTimeout(_miniRevealTimer);
+            // 若正在执行退出动画则立即中止，直接展开
+            wrapper.classList.remove('ffa-toolbar-wrapper--hiding');
             miniIcon.classList.add('ffa-mini-icon--hidden');
             miniIcon.classList.remove('ffa-mini-icon--visible', 'ffa-mini-icon--hovered');
             _miniRevealTimer = setTimeout(() => {
@@ -1177,9 +1180,15 @@
                 _miniMoveTimer = setTimeout(() => {
                     if (!wrapper.classList.contains('ffa-toolbar-wrapper--revealed') || UIState.isOverlayVisible()) return;
                     clearTimeout(_miniRevealTimer);
-                    wrapper.classList.remove('ffa-toolbar-wrapper--revealed');
-                    miniIcon.classList.remove('ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
-                    miniIcon.classList.add('ffa-mini-icon--visible');
+                    // 先加 --hiding 跑退出动画，再切换到隐藏态
+                    wrapper.classList.add('ffa-toolbar-wrapper--hiding');
+                    setTimeout(() => {
+                        // 如果期间鼠标又回来了（hiding 已被 startMiniReveal 移除），则放弃
+                        if (!wrapper.classList.contains('ffa-toolbar-wrapper--hiding')) return;
+                        wrapper.classList.remove('ffa-toolbar-wrapper--revealed', 'ffa-toolbar-wrapper--hiding');
+                        miniIcon.classList.remove('ffa-mini-icon--hidden', 'ffa-mini-icon--hovered');
+                        miniIcon.classList.add('ffa-mini-icon--visible');
+                    }, 450); // 与 hiding transition 时长对齐
                 }, 80);
             }
         }, { signal });
