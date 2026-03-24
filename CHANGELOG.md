@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [FFA-Omnibar] 3.5.5 - 2026-03-24
+
+### Added
+- enhance accent color readability with WCAG contrast compliance
+
 ## [FFA-Omnibar] 3.5.1 - 2026-03-23
 
 ### Changed
