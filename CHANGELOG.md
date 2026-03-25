@@ -5,8 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-
+<!-- changelog-body-start -->
 ## FFA-Omnibar.js [3.5.5] - 2026-03-24
 
 ### Added
@@ -90,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Refactor settings panel with tabbed layout and update engine icons (3801341)
+
 ### Improvements
 - streamline utilities, trim comments, and refine CSS variable/style handling (010c03d)
 
@@ -111,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Enhance search input with expandable design and search button (009e965)
 - Update metadata and enhance visual consistency (b76cd84)
+
 ### Improvements
 - Remove redundant @connect directive and iframe check (1e2563f)
 
