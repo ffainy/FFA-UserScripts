@@ -4,66 +4,101 @@ on:
   push:
     branches:
       - master
-    # 仅在这些文件变动时触发，减少不必要的运行
+    # 仅当这些文件发生变动时触发，避免无关 push 浪费 Actions 配额。
+    # 新增脚本时：在此处取消注释对应行，并同步更新下方 TARGET_SCRIPTS。
     paths:
-      - 'apple.js'
-      - 'banana.js'
-      # - 'NewScript.js'
+      - 'FFA-Omnibar.js'
+      - 'FFA-LinkHelper.js'
 
 jobs:
   update-changelog:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    
-    # 统一定义监控目标
+      contents: write  # 需要写权限才能 push CHANGELOG.md
+
+    # ── 目标脚本列表（两处维护点：paths 过滤 + 此处环境变量）──────────────────
+    # 新增脚本时两处同步更新，否则 paths 触发但 TARGET_SCRIPTS 不包含该文件，
+    # 版本变动会被忽略。
     env:
-      TARGET_SCRIPTS: "apple.js banana.js"
+      TARGET_SCRIPTS: "FFA-Omnibar.js FFA-LinkHelper.js"
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 必须拉取完整历史以支持版本回溯
+          # 拉取完整历史，用于 git log 版本回溯和 rev-list 范围查询
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Generate Changelog Entries
-        id: changelog_step # 设置 ID 以便后续引用输出
+      # 区分初始推送、强推、正常推送三种情况：
+      #   - 初始推送（BEFORE_SHA 全零）：正常运行
+      #   - 强推（BEFORE_SHA 已不在历史中）：跳过，如需重建请手动运行 rebuild-changelog.js
+      #   - 正常推送：正常运行
+      - name: Resolve SHAs and Validate Push Type
+        id: resolve_sha
         env:
           BEFORE_SHA: ${{ github.event.before }}
-          AFTER_SHA: ${{ github.event.after }}
+          AFTER_SHA:  ${{ github.event.after }}
         run: |
-          # 初始推送/强推兼容性修正
-          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE_SHA" ]; then
-            export BEFORE_SHA=$(git rev-parse HEAD~1)
-          fi
-          node .github/scripts/update-changelog.js
+          INITIAL_SHA="0000000000000000000000000000000000000000"
 
-      - name: Commit and Push Changes
-        if: success()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add CHANGELOG.md
-          
-          # 1. 获取 JS 脚本传出的更新列表
-          # 2. 如果列表为空，则使用默认 fallback
-          RAW_LIST="${{ steps.changelog_step.outputs.updated_list }}"
-          UPDATED_LIST=${RAW_LIST:-"scripts"}
-          
-          # 生成你要求的格式: docs: update CHANGELOG for apple.js | banana.js [skip ci]
-          COMMIT_MSG="docs: update CHANGELOG for $UPDATED_LIST [skip ci]"
+          if [ "$BEFORE_SHA" = "$INITIAL_SHA" ]; then
+            echo "检测到初始推送，使用 BEFORE_SHA=$BEFORE_SHA"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
 
-          if ! git diff --cached --quiet; then
-            # 使用 rebase 避免推送冲突
-            git pull origin master --rebase --autostash
-            git commit -m "$COMMIT_MSG"
-            git push origin master
+          elif ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            # 强推导致 BEFORE_SHA 已不在本地历史中，无法确定扫描范围
+            echo "检测到强推且 BEFORE_SHA 已不在历史中，跳过本次增量更新。"
+            echo "如需重建，请手动运行 rebuild-changelog.js。"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+
           else
-            echo "没有检测到 CHANGELOG.md 变动，跳过推送。"
+            echo "正常推送，BEFORE_SHA=$BEFORE_SHA"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
+
+          echo "BEFORE_SHA=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
+          echo "AFTER_SHA=$AFTER_SHA"   >> "$GITHUB_OUTPUT"
+
+      - name: Generate Changelog Entries
+        id: changelog_step
+        if: steps.resolve_sha.outputs.skip == 'false'
+        env:
+          BEFORE_SHA: ${{ steps.resolve_sha.outputs.BEFORE_SHA }}
+          AFTER_SHA:  ${{ steps.resolve_sha.outputs.AFTER_SHA }}
+        run: node .github/scripts/update-changelog.js
+
+      # updated_list 为空说明本次 push 没有版本变动，跳过提交
+      - name: Commit and Push Changes
+        if: |
+          steps.changelog_step.conclusion == 'success' &&
+          steps.changelog_step.outputs.updated_list != ''
+        env:
+          UPDATED_LIST: ${{ steps.changelog_step.outputs.updated_list }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add CHANGELOG.md
+
+          # [skip ci] 防止 bot commit 再次触发本 workflow
+          COMMIT_MSG="docs: update CHANGELOG for ${UPDATED_LIST} [skip ci]"
+
+          if git diff --cached --quiet; then
+            echo "CHANGELOG.md 无实际变动，跳过提交。"
+            exit 0
+          fi
+
+          # rebase 失败时中止并退出，避免留下中间状态
+          if ! git pull origin master --rebase --autostash; then
+            echo "错误：rebase 失败，正在中止..."
+            git rebase --abort
+            exit 1
+          fi
+
+          git commit -m "$COMMIT_MSG"
+          git push origin master

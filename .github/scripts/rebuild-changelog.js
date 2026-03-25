@@ -1,139 +1,294 @@
-/*
-$env:TARGET_SCRIPTS="apple.js banana.js"; node .github/scripts/rebuild-changelog.js
-*/
+/**
+ * rebuild-changelog.js
+ *
+ * 全量历史重建脚本：从仓库完整 git 历史中回溯所有版本，
+ * 按时间倒序重新生成 CHANGELOG.md，覆盖现有文件。
+ *
+ * 适用场景：
+ *   - 首次初始化 CHANGELOG
+ *   - 手动修复 CHANGELOG 数据
+ *   - 重大版本整理后重建
+ *
+ * 本地运行示例（PowerShell）：
+ *   $env:TARGET_SCRIPTS="FFA-Omnibar.js FFA-LinkHelper.js"; node .github/scripts/rebuild-changelog.js
+ *
+ * 本地运行示例（bash）：
+ *   TARGET_SCRIPTS="FFA-Omnibar.js FFA-LinkHelper.js" node .github/scripts/rebuild-changelog.js
+ */
 
+'use strict';
 
 const { execSync } = require('child_process');
-const fs = require('fs');
+const fs           = require('fs');
 
-// 从环境变量读取脚本列表，如果没有读取到则提示错误
-const envScripts = process.env.TARGET_SCRIPTS;
-if (!envScripts) {
-    console.error("错误: 未在环境变量中找到 TARGET_SCRIPTS。");
-    process.exit(1);
-}
-
-// 将字符串转换为数组（支持空格或逗号分隔）
-const SCRIPTS = envScripts.split(/[\s,]+/).filter(Boolean);
-console.log(`正在处理脚本: ${SCRIPTS.join(', ')}`);
+// ─── 常量（与 update-changelog.js 保持完全一致）────────────────────────────
 
 const CHANGELOG_FILE = 'CHANGELOG.md';
 
-const CATEGORIES = {
-    'breaking': '### BREAKING CHANGES',
-    'feat': '### Added',
-    'fix': '### Fixed',
-    'improvements': '### Improvements'
+/** CHANGELOG 文件头部（与 update-changelog.js 共用同一份，保证格式一致）*/
+const HEADER = [
+    '# Changelog',
+    '',
+    'All notable changes to this project will be documented in this file.',
+    '',
+    'The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),',
+    'and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).',
+    '',
+    '',
+].join('\n');
+
+const BODY_SEPARATOR = '<!-- changelog-body-start -->\n';
+
+/** Conventional Commits 类型 → changelog 分类 */
+const TYPE_TO_CATEGORY = {
+    feat:     'feat',
+    fix:      'fix',
+    refactor: 'improvements',
+    perf:     'improvements',
 };
 
-function getVersion(sha, file) {
-    try {
-        const content = execSync(`git show "${sha}:${file}"`, { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
-        const match = content.match(/@version\s+([^\s\n\r]+)/);
-        return match ? match[1] : null;
-    } catch (e) { return null; }
+/** changelog 分类 → 展示标题（插入顺序即输出顺序）*/
+const CATEGORY_TITLES = {
+    breaking:     '### BREAKING CHANGES',
+    feat:         '### Added',
+    fix:          '### Fixed',
+    improvements: '### Improvements',
+};
+
+/** 写入 changelog 时需要忽略的提交类型 */
+const IGNORED_TYPES = new Set([
+    'ci', 'docs', 'chore', 'test', 'build', 'style',
+]);
+
+// ─── 环境变量读取与校验 ───────────────────────────────────────────────────────
+
+const envScripts = process.env.TARGET_SCRIPTS;
+if (!envScripts) {
+    console.error('错误：未在环境变量中找到 TARGET_SCRIPTS。');
+    console.error('请设置环境变量后重试，例如：');
+    console.error('  TARGET_SCRIPTS="apple.js banana.js" node rebuild-changelog.js');
+    process.exit(1);
 }
 
+const SCRIPTS = envScripts.split(/[\s,]+/).filter(Boolean);
+console.log(`目标脚本：${SCRIPTS.join(', ')}`);
+
+// ─── 工具函数 ─────────────────────────────────────────────────────────────────
+
+/**
+ * 读取指定 commit 下某文件的 @version 字段。
+ *
+ * @param {string} sha  — commit SHA
+ * @param {string} file — 文件路径
+ * @returns {string|null}
+ */
+function readVersion(sha, file) {
+    try {
+        const content = execSync(
+            `git show "${sha}:${file}"`,
+            { stdio: ['pipe', 'pipe', 'ignore'] }
+        ).toString();
+
+        const match = content.match(/@version\s+([^\s\n\r]+)/);
+        return match ? match[1] : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * 解析单行 git log 输出（格式："%s|%b|%h"），返回 changelog 条目。
+ * 与 update-changelog.js 中逻辑保持一致。
+ *
+ * @param {string} logLine
+ * @returns {{ category: string, message: string } | null}
+ */
+function parseCommitLine(logLine) {
+    if (!logLine.includes('|')) return null;
+
+    const [subject, body, hash] = logLine.split('|');
+    const fullText = `${subject} ${body ?? ''}`.toLowerCase();
+
+    const typeMatch = subject.match(/^(\w+)/);
+    const rawType   = typeMatch ? typeMatch[1].toLowerCase() : '';
+
+    if (IGNORED_TYPES.has(rawType)) return null;
+    if (subject.toLowerCase().includes('update changelog')) return null;
+
+    const isBreaking = (
+        subject.includes('!:') ||
+        fullText.includes('breaking change')
+    );
+
+    const ccMatch = subject.match(
+        /^(\w+)(?:\((.+?)\))?\s*!?\s*:\s*(.+)$/
+    );
+    if (!ccMatch) return null;
+
+    const [, , scope, msg] = ccMatch;
+    const scopePrefix      = scope ? `**[${scope}]**: ` : '';
+    const message          = `- ${scopePrefix}${msg} (${hash})`;
+
+    let category = null;
+    if (isBreaking) {
+        category = 'breaking';
+    } else if (rawType in TYPE_TO_CATEGORY) {
+        category = TYPE_TO_CATEGORY[rawType];
+    }
+
+    if (!category) return null;
+    return { category, message };
+}
+
+/**
+ * 将分类条目渲染为 changelog section 字符串。
+ *
+ * @param {string} file    — 脚本文件名
+ * @param {string} version — 版本号
+ * @param {string} date    — 日期（YYYY-MM-DD）
+ * @param {Object} groups  — 各分类的提交条目数组
+ * @returns {string | null}
+ */
+function renderSection(file, version, date, groups) {
+    let body = '';
+
+    for (const [key, title] of Object.entries(CATEGORY_TITLES)) {
+        if (groups[key].length === 0) continue;
+        body += `${title}\n${groups[key].join('\n')}\n\n`;
+    }
+
+    if (!body) return null;
+
+    return `## ${file} [${version}] - ${date}\n\n${body}\n`;
+}
+
+/**
+ * 从 git 历史中提取某文件的所有版本区块。
+ *
+ * 算法：
+ *   1. 获取所有修改过该文件的 commit（从旧到新）
+ *   2. 遍历时按版本号分组，每个分组记录该版本包含的所有 commit
+ *   3. 分组的"结束 commit"取该分组中最新的一个，用于取版本发布日期
+ *
+ * @param {string} file — 文件路径
+ * @returns {Array<{ ver: string, endSha: string, commits: string[] }>}
+ */
+function extractVersionBlocks(file) {
+    // 获取所有涉及该文件的 commit，从旧到新
+    const rawLog = execSync(
+        `git log --pretty=format:%H -- "${file}"`
+    ).toString().trim();
+
+    if (!rawLog) return [];
+
+    // git log 默认从新到旧，reverse() 后变为从旧到新
+    const commits = rawLog.split('\n').reverse();
+
+    const blocks    = [];  // 最终结果
+    let currentVer  = null;
+    let currentBlock = null;
+
+    for (const sha of commits) {
+        const ver = readVersion(sha, file);
+        if (!ver) continue;
+
+        if (ver !== currentVer) {
+            // 发现新版本号，开启新区块
+            currentVer   = ver;
+            currentBlock = { ver, endSha: sha, commits: [] };
+            blocks.push(currentBlock);
+        }
+
+        // 将当前 commit 归入当前版本区块
+        currentBlock.commits.push(sha);
+
+        // 持续更新 endSha，确保最终指向该版本的最后一个 commit
+        currentBlock.endSha = sha;
+    }
+
+    return blocks;
+}
+
+// ─── 主逻辑 ───────────────────────────────────────────────────────────────────
+
 function rebuild() {
+
+    // 备份现有文件（仅在本地运行时有实际意义）
     if (fs.existsSync(CHANGELOG_FILE)) {
         fs.copyFileSync(CHANGELOG_FILE, `${CHANGELOG_FILE}.bak`);
+        console.log(`已备份现有文件至 ${CHANGELOG_FILE}.bak`);
     }
 
-    console.log("开始全量历史回溯...");
-    let allSections = "";
+    console.log('开始全量历史回溯...\n');
+
+    /**
+     * allSections 收集所有文件的所有版本 section。
+     * 因为每个 section 都前置插入，最终结果自然按时间倒序排列。
+     */
+    let allSections = '';
 
     for (const file of SCRIPTS) {
-        if (!fs.existsSync(file)) continue;
-        console.log(`>>> 正在提取文件完整历史: ${file}`);
 
-        // 1. 获取所有修改过该文件的提交（按时间从新到旧）
-        const allCommits = execSync(`git log --pretty=format:%H -- "${file}"`).toString().trim().split('\n');
-        
-        // 2. 识别版本区块
-        // 我们反向遍历，记录每个版本号对应的提交集合
-        let versionsFound = []; // { ver: '0.1.0', endSha: 'xxx', commits: [] }
-        let currentVer = null;
-        let currentBlock = null;
+        // 跳过工作区中不存在的文件
+        if (!fs.existsSync(file)) {
+            console.warn(`警告：文件 "${file}" 不存在，跳过。`);
+            continue;
+        }
 
-        // 从旧到新遍历所有提交，划分版本边界
-        const chronologicalCommits = allCommits.reverse();
-        
-        chronologicalCommits.forEach((sha) => {
-            const ver = getVersion(sha, file);
-            if (!ver) return;
+        console.log(`>>> 提取历史：${file}`);
 
-            if (ver !== currentVer) {
-                // 发现新版本（或者是第一个版本）
-                currentVer = ver;
-                currentBlock = { ver: ver, endSha: sha, commits: [] };
-                versionsFound.push(currentBlock);
-            }
-            // 将当前提交归入当前版本号区块
-            currentBlock.commits.push(sha);
-        });
+        const blocks = extractVersionBlocks(file);
 
-        // 3. 针对每个版本区块生成日志
-        // 这里的逻辑是：一个版本的日志 = (上个版本的 endSha .. 当前版本的 endSha) 之间所有关于该文件的提交
-        versionsFound.forEach((block, index) => {
-            let groups = { 'breaking': [], 'feat': [], 'fix': [], 'improvements': [] };
-            
-            block.commits.forEach(sha => {
-                const logLine = execSync(`git log -1 --pretty=format:"%s|%b|%h" ${sha}`).toString().trim();
-                const [subject, body, hash] = logLine.split('|');
-                
-                const fullText = (subject + " " + (body || "")).toLowerCase();
-                const typeMatch = subject.match(/^(\w+)/);
-                const type = typeMatch ? typeMatch[1].toLowerCase() : '';
-                
-                // 过滤掉没意义的
-                if (['ci', 'docs', 'chore', 'test', 'build', 'style'].includes(type) || 
-                    subject.toLowerCase().includes('update changelog')) return;
+        if (blocks.length === 0) {
+            console.log(`    未找到任何带版本号的提交，跳过。`);
+            continue;
+        }
 
-                const isBreaking = subject.includes('!:') || fullText.includes('breaking change');
-                const match = subject.match(/^(\w+)(?:\((.+?)\))?\s*!?\s*:\s*(.+)$/);
-                
-                let finalMsg = "";
-                let targetKey = isBreaking ? 'breaking' : null;
+        for (const block of blocks) {
 
-                if (match) {
-                    const [_, rawType, scope, msg] = match;
-                    const typeKey = rawType.toLowerCase();
-                    const scopePrefix = scope ? `**[${scope}]**: ` : "";
-                    finalMsg = `- ${scopePrefix}${msg} (${hash})`;
-                    
-                    if (!isBreaking) {
-                        if (typeKey === 'feat') targetKey = 'feat';
-                        else if (typeKey === 'fix') targetKey = 'fix';
-                        else if (['refactor', 'perf'].includes(typeKey)) targetKey = 'improvements';
-                    }
-                }
+            // 初始化各分类的条目桶
+            const groups = {
+                breaking:     [],
+                feat:         [],
+                fix:          [],
+                improvements: [],
+            };
 
-                if (finalMsg && targetKey) {
-                    groups[targetKey].push(finalMsg);
-                }
-            });
+            // 解析该版本区块内的所有提交
+            for (const sha of block.commits) {
+                const logLine = execSync(
+                    `git log -1 --pretty=format:"%s|%b|%h" ${sha}`
+                ).toString().trim();
 
-            // 构建 Section
-            let sectionContent = "";
-            for (const [key, title] of Object.entries(CATEGORIES)) {
-                if (groups[key].length > 0) {
-                    sectionContent += `${title}\n${groups[key].join('\n')}\n`;
+                const parsed = parseCommitLine(logLine);
+                if (parsed) {
+                    groups[parsed.category].push(parsed.message);
                 }
             }
 
-            if (sectionContent) {
-                const date = execSync(`git log -1 --format=%as ${block.endSha}`).toString().trim();
-                const section = `## ${file} [${block.ver}] - ${date}\n\n${sectionContent}\n\n`;
-                // 最新的在最上面
+            // 取版本最后一个 commit 的日期作为版本发布日期
+            const date = execSync(
+                `git log -1 --format=%as ${block.endSha}`
+            ).toString().trim();
+
+            const section = renderSection(file, block.ver, date, groups);
+
+            if (section) {
+                // 前置插入，保证最新版本在最上面
                 allSections = section + allSections;
             }
-        });
+        }
+
+        console.log(`    完成，共识别 ${blocks.length} 个版本。`);
     }
 
-    const header = `# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n\n\n`;
+    // ── 写入文件 ──────────────────────────────────────────────────────────────
+    fs.writeFileSync(
+        CHANGELOG_FILE,
+        HEADER + BODY_SEPARATOR + allSections
+    );
 
-    fs.writeFileSync(CHANGELOG_FILE, header + allSections);
-    console.log(`[Success] 历史全量重构完成，已覆盖从 0.0.1 开始的所有版本。`);
+    console.log('\n[完成] CHANGELOG.md 全量重建成功。');
 }
 
 rebuild();
