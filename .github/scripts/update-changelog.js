@@ -1,173 +1,134 @@
-#!/usr/bin/env node
-/**
- * update-changelog.js
- *
- * 由 changelog.yml 调用，读取环境变量 BUMPED_FILES，
- * 为每个版本变动的脚本生成 Keep a Changelog 规范的段落，
- * 插入到 CHANGELOG.md 顶部。
- *
- * 新增脚本时只需在 changelog.yml 的 paths 里添加文件名，
- * 本脚本无需改动。
- */
-
 const { execSync } = require('child_process');
-const fs   = require('fs');
-const path = require('path');
+const fs = require('fs');
 
-const CHANGELOG_PATH = path.resolve('CHANGELOG.md');
-
-// BUMPED_FILES 格式：file:newVer:oldVer，多个用逗号分隔
-// 示例："FFA-Omnibar.js:1.3.0:1.2.0,FFA-NewScript.js:1.0.0:"
-const BUMPED_FILES = process.env.BUMPED_FILES;
-
-if (!BUMPED_FILES) {
-  console.error('BUMPED_FILES env var is required');
-  process.exit(1);
+// 1. 配置与逻辑分离：从环境变量读取目标脚本列表
+const envScripts = process.env.TARGET_SCRIPTS;
+if (!envScripts) {
+    console.error("错误: 未在环境变量中找到 TARGET_SCRIPTS。");
+    process.exit(1);
 }
 
-const targets = BUMPED_FILES.split(',').map(entry => {
-  const [file, newVer, oldVer] = entry.split(':');
-  return { file, newVer, oldVer: oldVer || '' };
-});
+const SCRIPTS = envScripts.split(/[\s,]+/).filter(Boolean);
+const CHANGELOG_FILE = 'CHANGELOG.md';
+const beforeSha = process.env.BEFORE_SHA;
+const afterSha = process.env.AFTER_SHA;
 
-// ── commit message 分类规则（Conventional Commits） ──────────────────────
-const SKIP_PATTERNS = [
-  /^\[skip ci\]/i,
-  /^docs:\s*update changelog/i,
-  // 注意：不再整体跳过 chore:，仅跳过 changelog 维护类提交
-];
+// 2. 分类映射（遵循精简原则：Breaking, Added, Fixed, Improvements）
+const CATEGORIES = {
+    'breaking': '### BREAKING CHANGES',
+    'feat': '### Added',
+    'fix': '### Fixed',
+    'improvements': '### Improvements'
+};
 
-const CAT_ORDER = ['Added', 'Changed', 'Fixed', 'Removed', 'Security', 'Other'];
-
-function categorize(messages) {
-  const cats = { Added: [], Changed: [], Fixed: [], Removed: [], Security: [], Other: [] };
-
-  for (const msg of messages) {
-    if (!msg.trim()) continue;
-    if (SKIP_PATTERNS.some(p => p.test(msg))) continue;
-
-    // 去掉 conventional commit 前缀，保留可读描述
-    const clean = msg
-      .replace(/^(feat|fix|refactor|perf|style|test|build|ci|chore|docs)(\(.+?\))?!?:\s*/i, '')
-      .trim();
-
-    if (!clean) continue;
-
-    if      (/^feat/i.test(msg))                cats.Added.push(clean);
-    else if (/^fix/i.test(msg))                  cats.Fixed.push(clean);
-    else if (/^refactor|^perf/i.test(msg))        cats.Changed.push(clean);
-    else if (/^(remove|drop)/i.test(msg))         cats.Removed.push(clean);
-    else if (/security/i.test(msg))               cats.Security.push(clean);
-    else                                           cats.Other.push(clean);
-  }
-
-  return cats;
+/**
+ * 从指定提交中提取脚本的 @version 字段
+ */
+function getVersion(sha, file) {
+    try {
+        const content = execSync(`git show "${sha}:${file}"`, { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+        const match = content.match(/@version\s+([^\s\n\r]+)/);
+        return match ? match[1] : null;
+    } catch (e) { return null; }
 }
 
-// ── 为单个脚本生成版本段落 ───────────────────────────────────────────────
-function buildSection(file, newVer, oldVer) {
-  const scriptName = path.basename(file, '.js');
-  const today = new Date().toISOString().slice(0, 10);
+function update() {
+    // 获取本次推送涉及的所有提交记录
+    const commits = execSync(`git rev-list --reverse ${beforeSha}..${afterSha}`).toString().trim().split('\n');
+    let lastBumpPoint = {};
+    SCRIPTS.forEach(s => lastBumpPoint[s] = beforeSha);
 
-  let commitMessages = [];
+    let allNewSections = "";
+    let updatedScripts = []; // 用于记录本次真正产生更新日志的脚本名
 
-  // Bug fix: fetch-depth: 0 保证完整历史，tag 查找现在可以正常工作。
-  // 若有旧版本对应的 tag，使用精确 range；否则回退到两个 commit 之间的 diff。
-  try {
-    // 先尝试用 tag 锁定 range
-    const tagName = `v${oldVer}`;
-    const tagExists = oldVer
-      ? execSync(`git tag -l "${tagName}"`).toString().trim()
-      : '';
+    for (const commit of commits) {
+        if (!commit) continue;
+        for (const file of SCRIPTS) {
+            if (!fs.existsSync(file)) continue;
 
-    let raw = '';
-    if (tagExists) {
-      // 精确 range：从旧版本 tag 到当前 HEAD
-      raw = execSync(
-        `git log "${tagName}..HEAD" --pretty=format:"%s" --no-merges -- "${file}"`
-      ).toString().trim();
-      console.log(`  Using tag range: ${tagName}..HEAD`);
-    } else if (oldVer) {
-      // tag 不存在时，用两次版本 bump commit 之间的范围
-      // 找到最近一次含旧版本号的 commit hash
-      const prevCommit = execSync(
-        `git log --pretty=format:"%H" --no-merges -- "${file}" | xargs -I{} git show {}:"${file}" 2>/dev/null | grep -l "@version ${oldVer}" || true`
-      ).toString().trim();
+            const oldVer = getVersion(`${commit}^`, file);
+            const newVer = getVersion(commit, file);
 
-      if (prevCommit) {
-        raw = execSync(
-          `git log "${prevCommit}..HEAD" --pretty=format:"%s" --no-merges -- "${file}"`
-        ).toString().trim();
-        console.log(`  Using commit range from previous version commit`);
-      } else {
-        // 最终回退：仅取当前 HEAD 的 commit message
-        raw = execSync(
-          `git log -1 --pretty=format:"%s" -- "${file}"`
-        ).toString().trim();
-        console.log(`  Fallback: using only HEAD commit message`);
-      }
+            // 检测到版本号变动
+            if (newVer && oldVer !== newVer) {
+                const range = `${lastBumpPoint[file]}..${commit}`;
+                const logs = execSync(`git log ${range} --pretty=format:"%s|%b|%h" --no-merges -- "${file}"`).toString().trim().split('\n');
+                
+                let groups = { 'breaking': [], 'feat': [], 'fix': [], 'improvements': [] };
+
+                logs.forEach(line => {
+                    if (!line.includes('|')) return;
+                    const [subject, body, hash] = line.split('|');
+                    const fullText = (subject + " " + (body || "")).toLowerCase();
+                    
+                    // 过滤无关提交
+                    const typeMatch = subject.match(/^(\w+)/);
+                    const type = typeMatch ? typeMatch[1].toLowerCase() : '';
+                    if (['ci', 'docs', 'chore', 'test', 'build', 'style'].includes(type) || 
+                        subject.toLowerCase().includes('update changelog')) return;
+
+                    const isBreaking = subject.includes('!:') || fullText.includes('breaking change');
+                    const match = subject.match(/^(\w+)(?:\((.+?)\))?\s*!?\s*:\s*(.+)$/);
+                    
+                    let finalMsg = "";
+                    let targetKey = isBreaking ? 'breaking' : null;
+
+                    if (match) {
+                        const [_, rawType, scope, msg] = match;
+                        const typeKey = rawType.toLowerCase();
+                        const scopePrefix = scope ? `**[${scope}]**: ` : "";
+                        finalMsg = `- ${scopePrefix}${msg} (${hash})`;
+                        
+                        if (!isBreaking) {
+                            if (typeKey === 'feat') targetKey = 'feat';
+                            else if (typeKey === 'fix') targetKey = 'fix';
+                            else if (['refactor', 'perf'].includes(typeKey)) targetKey = 'improvements';
+                        }
+                    }
+
+                    if (finalMsg && targetKey) groups[targetKey].push(finalMsg);
+                });
+
+                let sectionBody = "";
+                for (const [key, title] of Object.entries(CATEGORIES)) {
+                    if (groups[key].length > 0) {
+                        sectionBody += `${title}\n${groups[key].join('\n')}\n\n`;
+                    }
+                }
+
+                if (sectionBody) {
+                    const date = new Date().toISOString().split('T')[0];
+                    const section = `## ${file} [${newVer}] - ${date}\n\n${sectionBody}\n\n`;
+                    allNewSections = section + allNewSections;
+                    
+                    // 记录更新了日志的脚本
+                    if (!updatedScripts.includes(file)) updatedScripts.push(file);
+                }
+                lastBumpPoint[file] = commit;
+            }
+        }
+    }
+
+    if (allNewSections) {
+        const header = `# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n`;
+        
+        let oldContent = "";
+        if (fs.existsSync(CHANGELOG_FILE)) {
+            const currentFile = fs.readFileSync(CHANGELOG_FILE, 'utf8');
+            oldContent = currentFile.replace(/^# Changelog[\s\S]*?---\n\n/, "");
+        }
+
+        fs.writeFileSync(CHANGELOG_FILE, header + allNewSections + oldContent);
+
+        // 关键：将更新的脚本列表导出给 GitHub Actions 环境变量
+        if (process.env.GITHUB_OUTPUT) {
+            const listStr = updatedScripts.join(' & ');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `updated_list=${listStr}\n`);
+        }
+        console.log(`更新成功: ${updatedScripts.join(', ')}`);
     } else {
-      // 全新脚本，无旧版本，仅取最近一条
-      raw = execSync(
-        `git log -1 --pretty=format:"%s" -- "${file}"`
-      ).toString().trim();
-      console.log(`  New script, using HEAD commit message`);
+        process.exit(0); // 没有更新也正常退出
     }
-
-    commitMessages = raw.split('\n').filter(Boolean);
-  } catch (err) {
-    console.warn(`  Warning: could not retrieve commit messages: ${err.message}`);
-    commitMessages = [];
-  }
-
-  const cats = categorize(commitMessages);
-  const hasContent = Object.values(cats).some(a => a.length > 0);
-
-  const lines = [`## [${scriptName}] ${newVer} - ${today}`];
-
-  if (hasContent) {
-    for (const cat of CAT_ORDER) {
-      if (cats[cat].length === 0) continue;
-      lines.push(`\n### ${cat}`);
-      cats[cat].forEach(item => lines.push(`- ${item}`));
-    }
-  } else {
-    lines.push('\n_No significant changes recorded._');
-  }
-
-  return lines.join('\n');
 }
 
-// ── 将所有新段落插入 CHANGELOG.md 顶部 ──────────────────────────────────
-let content = '';
-if (fs.existsSync(CHANGELOG_PATH)) {
-  content = fs.readFileSync(CHANGELOG_PATH, 'utf8');
-} else {
-  content = [
-    '# Changelog',
-    '',
-    'All notable changes to this project will be documented in this file.',
-    '',
-    'The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),',
-    'and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).',
-  ].join('\n') + '\n';
-}
-
-const newSections = targets
-  .map(({ file, newVer, oldVer }) => {
-    const section = buildSection(file, newVer, oldVer);
-    console.log(`✅ Generated section for ${file} → v${newVer}`);
-    return section;
-  })
-  .join('\n\n');
-
-// 在第一个 ## 版本段落之前插入；若还没有版本段落则直接追加
-const insertPos = content.indexOf('\n## ');
-if (insertPos === -1) {
-  content = content.trimEnd() + '\n\n' + newSections + '\n';
-} else {
-  content = content.slice(0, insertPos) + '\n\n' + newSections + '\n' + content.slice(insertPos);
-}
-
-fs.writeFileSync(CHANGELOG_PATH, content, 'utf8');
-console.log('✅ CHANGELOG.md updated successfully');
+update();
