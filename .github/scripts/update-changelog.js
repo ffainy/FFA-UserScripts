@@ -125,16 +125,69 @@ function hasParent(sha) {
 }
 
 /**
- * 解析单行 git log 输出（格式："%s|%b|%h"），返回 changelog 条目。
+ * 解析 git log 原始输出（记录分隔符 \x1e，字段分隔符 \x1f）。
  *
- * @param {string} logLine
+ * @param {string} raw
+ * @returns {Array<{ subject: string, body: string, hash: string }>}
+ */
+function parseGitLogOutput(raw) {
+    if (!raw) return [];
+
+    return raw
+        .split('\x1e')
+        .map(r => r.trim())
+        .filter(Boolean)
+        .map((record) => {
+            const parts = record.split('\x1f');
+            if (parts.length < 3) return null;
+
+            const [subject, body, hash] = parts;
+            return {
+                subject: (subject ?? '').trim(),
+                body:    (body ?? '').trim(),
+                hash:    (hash ?? '').trim(),
+            };
+        })
+        .filter(Boolean);
+}
+
+/**
+ * 归一化 scope。若 scope 以当前脚本名作为前缀（如 omnibar/search），
+ * 则去掉冗余前缀，仅保留子作用域（search）。
+ *
+ * @param {string} scope
+ * @param {string} file
+ * @returns {string}
+ */
+function normalizeScope(scope, file) {
+    if (!scope) return '';
+
+    const base = file
+        .replace(/^FFA-/i, '')
+        .replace(/\.js$/i, '')
+        .toLowerCase();
+
+    const prefix = `${base}/`;
+    if (scope.toLowerCase().startsWith(prefix)) {
+        const normalized = scope.slice(prefix.length).trim();
+        return normalized || scope;
+    }
+
+    return scope;
+}
+
+/**
+ * 解析单条 git log 记录，返回 changelog 条目。
+ *
+ * @param {{ subject: string, body: string, hash: string }} entry
+ * @param {string} file
  * @returns {{ category: string, message: string } | null}
  *   可写入 changelog 时返回对象，否则返回 null。
  */
-function parseCommitLine(logLine) {
-    if (!logLine.includes('|')) return null;
+function parseCommitLine(entry, file) {
+    if (!entry || !entry.subject || !entry.hash) return null;
 
-    const [subject, body, hash] = logLine.split('|');
+    const { subject, body, hash } = entry;
     const fullText = `${subject} ${body ?? ''}`.toLowerCase();
 
     // 提取提交类型
@@ -159,7 +212,8 @@ function parseCommitLine(logLine) {
     );
     if (!ccMatch) return null;
 
-    const [, , scope, msg] = ccMatch;
+    const [, , rawScope, msg] = ccMatch;
+    const scope             = normalizeScope(rawScope, file);
     const scopePrefix      = scope ? `**[${scope}]**: ` : '';
     const message          = `- ${scopePrefix}${msg} (${hash})`;
 
@@ -263,10 +317,10 @@ function update() {
             // 收集从上次版本升级点到当前 commit 之间的所有提交日志
             const range     = `${lastBumpPoint[file]}..${commit}`;
             const logOutput = execSync(
-                `git log ${range} --pretty=format:"%s|%b|%h" --no-merges -- "${file}"`
-            ).toString().trim();
+                `git log ${range} --pretty=format:%s%x1f%b%x1f%h%x1e --no-merges -- "${file}"`
+            ).toString();
 
-            const logs = logOutput ? logOutput.split('\n') : [];
+            const logs = parseGitLogOutput(logOutput);
 
             // 初始化各分类的条目桶
             const groups = {
@@ -276,8 +330,8 @@ function update() {
                 improvements: [],
             };
 
-            for (const line of logs) {
-                const parsed = parseCommitLine(line);
+            for (const entry of logs) {
+                const parsed = parseCommitLine(entry, file);
                 if (parsed) {
                     groups[parsed.category].push(parsed.message);
                 }
