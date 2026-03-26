@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 <!-- changelog-body-start -->
+## FFA-Omnibar.js [3.5.7] - 2026-03-26
+
+### Added
+- **[omnibar/search]**: split new-tab behavior by trigger source (undefined)
+
+
 ## FFA-Linkify.js [0.0.1] - 2026-03-25
 
 ### Added
