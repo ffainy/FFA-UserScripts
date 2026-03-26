@@ -139,13 +139,14 @@ function parseGitLogOutput(raw) {
         .filter(Boolean)
         .map((record) => {
             const parts = record.split('\x1f');
-            if (parts.length < 3) return null;
+            if (parts.length < 4) return null;
 
-            const [subject, body, hash] = parts;
+            const [subject, body, shortHash, fullHash] = parts;
             return {
                 subject: (subject ?? '').trim(),
                 body:    (body ?? '').trim(),
-                hash:    (hash ?? '').trim(),
+                shortHash: (shortHash ?? '').trim(),
+                fullHash:  (fullHash ?? '').trim(),
             };
         })
         .filter(Boolean);
@@ -168,6 +169,9 @@ function normalizeScope(scope, file) {
         .toLowerCase();
 
     const prefix = `${base}/`;
+    if (scope.toLowerCase() === base) {
+        return '';
+    }
     if (scope.toLowerCase().startsWith(prefix)) {
         const normalized = scope.slice(prefix.length).trim();
         return normalized || scope;
@@ -179,15 +183,17 @@ function normalizeScope(scope, file) {
 /**
  * 解析单条 git log 记录，返回 changelog 条目。
  *
- * @param {{ subject: string, body: string, hash: string }} entry
+ * @param {{ subject: string, body: string, shortHash: string, fullHash: string }} entry
  * @param {string} file
+ * @param {{ includeIgnoredType?: boolean }} [opts]
  * @returns {{ category: string, message: string } | null}
  *   可写入 changelog 时返回对象，否则返回 null。
  */
-function parseCommitLine(entry, file) {
-    if (!entry || !entry.subject || !entry.hash) return null;
+function parseCommitLine(entry, file, opts = {}) {
+    if (!entry || !entry.subject || !entry.shortHash) return null;
 
-    const { subject, body, hash } = entry;
+    const { subject, body, shortHash } = entry;
+    const { includeIgnoredType = false } = opts;
     const fullText = `${subject} ${body ?? ''}`.toLowerCase();
 
     // 提取提交类型
@@ -195,7 +201,7 @@ function parseCommitLine(entry, file) {
     const rawType   = typeMatch ? typeMatch[1].toLowerCase() : '';
 
     // 过滤不需要记录的类型
-    if (IGNORED_TYPES.has(rawType)) return null;
+    if (IGNORED_TYPES.has(rawType) && !includeIgnoredType) return null;
 
     // 过滤 changelog bot 自身产生的提交，防止自引用
     if (subject.toLowerCase().includes('update changelog')) return null;
@@ -215,7 +221,7 @@ function parseCommitLine(entry, file) {
     const [, , rawScope, msg] = ccMatch;
     const scope             = normalizeScope(rawScope, file);
     const scopePrefix      = scope ? `**[${scope}]**: ` : '';
-    const message          = `- ${scopePrefix}${msg} (${hash})`;
+    const message          = `- ${scopePrefix}${msg} (${shortHash})`;
 
     // 确定分类（breaking 优先于类型映射）
     let category = null;
@@ -225,6 +231,9 @@ function parseCommitLine(entry, file) {
         category = TYPE_TO_CATEGORY[rawType];
     }
 
+    if (!category && includeIgnoredType) {
+        category = 'improvements';
+    }
     if (!category) return null;
     return { category, message };
 }
@@ -317,7 +326,7 @@ function update() {
             // 收集从上次版本升级点到当前 commit 之间的所有提交日志
             const range     = `${lastBumpPoint[file]}..${commit}`;
             const logOutput = execSync(
-                `git log ${range} --pretty=format:%s%x1f%b%x1f%h%x1e --no-merges -- "${file}"`
+                `git log ${range} --pretty=format:%s%x1f%b%x1f%h%x1f%H%x1e --no-merges -- "${file}"`
             ).toString();
 
             const logs = parseGitLogOutput(logOutput);
@@ -331,7 +340,12 @@ function update() {
             };
 
             for (const entry of logs) {
-                const parsed = parseCommitLine(entry, file);
+                const isBumpCommit = (
+                    entry.fullHash.toLowerCase() === commit.toLowerCase()
+                );
+                const parsed = parseCommitLine(entry, file, {
+                    includeIgnoredType: isBumpCommit,
+                });
                 if (parsed) {
                     groups[parsed.category].push(parsed.message);
                 }
