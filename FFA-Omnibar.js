@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         FFA Omnibar
-// @version      3.5.6
+// @version      3.5.7
 // @namespace    https://github.com/ffainy/FFA-UserScripts
 // @description  Multi-engine floating search bar with suggestions and theming.
 // @description:zh-CN  多引擎悬浮搜索栏，支持补全与主题。
@@ -70,8 +70,10 @@
         labelAccentColor:    { en: 'Accent',                         zh: '强调颜色'             },
         labelMiniMode:       { en: 'Mini Mode',                      zh: '迷你模式'             },
         hintMiniMode:        { en: 'Collapse to a small icon when idle', zh: '空闲时收起为小图标' },
-        labelNewTab:         { en: 'Open in New Tab',                zh: '新标签页打开'         },
-        hintNewTab:          { en: 'Search results open in a new tab', zh: '搜索结果将在新标签页打开' },
+        labelNewTabInput:         { en: 'Input Search: New Tab',            zh: '输入搜索：新标签页'         },
+        hintNewTabInput:          { en: 'Includes Enter, Search button, Suggestions, and History.', zh: '包含回车、搜索按钮、建议词和历史记录。' },
+        labelNewTabEngineSwitch:  { en: 'Engine Switch Search: New Tab',    zh: '切换引擎搜索：新标签页'     },
+        hintNewTabEngineSwitch:   { en: 'When query exists, switching engine opens results in a new tab.', zh: '输入框有关键词时，切换引擎将在新标签页打开结果。' },
         labelFont:           { en: 'Font Family',                    zh: '字体族'               },
         labelFontHint:       { en: 'e.g. "Microsoft Yahei"',         zh: '例如 "Microsoft Yahei"' },
         btnAddEngine:        { en: 'Add Engine',                     zh: '添加引擎'             },
@@ -145,7 +147,8 @@
         lang: 'en',       // 界面语言：'en' | 'zh'
         font: '',         // 自定义字体族（CSS font-family 字符串）
         searchBehavior: {
-            openInNewTab: true,  // 搜索结果是否在新标签页打开
+            openInNewTabInput: true,         // 输入框/回车/放大镜/建议/历史触发时是否新标签页打开
+            openInNewTabEngineSwitch: true,  // 已有关键词后点击其他引擎按钮时是否新标签页打开
             suggestions: true,   // 是否启用关键字预测
             history: true,       // 是否启用历史关键字记录
         },
@@ -310,14 +313,18 @@
             || null;
     }
 
-    function performSearch(engineUrl, query) {
+    function performSearch(engineUrl, query, source = 'input') {
         const term = query?.trim();
         if (!engineUrl || !term) return;
         const url = engineUrl.replace('%s', encodeURIComponent(term));
         if (SettingsManager.current?.searchBehavior?.history) {
             HistoryModule.push(term);
         }
-        SettingsManager.current?.searchBehavior?.openInNewTab
+        const behavior = SettingsManager.current?.searchBehavior ?? {};
+        const openInNewTab = source === 'engine-switch'
+            ? (behavior.openInNewTabEngineSwitch ?? true)
+            : (behavior.openInNewTabInput ?? true);
+        openInNewTab
             ? window.open(url, '_blank') : (location.href = url);
     }
 
@@ -431,6 +438,16 @@
             this._s = { ...DEFAULT_SETTINGS, ...saved };
             this._s.en = this._mergeEngines(saved);
             if (!Array.isArray(this._s.bl)) this._s.bl = [];
+            if (!this._s.searchBehavior || typeof this._s.searchBehavior !== 'object') {
+                this._s.searchBehavior = { ...DEFAULT_SETTINGS.searchBehavior };
+            }
+            this._s.searchBehavior = { ...DEFAULT_SETTINGS.searchBehavior, ...this._s.searchBehavior };
+            if ('openInNewTab' in this._s.searchBehavior) {
+                const oldVal = !!this._s.searchBehavior.openInNewTab;
+                if (!('openInNewTabInput' in this._s.searchBehavior)) this._s.searchBehavior.openInNewTabInput = oldVal;
+                if (!('openInNewTabEngineSwitch' in this._s.searchBehavior)) this._s.searchBehavior.openInNewTabEngineSwitch = oldVal;
+                delete this._s.searchBehavior.openInNewTab;
+            }
             // 首次安装：根据系统色彩偏好自动选择主题
             if (isFirstRun) {
                 const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
@@ -506,6 +523,16 @@
                 this._s = { ...DEFAULT_SETTINGS, ...saved };
                 this._s.en = this._mergeEngines(saved);
                 if (!Array.isArray(this._s.bl)) this._s.bl = [];
+                if (!this._s.searchBehavior || typeof this._s.searchBehavior !== 'object') {
+                    this._s.searchBehavior = { ...DEFAULT_SETTINGS.searchBehavior };
+                }
+                this._s.searchBehavior = { ...DEFAULT_SETTINGS.searchBehavior, ...this._s.searchBehavior };
+                if ('openInNewTab' in this._s.searchBehavior) {
+                    const oldVal = !!this._s.searchBehavior.openInNewTab;
+                    if (!('openInNewTabInput' in this._s.searchBehavior)) this._s.searchBehavior.openInNewTabInput = oldVal;
+                    if (!('openInNewTabEngineSwitch' in this._s.searchBehavior)) this._s.searchBehavior.openInNewTabEngineSwitch = oldVal;
+                    delete this._s.searchBehavior.openInNewTab;
+                }
                 this.save();
                 EventBus.emit('settings:reset');
                 return true;
@@ -1031,7 +1058,7 @@
                     const text = document.createElement('span'); text.className = 'ffa-suggest__history-text'; text.textContent = term;
                     const del  = document.createElement('span'); del.className  = 'ffa-suggest__history-del';  del.textContent = '✕'; del.title = t('btnRemoveHistory');
 
-                    text.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
+                    text.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term, 'input'); };
                     del.onclick  = e => {
                         e.stopPropagation();
                         HistoryModule.remove(term);
@@ -1054,7 +1081,7 @@
                     item.className = 'ffa-suggest__item';
                     item.style.animationDelay = delay + 'ms';
                     item.textContent = term;
-                    item.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term); };
+                    item.onclick = e => { e.stopPropagation(); performSearch(engineUrl, term, 'input'); };
                     box.appendChild(item);
                     delay += STEP;
                 });
@@ -1426,9 +1453,16 @@
                     return true;
                 }
 
-                if (action === 'toggle-newtab') {
-                    settings.searchBehavior.openInNewTab = !settings.searchBehavior.openInNewTab;
-                    this.syncSwitch(el, settings.searchBehavior.openInNewTab);
+                if (action === 'toggle-newtab-input') {
+                    settings.searchBehavior.openInNewTabInput = !settings.searchBehavior.openInNewTabInput;
+                    this.syncSwitch(el, settings.searchBehavior.openInNewTabInput);
+                    Refresh.save();
+                    return true;
+                }
+
+                if (action === 'toggle-newtab-engine-switch') {
+                    settings.searchBehavior.openInNewTabEngineSwitch = !settings.searchBehavior.openInNewTabEngineSwitch;
+                    this.syncSwitch(el, settings.searchBehavior.openInNewTabEngineSwitch);
                     Refresh.save();
                     return true;
                 }
@@ -1534,7 +1568,7 @@
                             expand();
                             setTimeout(() => input.focus(), 50);
                         } else if (input.value.trim()) {
-                            performSearch(getEngineUrl(), input.value);
+                            performSearch(getEngineUrl(), input.value, 'input');
                         } else {
                             input.focus();
                         }
@@ -1561,7 +1595,7 @@
                     };
                     input.onkeydown = (e) => {
                         const url = getEngineUrl();
-                        if (e.key === 'Enter' && input.value.trim()) performSearch(url, input.value);
+                        if (e.key === 'Enter' && input.value.trim()) performSearch(url, input.value, 'input');
                         if (e.key === 'Escape') { input.blur(); }
                     };
 
@@ -1599,10 +1633,15 @@
                         <div class="ffa-card">
                             <span class="ffa-card__title">${t('cardSearch')}</span>
                             <div class="ffa-field__label">
-                                <span>${t('labelNewTab')}</span>
-                                <div class="ffa-switch ${s.searchBehavior.openInNewTab?'ffa-switch--on':''}" data-action="toggle-newtab"></div>
+                                <span>${t('labelNewTabInput')}</span>
+                                <div class="ffa-switch ${s.searchBehavior.openInNewTabInput?'ffa-switch--on':''}" data-action="toggle-newtab-input"></div>
                             </div>
-                            <div class="ffa-field__hint">${t('hintNewTab')}</div>
+                            <div class="ffa-field__hint">${t('hintNewTabInput')}</div>
+                            <div class="ffa-field__label" style="margin-top:16px">
+                                <span>${t('labelNewTabEngineSwitch')}</span>
+                                <div class="ffa-switch ${s.searchBehavior.openInNewTabEngineSwitch?'ffa-switch--on':''}" data-action="toggle-newtab-engine-switch"></div>
+                            </div>
+                            <div class="ffa-field__hint">${t('hintNewTabEngineSwitch')}</div>
                             <div class="ffa-field__label" style="margin-top:16px">
                                 <span>${t('labelSuggestionsToggle')}</span>
                                 <div class="ffa-switch ${s.searchBehavior.suggestions?'ffa-switch--on':''}" data-action="toggle-suggestions"></div>
@@ -1886,7 +1925,7 @@
                         const query = input.value.trim();
                         const engineUrl = btn.dataset.engineUrl;
                         if (query && engineUrl) {
-                            performSearch(engineUrl, query);
+                            performSearch(engineUrl, query, 'engine-switch');
                             return;
                         }
                         toolbar.querySelectorAll('.ffa-toolbar__engine-btn').forEach(b => b.classList.remove('ffa-toolbar__engine-btn--active'));
