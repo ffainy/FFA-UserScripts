@@ -10,10 +10,10 @@
  *   - 重大版本整理后重建
  *
  * 本地运行示例（PowerShell）：
- *   $env:TARGET_SCRIPTS="FFA-Omnibar.js FFA-Linkify.js"; node .github/scripts/rebuild-changelog.js
+ *   $env:TARGET_SCRIPTS="FFA-Omnibar.js FFA-Linkify.js FFA-NoRestrict.js"; node .github/scripts/rebuild-changelog.js
  *
  * 本地运行示例（bash）：
- *   TARGET_SCRIPTS="FFA-Omnibar.js FFA-Linkify.js" node .github/scripts/rebuild-changelog.js
+ *   TARGET_SCRIPTS="FFA-Omnibar.js FFA-Linkify.js FFA-NoRestrict.js" node .github/scripts/rebuild-changelog.js
  */
 
 'use strict';

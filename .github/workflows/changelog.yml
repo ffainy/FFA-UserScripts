@@ -9,6 +9,7 @@ on:
     paths:
       - 'FFA-Omnibar.js'
       - 'FFA-Linkify.js'
+      - 'FFA-NoRestrict.js'
 
 jobs:
   update-changelog:
@@ -20,7 +21,7 @@ jobs:
     # 新增脚本时两处同步更新，否则 paths 触发但 TARGET_SCRIPTS 不包含该文件，
     # 版本变动会被忽略。
     env:
-      TARGET_SCRIPTS: "FFA-Omnibar.js FFA-Linkify.js"
+      TARGET_SCRIPTS: "FFA-Omnibar.js FFA-Linkify.js FFA-NoRestrict.js"
 
     steps:
       - name: Checkout Repository
