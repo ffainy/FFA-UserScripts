@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                FFA NoRestrict
-// @version             0.0.1
+// @version             0.0.2
 // @namespace           https://github.com/ffainy/FFA-UserScripts
 // @icon                data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjMzZhYTZkIiBkPSJNMTIgMEExMiAxMiAwIDAgMCAwIDEyYTEyIDEyIDAgMCAwIDEyIDEyYTEyIDEyIDAgMCAwIDEyLTEyQTEyIDEyIDAgMCAwIDEyIDBNNi43MTggNS4yODJMMTMuNDM2IDEybC02LjcxOCA2LjcxOGwtMi4wMzYtMi4wMzZMOS4zNjQgMTJMNC42ODIgNy4zMTh6bTcuMiAwTDIwLjYzNiAxMmwtNi43MTggNi43MThsLTIuMDM2LTIuMDM2TDE2LjU2NCAxMmwtNC42ODItNC42ODJ6Ii8+PC9zdmc+
 // @description         Unlocks text selection, copy, and right-click on pages that block them. Works silently in the background — just enable it for the sites you need.
@@ -26,10 +26,6 @@
 
     const STORAGE_KEY = 'ffa_norestrict_settings';
 
-    /**
-     * 需要拦截（强制返回 true）的事件列表
-     * 这些事件常被网页用于屏蔽复制/右键/选择等操作
-     */
     const BLOCK_EVENTS = [
         'copy', 'cut', 'contextmenu',
         'selectstart', 'select',
@@ -37,27 +33,20 @@
         'beforeunload',
     ];
 
-    /**
-     * 需要保留原始处理逻辑但去掉 preventDefault 的事件
-     * 例如 mousedown/mouseup/keydown/keyup 通常用于正常交互，不应完全拦截
-     */
-    const PASSTHROUGH_EVENTS = ['mousedown', 'mouseup', 'keydown', 'keyup'];
-
     // ─── 默认设置 ─────────────────────────────────────────────────────────────────
 
     const DEFAULT_SETTINGS = {
-        enabled: true,         // 全局开关
-        showBadge: true,       // 是否显示角标徽章
-        themeMode: 'auto',     // auto | light | dark
-        lang: 'auto',          // 界面语言：'en' | 'zh' | 'auto'
+        enabled:   true,
+        showBadge: true,
+        themeMode: 'auto',  // 'auto' | 'light' | 'dark'
+        lang:      'auto',  // 'auto' | 'en' | 'zh'
         hooks: {
             addEventListener: true,
             dom0handlers:     true,
             preventDefault:   true,
             cssUserSelect:    true,
         },
-        // 仅在该列表中的站点才启用（默认所有站点关闭，手动开启）
-        enabledSites: [],
+        enabledSites: [],   // 启用白名单，精确匹配域名
     };
 
     // ─── 多语言 ───────────────────────────────────────────────────────────────────
@@ -120,24 +109,15 @@
     }
 
     // ─── 站点特定规则 ──────────────────────────────────────────────────────────────
-    //
-    // 结构：{ match, action }
-    //   match  — 字符串（精确主机名）或 RegExp
-    //   action — 函数，在 DOM ready 后执行，可进行额外的站点特定处理
-    //
-    // 扩展时只在此处新增条目，不需要修改任何核心逻辑。
+    // 结构：{ match: string | RegExp, action: () => void }
+    // action 在 DOM ready 后执行。扩展时只在此处新增条目。
 
     const SITE_RULES = [
         {
-            match: 'www.zhihu.com',
-            action() {
-                // 知乎通过 mousemove 检测选择行为，额外屏蔽
-                hookEvent('mousemove');
-            },
-        },
-        {
+            // 知乎：mousemove 检测选择行为 + 复制限制弹窗
             match: /^(www\.)?zhihu\.com$/,
             action() {
+                hookEvent('mousemove');
                 waitForElement('.CopyLimitDialog', el => el.remove());
             },
         },
@@ -145,7 +125,7 @@
 
     const UI_THEMES = {
         light: { bg: '#F5ECD8', accent: '#8B5E3C' }, // Warm Sepia
-        dark:  { bg: '#080F0A', accent: '#4AC878' }, // Deep Forest
+        dark:  { bg: '#05050F', accent: '#7ECFFF' }, // Neon Noir (cyber)
     };
     const THEME_ICON_SUN = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 19a7 7 0 1 1 0-14a7 7 0 0 1 0 14m0-1.5a5.5 5.5 0 1 0 0-11a5.5 5.5 0 1 0 0 11m-5.657.157a.75.75 0 0 1 0 1.06l-1.768 1.768a.749.749 0 0 1-1.275-.326a.75.75 0 0 1 .215-.734l1.767-1.768a.75.75 0 0 1 1.061 0M3.515 3.515a.75.75 0 0 1 1.06 0l1.768 1.768a.749.749 0 0 1-.326 1.275a.75.75 0 0 1-.734-.215L3.515 4.575a.75.75 0 0 1 0-1.06M12 0a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 12 0M4 12a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h2.5A.75.75 0 0 1 4 12m8 8a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 12 20m12-8a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h2.5A.75.75 0 0 1 24 12m-6.343 5.657a.75.75 0 0 1 1.06 0l1.768 1.768a.75.75 0 0 1-.018 1.042a.75.75 0 0 1-1.042.018l-1.768-1.767a.75.75 0 0 1 0-1.061m2.828-14.142a.75.75 0 0 1 0 1.06l-1.768 1.768a.75.75 0 0 1-1.042-.018a.75.75 0 0 1-.018-1.042l1.767-1.768a.75.75 0 0 1 1.061 0"/></svg>';
     const THEME_ICON_MOON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m14.768 3.96l-.002-.005a9 9 0 0 0-.218-.779c-.13-.394.21-.8.602-.67q.435.144.855.328l.01.005A10.002 10.002 0 0 1 12 22a10 10 0 0 1-9.162-5.985l-.004-.01a10 10 0 0 1-.329-.855c-.13-.392.277-.732.67-.602q.386.126.78.218l.004.002A9 9 0 0 0 14.999 6a9 9 0 0 0-.231-2.04M16.5 6c0 5.799-4.701 10.5-10.5 10.5q-.64 0-1.26-.075A8.5 8.5 0 1 0 16.425 4.74q.075.62.075 1.259Z"/></svg>';
@@ -204,8 +184,8 @@
         return detectPreferredColorMode();
     }
 
-    function getUIThemeVars() {
-        const mode = getEffectiveThemeMode();
+    function getUIThemeVars(mode) {
+        if (!mode) mode = getEffectiveThemeMode();
         const theme = mode === 'dark' ? UI_THEMES.dark : UI_THEMES.light;
         const accentRgb = hexToRgb(theme.accent).join(',');
         const isDark = mode === 'dark';
@@ -217,20 +197,29 @@
             '--ffa-nr-glow-accent'      : hexToRgba(theme.accent, isDark ? 0.28 : 0.16),
             '--ffa-nr-glow-accent-hover': hexToRgba(theme.accent, isDark ? 0.36 : 0.22),
             '--ffa-nr-glow-accent-sm'   : `0 0 4px ${hexToRgba(theme.accent, isDark ? 0.38 : 0.26)}`,
-            '--ffa-nr-glow-text'        : isDark ? '0 0 4px rgba(255,255,255,0.18)'                 : '0 0 4px rgba(0,0,0,0.12)',
-            '--ffa-nr-glow-on-accent'   : isDark ? '0 0 5px rgba(255,255,255,0.28)'                 : '0 0 5px rgba(255,255,255,0.22)',
-            '--ffa-nr-border'           : isDark ? 'rgba(255,255,255,0.14)'                         : 'rgba(86,58,34,0.2)',
-            '--ffa-nr-text-primary'     : isDark ? 'rgba(255,255,255,0.9)'                          : 'rgba(40,28,20,0.92)',
-            '--ffa-nr-text-secondary'   : isDark ? 'rgba(255,255,255,0.54)'                         : 'rgba(75,52,36,0.62)',
+            '--ffa-nr-glow-text'        : isDark ? '0 0 4px rgba(255,255,255,0.18)'  : '0 0 4px rgba(0,0,0,0.12)',
+            '--ffa-nr-glow-on-accent'   : isDark ? '0 0 5px rgba(255,255,255,0.28)'  : '0 0 5px rgba(255,255,255,0.22)',
+            '--ffa-nr-border'           : isDark ? 'rgba(255,255,255,0.14)'           : 'rgba(86,58,34,0.2)',
+            '--ffa-nr-text-primary'     : isDark ? 'rgba(255,255,255,0.9)'            : 'rgba(40,28,20,0.92)',
+            '--ffa-nr-text-secondary'   : isDark ? 'rgba(255,255,255,0.54)'           : 'rgba(75,52,36,0.62)',
             '--ffa-nr-bg-panel'         : hexToRgba(theme.bg, panelAlpha),
-            '--ffa-nr-bg-surface'       : isDark ? 'rgba(255,255,255,0.045)'                        : 'rgba(255,255,255,0.52)',
-            '--ffa-nr-bg-surface-hover' : isDark ? 'rgba(255,255,255,0.08)'                         : 'rgba(255,255,255,0.75)',
+            '--ffa-nr-bg-surface'       : isDark ? 'rgba(255,255,255,0.045)'          : 'rgba(255,255,255,0.52)',
+            '--ffa-nr-bg-surface-hover' : isDark ? 'rgba(255,255,255,0.08)'           : 'rgba(255,255,255,0.75)',
         };
     }
 
     function applyThemeVars(host) {
         const themeVars = getUIThemeVars();
         Object.entries(themeVars).forEach(([name, value]) => host.style.setProperty(name, value));
+    }
+
+    /** 从 UI_THEMES 动态生成 :host 的 CSS 变量 fallback 块（暗色主题作为默认值） */
+    function buildThemeFallbackCSS() {
+        const vars = getUIThemeVars('dark');
+        const block = Object.entries(vars)
+            .map(([k, v]) => `            ${k}: ${v};`)
+            .join('\n');
+        return block;
     }
 
     /** 检查当前主机名是否命中某条规则的 match 字段 */
@@ -248,7 +237,9 @@
         get current() { return this._data; },
 
         load() {
-            const saved = GM_getValue(STORAGE_KEY, {});
+            const raw = GM_getValue(STORAGE_KEY, {});
+            // GM_getValue 在极少数情况下可能返回非对象，做防御性处理
+            const saved = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
             const isFirstInstall = Object.keys(saved).length === 0;
             const normalizedSites = Array.isArray(saved.enabledSites)
                 ? [...new Set(saved.enabledSites.map(site => this.normalizeHost(site)).filter(Boolean))]
@@ -328,23 +319,23 @@
 
     // ─── 核心 Hook 逻辑 ───────────────────────────────────────────────────────────
 
-    // 在 document-start 时保存原始引用，此时页面脚本尚未运行
+    // 在 document-start 时保存原始引用，此时页面脚本尚未运行，确保拿到未被篡改的原生方法
     const _origAddEventListener = EventTarget.prototype.addEventListener;
     const _origPreventDefault    = Event.prototype.preventDefault;
-    let _sessionSiteEnabled = false;
-    let _domReady = false;
-    let _dom0CleanerStop = null;
-    let _cssUnlockStyle = null;
-    let _siteRulesApplied = false;
 
-    /** 强制将事件处理器替换为返回 true 的 noop */
+    // 运行时状态：这些变量跨函数共享，集中声明便于追踪
+    let _sessionSiteEnabled = false;  // 本次会话的临时启用状态，不持久化
+    let _domReady           = false;  // DOM 是否已就绪
+    let _dom0CleanerStop    = null;   // DOM0 清理器的停止函数
+    let _cssUnlockStyle     = null;   // CSS 解锁样式元素的引用
+    let _siteRulesApplied   = false;  // 站点规则是否已执行
+
+    /** 强制将事件处理器替换为返回 true 的 noop，使事件不被阻断 */
     function returnTrue() { return true; }
 
     /**
-     * 拦截 addEventListener：
-     * - BLOCK_EVENTS 中的事件直接替换为 returnTrue
-     * - PASSTHROUGH_EVENTS 中的事件保留处理器，但其内部的 preventDefault 调用会被阻断
-     * - 其他事件照常注册
+     * 将指定事件类型加入 BLOCK_EVENTS，使其受 hook 拦截。
+     * 用于站点规则动态扩展拦截范围（如知乎的 mousemove）。
      */
     function hookEvent(type) {
         if (!BLOCK_EVENTS.includes(type)) BLOCK_EVENTS.push(type);
@@ -358,7 +349,7 @@
             }
 
             if (BLOCK_EVENTS.includes(type)) {
-                // 用 returnTrue 替换原始处理器，保持注册（不影响 removeEventListener）
+                // 用 returnTrue 替换 listener，保持注册形式不变（不影响 removeEventListener 的配对）
                 return _origAddEventListener.call(this, type, returnTrue, options);
             }
 
@@ -378,8 +369,10 @@
     }
 
     /**
-     * 清理 DOM0 内联处理器（element.oncopy = fn 等形式）
-     * 周期轮询以覆盖动态插入的元素
+     * 清理 DOM0 内联处理器（element.oncopy = fn 等形式）。
+     * 以 1.5s 为间隔轮询，覆盖页面脚本动态注入处理器的情况。
+     * 间隔不宜过短（避免频繁遍历 DOM），不宜过长（避免用户感知到延迟）。
+     * 返回停止函数，由 updateRuntimeFeatures 在功能关闭时调用。
      */
     function installDOM0Cleaner() {
         const allEvents = [...BLOCK_EVENTS];
@@ -400,13 +393,16 @@
             }
         }
 
-        // 初次立即执行，之后每 1.5s 轮询一次（页面动态注入处理器的情况）
+        // 初次立即执行，之后每 1.5s 轮询
         clean();
         _timer = setInterval(clean, 1500);
         return () => clearInterval(_timer);
     }
 
-    /** 注入 CSS 解除 user-select 限制 */
+    /**
+     * 注入 CSS 强制启用文字选择。
+     * `*:not([class*="ffa-"])` 排除脚本自身的 UI 元素，避免影响面板交互。
+     */
     function installCSSUnlock() {
         return GM_addStyle(`
             html,
@@ -469,19 +465,7 @@
     const UI_THEME_CSS = `
         :host {
             all: initial;
-            --ffa-nr-accent           : #36aa6d;
-            --ffa-nr-accent-rgb       : 54,        170, 109;
-            --ffa-nr-glow-accent      : rgba(54,170,109,0.28);
-            --ffa-nr-glow-accent-hover: rgba(54,170,109,0.36);
-            --ffa-nr-border           : rgba(255,255,255,0.14);
-            --ffa-nr-text-primary     : rgba(255,255,255,0.9);
-            --ffa-nr-text-secondary   : rgba(255,255,255,0.54);
-            --ffa-nr-bg-panel         : rgba(10,18,12,0.9);
-            --ffa-nr-bg-surface       : rgba(255,255,255,0.045);
-            --ffa-nr-bg-surface-hover : rgba(255,255,255,0.08);
-            --ffa-nr-glow-text        : 0 0 4px rgba(255,255,255,0.16);
-            --ffa-nr-glow-accent-sm   : 0 0 4px rgba(54,170,109,0.3);
-            --ffa-nr-glow-on-accent   : 0 0 5px rgba(255,255,255,0.26);
+${buildThemeFallbackCSS()}
             --ffa-nr-radius-panel     : 14px;
             --ffa-nr-radius-widget    : 10px;
             --ffa-nr-easing           : cubic-bezier(0.23,1,0.32,1);
@@ -496,15 +480,46 @@
     const UI_COMPONENT_CSS = `
         .ffa-nr-root {
             position: fixed;
-            bottom: 24px;
-            left: 0;
+            inset: 0;
             z-index: 2147483647;
             pointer-events: none;
         }
 
-        /* ── 迷你图标 ── */
-        .ffa-nr-mini-icon {
+        /* ── 遮罩 ── */
+        .ffa-nr-overlay {
             position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s var(--ffa-nr-easing), visibility 0s linear 0.3s;
+        }
+
+        .ffa-nr-overlay--visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.3s var(--ffa-nr-easing);
+        }
+
+        /* ── 热区（父容器，固定在左上角，捕捉鼠标接近） ── */
+        .ffa-nr-mini-hitarea {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 64px;
+            height: 64px;
+            pointer-events: auto;
+            cursor: pointer;
+            overflow: visible;
+        }
+
+        /* ── 迷你图标（热区的子元素） ── */
+        .ffa-nr-mini-icon {
+            position: absolute;
             top: 12px;
             left: 0;
             width: 36px;
@@ -512,9 +527,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            pointer-events: auto;
-            transform: translateX(-33%);
+            /* 默认：露出 1/3 */
+            transform: translateX(-66%);
             transition: transform 0.5s var(--ffa-nr-easing), opacity 0.4s var(--ffa-nr-easing);
             user-select: none;
             -webkit-user-select: none;
@@ -524,50 +538,58 @@
         .ffa-nr-mini-icon svg {
             width: 22px;
             height: 22px;
-            color: var(--ffa-nr-accent);
             stroke: currentColor;
-            filter: drop-shadow(0 0 4px var(--ffa-nr-accent));
-            transition: all 0.5s var(--ffa-nr-easing);
             flex-shrink: 0;
+            transition: filter 0.4s var(--ffa-nr-easing), transform 0.4s var(--ffa-nr-easing), color 0.3s;
         }
 
-        /* 未激活状态：图标变灰，无光晕 */
-        .ffa-nr-mini-icon--off svg {
-            color: rgba(255,255,255,0.28);
-            stroke: currentColor;
-            filter: none;
+        /* 默认（未激活）：灰色 + 灰色光晕 */
+        .ffa-nr-mini-icon {
+            color: rgba(255,255,255,0.35);
         }
 
-        /* 鼠标悬停：完全展开 + 双层光晕 */
-        .ffa-nr-mini-icon:hover {
-            transform: translateX(0);
+        .ffa-nr-mini-icon svg {
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.2));
         }
 
-        .ffa-nr-mini-icon:hover svg {
-            transform: scale(1.15);
+        /* 激活状态：绿色 + 绿色光晕 */
+        .ffa-nr-mini-icon--on {
+            color: var(--ffa-nr-accent);
+        }
+
+        .ffa-nr-mini-icon--on svg {
+            filter: drop-shadow(0 0 4px var(--ffa-nr-accent));
+        }
+
+        /* 热区 hover：图标滑出到 2/3 */
+        .ffa-nr-mini-hitarea:hover .ffa-nr-mini-icon {
+            transform: translateX(-33%);
+        }
+
+        /* 热区 hover（未激活）：图标和光晕变白 */
+        .ffa-nr-mini-hitarea:hover .ffa-nr-mini-icon {
+            color: rgba(255,255,255,0.75);
+        }
+
+        .ffa-nr-mini-hitarea:hover .ffa-nr-mini-icon svg {
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+            transform: scale(1.1);
+        }
+
+        /* 热区 hover（激活）：绿色加强光晕 */
+        .ffa-nr-mini-hitarea:hover .ffa-nr-mini-icon--on {
+            color: var(--ffa-nr-accent);
+        }
+
+        .ffa-nr-mini-hitarea:hover .ffa-nr-mini-icon--on svg {
             filter: drop-shadow(0 0 6px var(--ffa-nr-accent)) drop-shadow(0 0 16px var(--ffa-nr-accent));
         }
 
-        .ffa-nr-mini-icon--off:hover svg {
-            filter: none;
-        }
-
-        /* 菜单打开时：完全缩回 */
+        /* 菜单打开时：完全缩回隐藏 */
         .ffa-nr-mini-icon--hidden {
             opacity: 0;
             pointer-events: none;
-            transform: translateX(-100%);
-        }
-
-        /* ── 热区（覆盖左上角，比图标更大，捕捉鼠标接近） ── */
-        .ffa-nr-mini-hitarea {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 72px;
-            height: 72px;
-            pointer-events: auto;
-            cursor: pointer;
+            transform: translateX(-100%) !important;
         }
 
         .ffa-nr-menu {
@@ -678,23 +700,23 @@
         }
 
         .ffa-nr-icon-btn--light {
-            color: #b57a42;
-            text-shadow: 0 0 6px rgba(181,122,66,0.28), 0 0 14px rgba(181,122,66,0.18);
+            color: var(--ffa-nr-accent);
+            text-shadow: 0 0 6px var(--ffa-nr-glow-accent), 0 0 14px var(--ffa-nr-glow-accent);
         }
 
         .ffa-nr-icon-btn--light:hover {
-            color: #c88a4f;
-            text-shadow: 0 0 8px rgba(200,138,79,0.38), 0 0 18px rgba(200,138,79,0.24);
+            color: var(--ffa-nr-accent);
+            text-shadow: 0 0 8px var(--ffa-nr-glow-accent-hover), 0 0 18px var(--ffa-nr-glow-accent-hover);
         }
 
         .ffa-nr-icon-btn--dark {
-            color: #68d090;
-            text-shadow: 0 0 6px rgba(74,200,120,0.32), 0 0 16px rgba(74,200,120,0.2);
+            color: var(--ffa-nr-accent);
+            text-shadow: 0 0 6px var(--ffa-nr-glow-accent), 0 0 16px var(--ffa-nr-glow-accent);
         }
 
         .ffa-nr-icon-btn--dark:hover {
-            color: #7ee1a2;
-            text-shadow: 0 0 9px rgba(126,225,162,0.4), 0 0 20px rgba(126,225,162,0.26);
+            color: var(--ffa-nr-accent);
+            text-shadow: 0 0 9px var(--ffa-nr-glow-accent-hover), 0 0 20px var(--ffa-nr-glow-accent-hover);
         }
 
         .ffa-nr-menu__title {
@@ -1510,14 +1532,22 @@
 
         const s = Settings.current;
 
-        // ── 迷你图标 ──
+        // ── 遮罩 ──
+        const overlay = document.createElement('div');
+        overlay.className = 'ffa-nr-overlay';
+
+        const openOverlay = () => overlay.classList.add('ffa-nr-overlay--visible');
+        const closeOverlay = () => overlay.classList.remove('ffa-nr-overlay--visible');
+
+        // ── 热区（父容器）+ 迷你图标（子元素）──
+        const miniHitArea = document.createElement('div');
+        miniHitArea.className = 'ffa-nr-mini-hitarea';
+
         const miniIcon = document.createElement('div');
         miniIcon.className = 'ffa-nr-mini-icon';
         miniIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 12l-3 9l18-9L3 3zm0 0h6"/></svg>`;
 
-        // ── 热区（覆盖左下角，比图标更大，捕捉鼠标接近） ──
-        const miniHitArea = document.createElement('div');
-        miniHitArea.className = 'ffa-nr-mini-hitarea';
+        miniHitArea.appendChild(miniIcon);
 
         // ── 弹出菜单 ──
         const menu = document.createElement('div');
@@ -1527,12 +1557,13 @@
 
         // ── 迷你图标状态同步 ──
         const syncMiniIcon = () => {
-            miniIcon.classList.toggle('ffa-nr-mini-icon--off', !isFeatureActive());
+            miniIcon.classList.toggle('ffa-nr-mini-icon--on', isFeatureActive());
         };
 
         const showMiniIcon = () => {
             miniIcon.classList.remove('ffa-nr-mini-icon--hidden');
             miniHitArea.style.pointerEvents = 'auto';
+            closeOverlay();
         };
 
         const hideMiniIcon = () => {
@@ -1629,22 +1660,22 @@
         const openMenu = (e) => {
             e.stopPropagation();
             menu.classList.add('ffa-nr-menu--visible');
+            openOverlay();
             hideMiniIcon();
         };
 
-        miniIcon.addEventListener('click', openMenu);
         miniHitArea.addEventListener('click', openMenu);
 
-        // 点击外部关闭
-        document.addEventListener('click', () => {
-            if (menu.classList.contains('ffa-nr-menu--visible')) {
-                menu.classList.remove('ffa-nr-menu--visible');
-                showMiniIcon();
-            }
+        // 点击遮罩关闭（替代原来的 document click 监听）
+        overlay.addEventListener('click', () => {
+            menu.classList.remove('ffa-nr-menu--visible');
+            sitesSubpanel.subpanel.classList.remove('ffa-nr-subpanel--visible');
+            showMiniIcon();
         });
+
         shadow.addEventListener('click', e => e.stopPropagation());
 
-        root.append(menu, miniIcon, miniHitArea);
+        root.append(overlay, menu, miniHitArea);
     }
 
     // ─── 初始化 ───────────────────────────────────────────────────────────────────
