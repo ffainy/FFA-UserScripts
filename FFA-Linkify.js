@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name                FFA Linkify
-// @version             0.0.2
+// @version             0.0.3
 // @namespace           https://github.com/ffainy/FFA-UserScripts
 // @icon                data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjMzZhYTZkIiBkPSJNMTIgMEExMiAxMiAwIDAgMCAwIDEyYTEyIDEyIDAgMCAwIDEyIDEyYTEyIDEyIDAgMCAwIDEyLTEyQTEyIDEyIDAgMCAwIDEyIDBNNi43MTggNS4yODJMMTMuNDM2IDEybC02LjcxOCA2LjcxOGwtMi4wMzYtMi4wMzZMOS4zNjQgMTJMNC42ODIgNy4zMTh6bTcuMiAwTDIwLjYzNiAxMmwtNi43MTggNi43MThsLTIuMDM2LTIuMDM2TDE2LjU2NCAxMmwtNC42ODItNC42ODJ6Ii8+PC9zdmc+
 // @description         Triple-click any plain-text URL to make it clickable
@@ -27,11 +27,10 @@
     const CLICK_THRESHOLD = 10;
 
     /**
-     * URL 匹配正则
-     * 注意：不在模块级复用同一实例，每次调用 findUrls() 时重新创建，
+     * URL 匹配正则的 source，每次调用 findUrls() 时用固定的 'gi' 标志重新创建实例，
      * 避免带 g 标志的正则 lastIndex 状态在多次调用间污染匹配结果。
      */
-    const URL_PATTERN = /(https?:\/\/[^\s<]+|www\.[^\s<]+\.[^\s<]{2,})/gi;
+    const URL_PATTERN_SOURCE = /(https?:\/\/[^\s<]+|www\.[^\s<]+\.[^\s<]{2,})/.source;
 
     /**
      * URL 尾部需要剥离的标点符号
@@ -57,10 +56,13 @@
     /** 存储最近三次点击记录（时间 + 坐标） */
     let recentClicks = [];
 
+    // passive: true 告知浏览器此监听器不会调用 preventDefault()，允许浏览器提前优化滚动等行为
     document.addEventListener('click', function (e) {
         const now = Date.now();
 
         // 追加本次点击，只保留最近 3 条
+        // 注意：保留最近 3 条意味着第 4 次点击会丢弃第 1 次，
+        // 用第 2、3、4 次重新判断，实现滑动窗口式三击检测
         recentClicks.push({ time: now, x: e.clientX, y: e.clientY });
         if (recentClicks.length > 3) recentClicks.shift();
 
@@ -76,7 +78,7 @@
                 recentClicks = []; // 重置，避免连续触发
             }
         }
-    });
+    }, { passive: true });
 
     // ─── 核心逻辑 ─────────────────────────────────────────────────────────────────
 
@@ -99,29 +101,30 @@
     /**
      * 获取指定坐标下的文本节点
      * 兼容 Chrome（caretRangeFromPoint）和 Firefox（caretPositionFromPoint）
+     * 注意：仅处理鼠标命中的单个文本节点；跨节点的文本（如富文本编辑器）不在处理范围内
      *
      * @param {number} x
      * @param {number} y
      * @returns {Text | null}
      */
     function getTextNodeFromPoint(x, y) {
-        let range;
+        let node = null;
 
         if (document.caretRangeFromPoint) {
             // Chrome / Edge
-            range = document.caretRangeFromPoint(x, y);
+            const range = document.caretRangeFromPoint(x, y);
+            if (range?.startContainer?.nodeType === Node.TEXT_NODE) {
+                node = range.startContainer;
+            }
         } else if (document.caretPositionFromPoint) {
-            // Firefox
+            // Firefox：使用 caretPositionFromPoint，无需创建 Range，避免对象泄漏
             const pos = document.caretPositionFromPoint(x, y);
-            if (!pos) return null;
-            range = document.createRange();
-            range.setStart(pos.offsetNode, pos.offset);
-            range.collapse(true);
+            if (pos?.offsetNode?.nodeType === Node.TEXT_NODE) {
+                node = pos.offsetNode;
+            }
         }
 
-        return range?.startContainer?.nodeType === Node.TEXT_NODE
-            ? range.startContainer
-            : null;
+        return node;
     }
 
     /**
@@ -147,7 +150,7 @@
      * @returns {{ start: number, end: number, url: string }[]}
      */
     function findUrls(text) {
-        const regex = new RegExp(URL_PATTERN.source, URL_PATTERN.flags);
+        const regex = new RegExp(URL_PATTERN_SOURCE, 'gi');
         const results = [];
         let match;
 
@@ -172,6 +175,7 @@
      * @param {{ start: number, end: number, url: string }[]} urls
      */
     function replaceTextWithLinks(textNode, urls) {
+        if (!textNode.parentNode) return; // 防御性检查：文本节点已脱离 DOM
         const original = textNode.nodeValue;
         const fragment = document.createDocumentFragment();
         let cursor = 0;
